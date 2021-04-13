@@ -18,7 +18,7 @@ using static Fusee.Engine.Core.Time;
 
 namespace Fusee.Examples.MuVista.Core
 {
-    [FuseeApplication(Name = "FUSEE MuVista", Description = "")]
+    [FuseeApplication(Name = "FUSEE Spherical Image Viewer", Description = "Viewer for 360 degree pictures.")]
     public class MuVista : RenderCanvas
     {
 
@@ -66,6 +66,10 @@ namespace Fusee.Examples.MuVista.Core
         private const float AnimDuration = 2f;
         private bool _animActive;
         private float _animTimeStart = 0;
+
+
+        //Inactivity Checker
+        private bool _inactiv = false;
 
 
         // Init is called on startup.
@@ -373,12 +377,26 @@ namespace Fusee.Examples.MuVista.Core
                 _angleVert += _angleVelVert;
             }
 
+            if (Input.Mouse.IsButtonDown(1))
+            {
+                _inactiv = false;
+            }
+            else
+            {
+                _inactiv = true;
+            }
 
-
-            if (_sphereIsVisible)
+            if (_sphereIsVisible && !_inactiv)
             {
                 _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
             }
+
+            if (_inactiv)
+            {
+                rotationAfterInactivity();
+            }
+
+
             //_imagePlaneTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
             _sphereTransform.Translation = new float3(_planePositionX, _planePositionY, 0);
             //_mainCamTransform.Translation = new float3(-_planePositionX, -_planePositionY, 0);
@@ -481,7 +499,7 @@ namespace Fusee.Examples.MuVista.Core
             //RC.View = view;
             //RC.Projection = perspective; //_sceneRenderer.Animate();
             _sceneRenderer.Render(RC);
-            _guiRenderer.Render(RC);
+            //_guiRenderer.Render(RC);
 
             //Constantly check for interactive objects.
             //RC.Projection = orthographic;
@@ -497,6 +515,11 @@ namespace Fusee.Examples.MuVista.Core
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rendered frame) on the front buffer.
             Present();
+        }
+
+        public void rotationAfterInactivity()
+        {
+            _mainCamTransform.Rotation.y += 0.5f * Time.DeltaTime;
         }
 
         private SceneContainer CreateGui()
