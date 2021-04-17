@@ -69,7 +69,7 @@ namespace Fusee.Examples.MuVista.Core
 
 
         //Inactivity Checker
-        private bool _inactiv = false;
+        private float _inActiveTimer = 0f;
 
 
         // Init is called on startup.
@@ -78,8 +78,8 @@ namespace Fusee.Examples.MuVista.Core
 
             var sphereTex = new Texture(AssetStorage.Get<ImageData>("LadyBug_C2P2.jpg"));
 
-            Mesh sphere = CreateSphere(10, 20, 50);
-            Mesh plane = CreateGridPlane(20, 50, _planeHeight, _planeWidth, DistancePlaneCamera);
+            Sphere sphere = new Sphere(10, 20, 50);
+            GridPlane plane = new GridPlane(20, 50, _planeHeight, _planeWidth, DistancePlaneCamera);
 
             TextureInputSpecular colorInput = new TextureInputSpecular()
             {
@@ -205,7 +205,6 @@ namespace Fusee.Examples.MuVista.Core
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);
 
             //RC.Viewport(0, 0, Width, Height);
-
 
             #region Controls
             // Mouse and keyboard movement
@@ -377,21 +376,18 @@ namespace Fusee.Examples.MuVista.Core
                 _angleVert += _angleVelVert;
             }
 
-            if (Input.Mouse.IsButtonDown(1))
+            _inActiveTimer += Time.DeltaTime;
+            if (Input.Mouse.IsButtonDown(1) || (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0))
             {
-                _inactiv = false;
-            }
-            else
-            {
-                _inactiv = true;
+                _inActiveTimer = 0f;
             }
 
-            if (_sphereIsVisible && !_inactiv)
+            if (_sphereIsVisible && _inActiveTimer < 5f)
             {
                 _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
             }
 
-            if (_inactiv)
+            if (_inActiveTimer > 5f)
             {
                 rotationAfterInactivity();
             }
@@ -519,7 +515,8 @@ namespace Fusee.Examples.MuVista.Core
 
         public void rotationAfterInactivity()
         {
-            _mainCamTransform.Rotation.y += 0.5f * Time.DeltaTime;
+            _angleHorz += 0.5f * Time.DeltaTime;
+            _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
         }
 
         private SceneContainer CreateGui()
@@ -703,87 +700,7 @@ namespace Fusee.Examples.MuVista.Core
 
         }
 
-        public static Mesh CreateSphere(float radius, int longSegments, int latSegments)
-        {
-
-            //Deklaration der Arrays
-            float3[] verts = new float3[(longSegments + 1) * latSegments];
-            float3[] norms = new float3[(longSegments + 1) * latSegments];
-            float2[] uvs = new float2[(longSegments + 1) * latSegments];
-            ushort[] tris = new ushort[longSegments * (latSegments - 1) * 6];
-
-            //Initialisierung der verts, norms und uvs
-            for (int i = 0; i < latSegments; i++)
-            {
-                float theta = (float)M.Pi / (latSegments - 1) * i;
-
-                for (int j = 0; j <= longSegments; j++)
-                {
-                    float phi = 2 * (float)M.Pi / (longSegments) * j;
-
-                    if (i == 0)  //Nordpol
-                    {
-                        verts[j] = new float3(0, radius, 0);
-                        norms[j] = -float3.UnitY;
-                        uvs[j] = new float2((float)(j) / (float)(longSegments), 1);
-                    }
-                    else if (i == latSegments - 1)   //S�dpol
-                    {
-                        verts[(latSegments - 1) * (longSegments + 1) + j] = new float3(0, -radius, 0);
-                        norms[(latSegments - 1) * (longSegments + 1) + j] = float3.UnitY;
-                        uvs[(latSegments - 1) * (longSegments + 1) + j] = new float2((float)(j) / (float)(longSegments), 0);
-                    }
-                    else
-                    {
-                        if (j == longSegments)
-                        {
-                            phi = 2 * (float)M.Pi / (longSegments - 1) * 0;
-                        }
-                        verts[i * longSegments + j + i * 1] = new float3(
-                            (float)(radius * M.Sin(phi) * M.Sin(theta)),
-                            (float)(radius * M.Cos(theta)),
-                            (float)(radius * M.Cos(phi) * M.Sin(theta)));
-
-                        norms[i * longSegments + j + i * 1] = new float3(
-                            -(float)(radius * M.Sin(phi) * M.Sin(theta)),
-                            -(float)(radius * M.Cos(theta)),
-                            -(float)(radius * M.Cos(phi) * M.Sin(theta)));
-
-                        uvs[i * longSegments + j + i * 1] = new float2(
-                            (float)(j) / (float)(longSegments),
-                            1 - ((float)(i) / (float)(latSegments - 1)));
-                    }
-                }
-            }
-
-            for (int j = 0, k = 0; j < (latSegments - 1) * longSegments; j++, k++)   //j f�r die Array-Indices und k ist ein Punkt in den aktuellen Dreiecken
-            {
-                if ((k + 1) % (longSegments + 1) == 0)
-                {
-                    k++;
-                }
-
-                tris[j * 6] = (ushort)(k);
-                tris[j * 6 + 1] = (ushort)(k + (longSegments + 1) + 1);
-                tris[j * 6 + 2] = (ushort)(k + 1);
-
-                tris[j * 6 + 3] = (ushort)(k);
-                tris[j * 6 + 4] = (ushort)(k + (longSegments + 1));
-                tris[j * 6 + 5] = (ushort)(k + (longSegments + 1) + 1);
-
-            }
-
-            return new Mesh
-            {
-                Vertices = verts,
-                Normals = norms,
-                UVs = uvs,
-                Triangles = tris,
-
-            };
-        }
-
-        public static Mesh CreateSphereAndPlane(float radius, int longSegments, int latSegments, float height, float width, float distancePlane)
+        /*public static Mesh CreateSphereAndPlane(float radius, int longSegments, int latSegments, float height, float width, float distancePlane)
         {
             //Deklaration der Arrays
             float3[] verts = new float3[(longSegments + 1) * latSegments];
@@ -886,41 +803,6 @@ namespace Fusee.Examples.MuVista.Core
                 Triangles = tris,
 
             };
-        }
-
-        public static Mesh CreateGridPlane(int longSegments, int latSegments, float height, float width, float distancePlane)
-        {
-            float3[] verts1 = new float3[(longSegments + 1) * latSegments];
-            float3[] norms1 = new float3[(longSegments + 1) * latSegments];
-
-            //Plane
-            float rowHeight = height / (latSegments - 1);
-            float columnWidth = width / longSegments;
-            float startHeight = height / 2f;
-            float startWidth = -width / 2f;
-
-            //Initialisierung der verts und norms
-            for (int i = 0; i < latSegments; i++)
-            {
-                for (int j = 0; j <= longSegments; j++)
-                {
-                    //Vektor wird um 45� um den Koordinatenursprung gedreht
-                    float x = M.Cos(M.Pi) * (startWidth + (j * columnWidth)) + M.Sin(M.Pi) * distancePlane;
-                    float y = startHeight - (i * rowHeight);
-                    float z = -M.Sin(M.Pi) * (startWidth + (j * columnWidth)) + M.Cos(M.Pi) * distancePlane;
-                    verts1[i * (longSegments + 1) + j] = new float3(x, y, z); //Add - to x and z value to mirror the image
-                    norms1[i * (longSegments + 1) + j] = float3.UnitZ;
-                }
-            }
-
-            return new Mesh
-            {
-                Vertices1 = verts1,
-                Normals1 = norms1,
-
-            };
-        }
-
-
+        }*/
     }
 }
