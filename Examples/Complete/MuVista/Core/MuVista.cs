@@ -36,12 +36,9 @@ namespace Fusee.Examples.MuVista.Core
 
 
         private SceneRendererForward _guiRenderer;
-        private SceneContainer _gui;
+        private GUI _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
-
-        private GUIButton _btnZoomIn;
-        private GUIButton _btnZoomOut;
 
         private bool _keys;
 
@@ -52,9 +49,6 @@ namespace Fusee.Examples.MuVista.Core
         private Transform _mainCamTransform;
         private readonly Camera _mainCam = new Camera(ProjectionMethod.Perspective, 5, 100, M.PiOver4);
         private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
-
-        private float2 _zoomInBtnPosition;
-        private float2 _zoomOutBtnPosition;
 
         private const float _planeHeight = 4096f / 300f;
         private const float _planeWidth = 8192f / 300f;
@@ -150,7 +144,7 @@ namespace Fusee.Examples.MuVista.Core
                 Triangles = sphere.Triangles
             };
 
-            _gui = CreateGui();
+            _gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
 
             // Create the interaction handler
             _sih = new SceneInteractionHandler(_gui);
@@ -230,7 +224,6 @@ namespace Fusee.Examples.MuVista.Core
                     _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
 
                     //_touchPosition = Touch.GetPosition(TouchPoints.Touchpoint_0);
-
                 }
                 else
                 {
@@ -246,17 +239,12 @@ namespace Fusee.Examples.MuVista.Core
                         {
                             _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
                         }
-
-
                     }
                     else
                     {
-
                         var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
                         _angleVelHorz *= curDamp;
                         _angleVelVert *= curDamp;
-
-
                     }
                 }
 
@@ -271,7 +259,6 @@ namespace Fusee.Examples.MuVista.Core
                 if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
                 {
                     _keys = true;
-
                 }
 
                 //Zoom in/out
@@ -301,9 +288,7 @@ namespace Fusee.Examples.MuVista.Core
                     var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
                     _planePosX = RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
                     _planePosY = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
-
                     //_touchPosition = Touch.GetPosition(TouchPoints.Touchpoint_0);
-
                 }
                 else
                 {
@@ -348,7 +333,6 @@ namespace Fusee.Examples.MuVista.Core
                 Diagnostics.Debug("planeWidth/2: " + _planeWidth / 2f);
                 if (xMax - _planePositionX - _planePosX > (_planeWidth / 2f) || xMin - _planePositionX - _planePosX < -(_planeWidth / 2f))
                 {
-
                     if (_planePositionX > 0)
                     {
                         Diagnostics.Debug("Bumper hit");
@@ -358,7 +342,6 @@ namespace Fusee.Examples.MuVista.Core
                     {
                         Diagnostics.Debug("Bumper hit");
                         _planePositionX = -(_planeWidth / 2) + xMax - 0.000001f;
-
                     }
                 }
                 else
@@ -377,7 +360,7 @@ namespace Fusee.Examples.MuVista.Core
             }
 
             _inActiveTimer += Time.DeltaTime;
-            if (Input.Mouse.IsButtonDown(1) || (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0))
+            if (Mouse.IsButtonDown(1) || (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0))
             {
                 _inActiveTimer = 0f;
             }
@@ -389,48 +372,18 @@ namespace Fusee.Examples.MuVista.Core
 
             if (_inActiveTimer > 5f)
             {
-                rotationAfterInactivity();
+                RotationAfterInactivity();
             }
-
 
             //_imagePlaneTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
             _sphereTransform.Translation = new float3(_planePositionX, _planePositionY, 0);
             //_mainCamTransform.Translation = new float3(-_planePositionX, -_planePositionY, 0);
 
+            HndGuiButtonInput();
 
-            //GUI Button Input
-            if (_btnZoomOut.IsMouseOver)
-            {
-                _btnZoomOut.OnMouseDown += BtnZoomOutDown;
-            }
-
-            if (_btnZoomIn.IsMouseOver)
-            {
-                _btnZoomIn.OnMouseDown += BtnZoomInDown;
-            }
-
-
-            //Input Space Bar to switch between spherical and plane view
             if (Keyboard.IsKeyDown(KeyCodes.Space))
             {
-                _mainCam.Fov = M.PiOver4;
-
-                //Animationsettings
-                _animTimeStart = Time.TimeSinceStart;
-                _animActive = true;
-
-                _sphereTransform.Translation = new float3(0, 0, 0);
-                _sphereTransform.Rotation = new float3(0, 0, 0);
-                _mainCamTransform.Rotation = new float3(0, M.Pi, 0);
-
-                if (_sphereIsVisible)
-                {
-                    _sphereIsVisible = false;
-                }
-                else
-                {
-                    _sphereIsVisible = true;
-                }
+                SwitchBetweenViews();
             }
             //Zoom In Button Check
             //if ((_touchPosition.x <= _zoomInBtnPosition.x + 0.25 && _touchPosition.x >= _zoomInBtnPosition.x - 0.25) && (_touchPosition.y <= _zoomInBtnPosition.y + 0.25 && _touchPosition.y >= _zoomInBtnPosition.y - 0.25))
@@ -476,9 +429,6 @@ namespace Fusee.Examples.MuVista.Core
             }
 
 
-
-
-
             // Create the camera matrix and set it as the current ModelView transformation
             //var mtxRot = float4x4.CreateRotationX(_angleVert) * float4x4.CreateRotationY(_angleHorz);
             //var mtxCam = float4x4.LookAt(0, 0, -10, 0, 0, 0, 0, 1, 0);
@@ -495,7 +445,7 @@ namespace Fusee.Examples.MuVista.Core
             //RC.View = view;
             //RC.Projection = perspective; //_sceneRenderer.Animate();
             _sceneRenderer.Render(RC);
-            //_guiRenderer.Render(RC);
+            _guiRenderer.Render(RC);
 
             //Constantly check for interactive objects.
             //RC.Projection = orthographic;
@@ -513,159 +463,40 @@ namespace Fusee.Examples.MuVista.Core
             Present();
         }
 
-        public void rotationAfterInactivity()
+        public void SwitchBetweenViews()
+        {
+            _mainCam.Fov = M.PiOver4;
+
+            //Animationsettings
+            _animTimeStart = Time.TimeSinceStart;
+            _animActive = true;
+
+            _sphereTransform.Translation = new float3(0, 0, 0);
+            _sphereTransform.Rotation = new float3(0, 0, 0);
+            _mainCamTransform.Rotation = new float3(0, M.Pi, 0);
+
+            _sphereIsVisible = !_sphereIsVisible;
+        }
+
+        public void HndGuiButtonInput()
+        {
+            if (_gui._btnZoomOut.IsMouseOver)
+            {
+                _gui._btnZoomOut.OnMouseDown += BtnZoomOutDown;
+            }
+
+            if (_gui._btnZoomIn.IsMouseOver)
+            {
+                _gui._btnZoomIn.OnMouseDown += BtnZoomInDown;
+            }
+        }
+
+        public void RotationAfterInactivity()
         {
             _angleHorz += 0.5f * Time.DeltaTime;
             _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
         }
 
-        private SceneContainer CreateGui()
-        {
-            var vsTex = AssetStorage.Get<string>("texture.vert");
-            var psTex = AssetStorage.Get<string>("texture.frag");
-            var psText = AssetStorage.Get<string>("text.frag");
-            var vsNineSlice = AssetStorage.Get<string>("nineSlice.vert");
-            var psNineSlice = AssetStorage.Get<string>("nineSliceTile.frag");
-
-
-            var canvasWidth = Width / 100f;
-            var canvasHeight = Height / 100f;
-
-            var btnFuseeLogo = new GUIButton
-            {
-                Name = "Canvas_Button"
-            };
-            btnFuseeLogo.OnMouseEnter += BtnLogoEnter;
-            btnFuseeLogo.OnMouseExit += BtnLogoExit;
-            //btnFuseeLogo.OnMouseDown += BtnLogoDown;
-
-            var guiFuseeLogo = new Texture(AssetStorage.Get<ImageData>("FuseeText.png"));
-            var fuseeLogo = new TextureNode(
-                "fuseeLogo",
-                vsTex,
-                psTex,
-                //Set the albedo texture you want to use.
-                guiFuseeLogo,
-                //Define anchor points. They are given in percent, seen from the lower left corner, respectively to the width/height of the parent.
-                //In this setup the element will stretch horizontally but stay the same vertically if the parent element is scaled.
-                UIElementPosition.GetAnchors(AnchorPos.TopTopLeft),
-                //Define Offset and therefor the size of the element.
-                UIElementPosition.CalcOffsets(AnchorPos.TopTopLeft, new float2(0, canvasHeight - 0.5f), canvasHeight, canvasWidth, new float2(1.75f, 0.5f)),
-                float2.One
-                );
-            fuseeLogo.AddComponent(btnFuseeLogo);
-
-            var fontLato = AssetStorage.Get<Font>("Lato-Black.ttf");
-            var guiLatoBlack = new FontMap(fontLato, 24);
-
-            var text = new TextNode(
-                "FUSEE Spherical Image Viewer",
-                "ButtonText",
-                vsTex,
-                psText,
-                UIElementPosition.GetAnchors(AnchorPos.StretchHorizontal),
-                UIElementPosition.CalcOffsets(AnchorPos.StretchHorizontal, new float2(canvasWidth / 2 - 4, 0), canvasHeight, canvasWidth, new float2(8, 1)),
-                guiLatoBlack,
-                ColorUint.Tofloat4(ColorUint.Greenery),
-                HorizontalTextAlignment.Center,
-                VerticalTextAlignment.Center);
-
-            _btnZoomOut = new GUIButton
-            {
-                Name = "Zoom_Out_Button"
-            };
-
-            _btnZoomIn = new GUIButton
-            {
-                Name = "Zoom_In_Button"
-            };
-
-            _zoomInBtnPosition = new float2(canvasWidth - 1f, 1f);
-            var zoomInNode = new TextureNode(
-                "ZoomInLogo",
-                vsTex,
-                psTex,
-                new Texture(AssetStorage.Get<ImageData>("FuseePlusIcon.png")),
-                UIElementPosition.GetAnchors(AnchorPos.DownDownRight),
-                UIElementPosition.CalcOffsets(AnchorPos.DownDownRight, _zoomInBtnPosition, canvasHeight, canvasWidth, new float2(0.5f, 0.5f)),
-                float2.One
-                );
-            zoomInNode.Components.Add(_btnZoomIn);
-
-            _zoomOutBtnPosition = new float2(canvasWidth - 1f, 0.4f);
-            var zoomOutNode = new TextureNode(
-                "ZoomOutLogo",
-                vsTex,
-                psTex,
-                new Texture(AssetStorage.Get<ImageData>("FuseeMinusIcon.png")),
-                UIElementPosition.GetAnchors(AnchorPos.DownDownRight),
-                UIElementPosition.CalcOffsets(AnchorPos.DownDownRight, _zoomOutBtnPosition, canvasHeight, canvasWidth, new float2(0.5f, 0.5f)),
-                float2.One
-                );
-            zoomOutNode.Components.Add(_btnZoomOut);
-
-
-
-
-            var canvas = new CanvasNode(
-                "Canvas",
-                _canvasRenderMode,
-                new MinMaxRect
-                {
-                    Min = new float2(-canvasWidth / 2, -canvasHeight / 2f),
-                    Max = new float2(canvasWidth / 2, canvasHeight / 2f)
-                })
-            {
-                Children = new ChildList()
-                {
-                    //Simple Texture Node, contains the fusee logo.
-                    fuseeLogo,
-                    text,
-                    zoomInNode,
-                    zoomOutNode
-                }
-            };
-
-
-            return new SceneContainer
-            {
-                Children = new List<SceneNode>
-                {
-                    new SceneNode
-                    {
-                        Name = "GuiCam",
-                        Components = new List<SceneComponent>()
-                        {
-                            _mainCamTransform,
-                            _guiCam
-
-                        }
-                     },
-                    
-                    //Add canvas.
-                    canvas
-                }
-            };
-        }
-
-        public void BtnLogoEnter(CodeComponent sender)
-        {
-            var effect = _gui.Children.FindNodes(node => node.Name == "fuseeLogo").First().GetComponent<Effect>();
-            effect.SetFxParam(UniformNameDeclarations.Albedo, new float4(0.0f, 0.0f, 0.0f, 1f));
-            effect.SetFxParam(UniformNameDeclarations.AlbedoMix, 0.8f);
-        }
-
-        public void BtnLogoExit(CodeComponent sender)
-        {
-            var effect = _gui.Children.FindNodes(node => node.Name == "fuseeLogo").First().GetComponent<Effect>();
-            effect.SetFxParam(UniformNameDeclarations.Albedo, float4.One);
-            effect.SetFxParam(UniformNameDeclarations.AlbedoMix, 1f);
-        }
-
-        //public void BtnLogoDown(CodeComponent sender)
-        //{
-        //    OpenLink("http://fusee3d.org");
-        //}
 
         public void BtnZoomInDown(CodeComponent sender)
         {
@@ -697,112 +528,6 @@ namespace Fusee.Examples.MuVista.Core
                     }
                 }
             }
-
         }
-
-        /*public static Mesh CreateSphereAndPlane(float radius, int longSegments, int latSegments, float height, float width, float distancePlane)
-        {
-            //Deklaration der Arrays
-            float3[] verts = new float3[(longSegments + 1) * latSegments];
-            float3[] verts1 = new float3[(longSegments + 1) * latSegments];
-            float3[] norms = new float3[(longSegments + 1) * latSegments];
-            float3[] norms1 = new float3[(longSegments + 1) * latSegments];
-            float2[] uvs = new float2[(longSegments + 1) * latSegments];
-            ushort[] tris = new ushort[longSegments * (latSegments - 1) * 6];
-
-
-            //Sphere
-            //Initialisierung der verts, norms und uvs
-            for (int i = 0; i < latSegments; i++)
-            {
-                float theta = (float)M.Pi / (latSegments - 1) * i;
-
-                for (int j = 0; j <= longSegments; j++)
-                {
-                    float phi = 2 * (float)M.Pi / (longSegments) * j;
-
-                    if (i == 0)  //Nordpol
-                    {
-                        verts[j] = new float3(0, radius, 0);
-                        norms[j] = -float3.UnitY;
-                        uvs[j] = new float2((float)(j) / (float)(longSegments), 1);
-                    }
-                    else if (i == latSegments - 1)   //S�dpol
-                    {
-                        verts[(latSegments - 1) * (longSegments + 1) + j] = new float3(0, -radius, 0);
-                        norms[(latSegments - 1) * (longSegments + 1) + j] = float3.UnitY;
-                        uvs[(latSegments - 1) * (longSegments + 1) + j] = new float2((float)(j) / (float)(longSegments), 0);
-                    }
-                    else
-                    {
-                        if (j == longSegments)
-                        {
-                            phi = 2 * (float)M.Pi / (longSegments - 1) * 0;
-                        }
-                        verts[i * longSegments + j + i * 1] = new float3(
-                            (float)(radius * M.Sin(phi) * M.Sin(theta)),
-                            (float)(radius * M.Cos(theta)),
-                            (float)(radius * M.Cos(phi) * M.Sin(theta)));
-
-                        norms[i * longSegments + j + i * 1] = new float3(
-                            -(float)(radius * M.Sin(phi) * M.Sin(theta)),
-                            -(float)(radius * M.Cos(theta)),
-                            -(float)(radius * M.Cos(phi) * M.Sin(theta)));
-
-                        uvs[i * longSegments + j + i * 1] = new float2(
-                            (float)(j) / (float)(longSegments),
-                            1 - ((float)(i) / (float)(latSegments - 1)));
-                    }
-                }
-            }
-
-            //Initialisierung der tris
-            for (int j = 0, k = 0; j < (latSegments - 1) * longSegments; j++, k++)   //j f�r die Array-Indices und k ist ein Punkt in den aktuellen Dreiecken
-            {
-                if ((k + 1) % (longSegments + 1) == 0)
-                {
-                    k++;
-                }
-
-                tris[j * 6] = (ushort)(k);
-                tris[j * 6 + 1] = (ushort)(k + (longSegments + 1) + 1);
-                tris[j * 6 + 2] = (ushort)(k + 1);
-
-                tris[j * 6 + 3] = (ushort)(k);
-                tris[j * 6 + 4] = (ushort)(k + (longSegments + 1));
-                tris[j * 6 + 5] = (ushort)(k + (longSegments + 1) + 1);
-
-            }
-
-
-
-
-            //Plane
-            float rowHeight = height / (latSegments - 1);
-            float columnWidth = width / longSegments;
-            float startHeight = height / 2;
-            float startWidth = -width / 2;
-
-            //Initialisierung der verts und norms
-            for (int i = 0; i < latSegments; i++)
-            {
-                for (int j = 0; j <= longSegments; j++)
-                {
-                    verts1[i * (longSegments + 1) + j] = new float3(-(startWidth + (j * columnWidth)), startHeight - (i * rowHeight), -distancePlane); //Add - to x and z value to mirror the image
-                    norms1[i * (longSegments + 1) + j] = float3.UnitZ;
-                }
-            }
-
-            return new Mesh
-            {
-                Vertices = verts,
-                Vertices1 = verts1,
-                Normals = norms,
-                Normals1 = norms1,
-                UVs = uvs,
-                Triangles = tris,
-
-            };
-        }*/
     }
 }
