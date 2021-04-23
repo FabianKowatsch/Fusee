@@ -18,7 +18,7 @@ using static Fusee.Engine.Core.Time;
 
 namespace Fusee.Examples.MuVista.Core
 {
-    [FuseeApplication(Name = "FUSEE Spherical Image Viewer", Description = "Viewer for 360 degree pictures.")]
+    [FuseeApplication(Name = "FUSEE MuVista Viewer", Description = "Viewer for 360 degree pictures.")]
     public class MuVista : RenderCanvas
     {
 
@@ -47,7 +47,7 @@ namespace Fusee.Examples.MuVista.Core
         private Transform _planeTransform;
 
         private Transform _mainCamTransform;
-        private readonly Camera _mainCam = new Camera(ProjectionMethod.Perspective, 5, 100, M.PiOver4);
+        private readonly Camera _mainCam = new Camera(ProjectionMethod.Perspective, 4, 100, M.PiOver4);
         private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
 
         private const float _planeHeight = 4096f / 300f;
@@ -181,7 +181,10 @@ namespace Fusee.Examples.MuVista.Core
             };
 
 
-            //Debuggingtools
+            /*-----------------------------------------------------------------------
+             * Debuggingtools
+             -----------------------------------------------------------------------*/
+
             //RC.SetRenderState(RenderState.CullMode, (uint)Cull.None);
             //RC.SetRenderState(RenderState.FillMode, (uint)FillMode.Wireframe);
 
@@ -206,61 +209,17 @@ namespace Fusee.Examples.MuVista.Core
 
             if (_sphereIsVisible)
             {
-                if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-                {
-                    _keys = true;
-                }
-                if (Mouse.LeftButton)
-                {
-                    _keys = false;
-                    _angleVelHorz = -RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
-                    _angleVelVert = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
-                }
-                else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
-                {
-                    _keys = false;
-                    var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
-                    _angleVelHorz = -RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
-                    _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
-
-                    //_touchPosition = Touch.GetPosition(TouchPoints.Touchpoint_0);
-                }
-                else
-                {
-                    if (_keys)
-                    {
-                        _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
-
-                        if (_angleVert < 0)
-                        {
-                            _angleVelVert = -(RotationSpeed / (((_angleVert * -1) + 1) * (1.5f))) * Keyboard.UpDownAxis * DeltaTime;
-                        }
-                        else
-                        {
-                            _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
-                        }
-                    }
-                    else
-                    {
-                        var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
-                        _angleVelHorz *= curDamp;
-                        _angleVelVert *= curDamp;
-                    }
-                }
-
                 if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
                 {
                     _mainCam.Fov += _zoom;
                 }
             }
-
             else
             {
                 if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
                 {
                     _keys = true;
                 }
-
                 //Zoom in/out
                 if (_zoom != 0)
                 {
@@ -274,84 +233,49 @@ namespace Fusee.Examples.MuVista.Core
                         }
                     }
                 }
+            }
 
+            if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
+            {
+                _keys = true;
+            }
+            if (Mouse.LeftButton)
+            {
+                _keys = false;
+                _angleVelHorz = -RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
+                _angleVelVert = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
+            }
+            else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
+            {
+                _keys = false;
+                var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
+                _angleVelHorz = -RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
+                _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
 
-                if (Mouse.LeftButton)
+                //_touchPosition = Touch.GetPosition(TouchPoints.Touchpoint_0);
+            }
+            else
+            {
+                if (_keys)
                 {
-                    _keys = false;
-                    _planePosX = RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
-                    _planePosY = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
-                }
-                else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
-                {
-                    _keys = false;
-                    var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
-                    _planePosX = RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
-                    _planePosY = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
-                    //_touchPosition = Touch.GetPosition(TouchPoints.Touchpoint_0);
-                }
-                else
-                {
-                    if (_keys)
+                    _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
+
+                    if (_angleVert < 0)
                     {
-                        _planePosX = -RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
-                        _planePosY = -RotationSpeed * Keyboard.UpDownAxis * DeltaTime;
+                        _angleVelVert = -(RotationSpeed / (((_angleVert * -1) + 1) * (1.5f))) * Keyboard.UpDownAxis * DeltaTime;
                     }
                     else
                     {
-                        var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
-                        _planePosX *= curDamp;
-                        _planePosY *= curDamp;
-                    }
-                }
-
-                float aspect = (float)Width / (float)Height;
-
-                float yMax = DistancePlaneCamera * (float)System.Math.Tan(0.5f * _mainCam.Fov);
-                float yMin = -yMax;
-                float xMin = yMin * aspect;
-                float xMax = yMax * aspect;
-
-                if (yMax - _planePositionY - _planePosY > (_planeHeight / 2) || yMin - _planePositionY - _planePosY < -(_planeHeight / 2))
-                {
-                    if (_planePositionY > 0)
-                    {
-                        _planePositionY = (_planeHeight / 2) - yMax;
-                    }
-                    else if (_planePositionY < 0)
-                    {
-                        _planePositionY = -(_planeHeight / 2) + yMax;
+                        _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
                     }
                 }
                 else
                 {
-                    _planePositionY += _planePosY;
-                }
-                Diagnostics.Debug("xMax: " + xMax);
-                Diagnostics.Debug("planePositionX: " + _planePositionX);
-                Diagnostics.Debug("planePosX: " + _planePosX);
-                Diagnostics.Debug("planeWidth/2: " + _planeWidth / 2f);
-                if (xMax - _planePositionX - _planePosX > (_planeWidth / 2f) || xMin - _planePositionX - _planePosX < -(_planeWidth / 2f))
-                {
-                    if (_planePositionX > 0)
-                    {
-                        Diagnostics.Debug("Bumper hit");
-                        _planePositionX = (_planeWidth / 2) - xMax - 0.000001f;
-                    }
-                    else if (_planePositionX < 0)
-                    {
-                        Diagnostics.Debug("Bumper hit");
-                        _planePositionX = -(_planeWidth / 2) + xMax - 0.000001f;
-                    }
-                }
-                else
-                {
-                    _planePositionX -= _planePosX;
+                    var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
+                    _angleVelHorz *= curDamp;
+                    _angleVelVert *= curDamp;
                 }
             }
-
-
-            Diagnostics.Debug("----------------------------");
 
             _angleHorz += _angleVelHorz;
             if (!(_angleVert + _angleVelVert >= 1.5) && !(_angleVert + _angleVelVert <= -1.5))
@@ -359,24 +283,25 @@ namespace Fusee.Examples.MuVista.Core
                 _angleVert += _angleVelVert;
             }
 
-            _inActiveTimer += Time.DeltaTime;
             if (Mouse.IsButtonDown(1) || (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0))
             {
                 _inActiveTimer = 0f;
             }
 
-            if (_sphereIsVisible && _inActiveTimer < 5f)
+            if ( _inActiveTimer < 5f)
             {
+            _inActiveTimer += Time.DeltaTime;
+                Diagnostics.Debug("Cam: " + _angleVert + ", " + _angleHorz);
                 _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
             }
 
-            if (_inActiveTimer > 5f)
+            if (_sphereIsVisible && _inActiveTimer > 5f)
             {
                 RotationAfterInactivity();
             }
 
             //_imagePlaneTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
-            _sphereTransform.Translation = new float3(_planePositionX, _planePositionY, 0);
+            //_sphereTransform.Translation = new float3(_planePositionX, _planePositionY, 0);
             //_mainCamTransform.Translation = new float3(-_planePositionX, -_planePositionY, 0);
 
             HndGuiButtonInput();
@@ -428,6 +353,9 @@ namespace Fusee.Examples.MuVista.Core
                 #endregion
             }
 
+           
+            
+         
 
             // Create the camera matrix and set it as the current ModelView transformation
             //var mtxRot = float4x4.CreateRotationX(_angleVert) * float4x4.CreateRotationY(_angleHorz);
