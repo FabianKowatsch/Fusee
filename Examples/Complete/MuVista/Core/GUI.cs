@@ -18,8 +18,13 @@ namespace Fusee.Examples.MuVista.Core
         public GUIButton _btnZoomOut;
         public GUIButton _btnZoomIn;
 
+        public GUIButton _btnMiniMap;
+
         public float2 _zoomInBtnPosition;
         public float2 _zoomOutBtnPosition;
+
+        public float2 _miniMapBtnPosition;
+
         public GUI(int width, int height, CanvasRenderMode canvasRenderMode, Transform mainCamTransform, Camera guiCam)
         {
             var vsTex = AssetStorage.Get<string>("texture.vert");
@@ -40,8 +45,8 @@ namespace Fusee.Examples.MuVista.Core
             btnFuseeLogo.OnMouseExit += BtnLogoExit;
             //btnFuseeLogo.OnMouseDown += BtnLogoDown;
 
-            var guiFuseeLogo = new Texture(AssetStorage.Get<ImageData>("FuseeText.png"));
-            var fuseeLogo = new TextureNode(
+            Texture guiFuseeLogo = new Texture(AssetStorage.Get<ImageData>("FuseeText.png"));
+            TextureNode fuseeLogo = new TextureNode(
                 "fuseeLogo",
                 vsTex,
                 psTex,
@@ -81,6 +86,11 @@ namespace Fusee.Examples.MuVista.Core
                 Name = "Zoom_In_Button"
             };
 
+            _btnMiniMap = new GUIButton
+            {
+                Name = "MiniMap"
+            };
+
             _zoomInBtnPosition = new float2(canvasWidth - 1f, 1f);
             var zoomInNode = new TextureNode(
                 "ZoomInLogo",
@@ -105,6 +115,20 @@ namespace Fusee.Examples.MuVista.Core
                 );
             zoomOutNode.Components.Add(_btnZoomOut);
 
+            _miniMapBtnPosition = new float2(canvasWidth - 3f, canvasHeight - 2f);
+            TextureNode minimapNode = new TextureNode(
+                "MinimapRahmen",
+                vsTex,
+                psTex,
+                new Texture(AssetStorage.Get<ImageData>("Fusee-Minimap.png")),
+                UIElementPosition.GetAnchors(AnchorPos.TopTopRight),
+                UIElementPosition.CalcOffsets(AnchorPos.TopTopRight, _miniMapBtnPosition, canvasHeight, canvasWidth, new float2(3f, 2f)),
+                float2.One
+                );
+            minimapNode.Components.Add(_btnMiniMap);
+
+
+
 
             var canvas = new CanvasNode(
                 "Canvas",
@@ -121,7 +145,8 @@ namespace Fusee.Examples.MuVista.Core
                     fuseeLogo,
                     text,
                     zoomInNode,
-                    zoomOutNode
+                    zoomOutNode,
+                    minimapNode
                 }
             };
 
