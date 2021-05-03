@@ -1,4 +1,3 @@
-using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core;
@@ -9,9 +8,7 @@ using Fusee.Engine.Core.ShaderShards.Fragment;
 using Fusee.Engine.Core.ShaderShards.Vertex;
 using Fusee.Engine.GUI;
 using Fusee.Math.Core;
-using Fusee.Xene;
 using System.Collections.Generic;
-using System.Linq;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
 
@@ -39,8 +36,6 @@ namespace Fusee.Examples.MuVista.Core
         private GUI _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
-
-        private bool _keys;
 
         private SceneContainer _animScene;
         private Transform _sphereTransform;
@@ -88,10 +83,11 @@ namespace Fusee.Examples.MuVista.Core
             };
             var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex;
 
-            _animationEffect = new VertexAnimationSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation);
-
-            _animationEffect.PercentPerVertex = 1.0f;
-            _animationEffect.PercentPerVertex1 = 0.0f;
+            _animationEffect = new VertexAnimationSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation)
+            {
+                PercentPerVertex = 1.0f,
+                PercentPerVertex1 = 0.0f
+            };
 
             //Creating CameraComponent and TransformComponent
             _mainCam.Viewport = new float4(0, 0, 100, 100);
@@ -204,101 +200,8 @@ namespace Fusee.Examples.MuVista.Core
             //RC.Viewport(0, 0, Width, Height);
 
             #region Controls
-            // Mouse and keyboard movement
-            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
-
-            if (_sphereIsVisible)
-            {
-                if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
-                {
-                    _mainCam.Fov += _zoom;
-                }
-            }
-            else
-            {
-                if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-                {
-                    _keys = true;
-                }
-                //Zoom in/out
-                if (_zoom != 0)
-                {
-                    if (!(_mainCam.Fov + _zoom >= M.PiOver3) && !(_mainCam.Fov + _zoom <= 0.3))
-                    {
-                        _mainCam.Fov += _zoom;
-                        if (_mainCam.Fov > 0.75f)  //um bei weitem herauszoomen das flackern zwischen den R�ndern zu verhindern
-                        {
-                            _planePositionY = 0;
-                            _planePositionX = 0;
-                        }
-                    }
-                }
-            }
-
-            if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-            {
-                _keys = true;
-            }
-            if (Mouse.LeftButton)
-            {
-                _keys = false;
-                _angleVelHorz = -RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
-                _angleVelVert = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
-            }
-            else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
-            {
-                _keys = false;
-                var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
-                _angleVelHorz = -RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
-                _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
-
-                //_touchPosition = Touch.GetPosition(TouchPoints.Touchpoint_0);
-            }
-            else
-            {
-                if (_keys)
-                {
-                    _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
-
-                    if (_angleVert < 0)
-                    {
-                        _angleVelVert = -(RotationSpeed / (((_angleVert * -1) + 1) * (1.5f))) * Keyboard.UpDownAxis * DeltaTime;
-                    }
-                    else
-                    {
-                        _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
-                    }
-                }
-                else
-                {
-                    var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
-                    _angleVelHorz *= curDamp;
-                    _angleVelVert *= curDamp;
-                }
-            }
-
-            _angleHorz += _angleVelHorz;
-            if (!(_angleVert + _angleVelVert >= 1.5) && !(_angleVert + _angleVelVert <= -1.5))
-            {
-                _angleVert += _angleVelVert;
-            }
-
-            if (Mouse.IsButtonDown(1) || (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0))
-            {
-                _inActiveTimer = 0f;
-            }
-
-            if ( _inActiveTimer < 5f)
-            {
-            _inActiveTimer += Time.DeltaTime;
-                Diagnostics.Debug("Cam: " + _angleVert + ", " + _angleHorz);
-                _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
-            }
-
-            if (_sphereIsVisible && _inActiveTimer > 5f)
-            {
-                RotationAfterInactivity();
-            }
+            MouseWheelZoom();
+            MouseAndKeyboardRotation();
 
             //_imagePlaneTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
             //_sphereTransform.Translation = new float3(_planePositionX, _planePositionY, 0);
@@ -353,10 +256,6 @@ namespace Fusee.Examples.MuVista.Core
                 #endregion
             }
 
-           
-            
-         
-
             // Create the camera matrix and set it as the current ModelView transformation
             //var mtxRot = float4x4.CreateRotationX(_angleVert) * float4x4.CreateRotationY(_angleHorz);
             //var mtxCam = float4x4.LookAt(0, 0, -10, 0, 0, 0, 0, 1, 0);
@@ -391,12 +290,110 @@ namespace Fusee.Examples.MuVista.Core
             Present();
         }
 
+        public void MouseWheelZoom()
+        {
+            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
+
+            if (_sphereIsVisible)
+            {
+                if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
+                {
+                    _mainCam.Fov += _zoom;
+                }
+            }
+            else
+            {
+                //Zoom in/out
+                if (_zoom != 0)
+                {
+                    if (!(_mainCam.Fov + _zoom >= M.PiOver3) && !(_mainCam.Fov + _zoom <= 0.3))
+                    {
+                        _mainCam.Fov += _zoom;
+                        if (_mainCam.Fov > 0.75f)  //um bei weitem herauszoomen das flackern zwischen den R�ndern zu verhindern
+                        {
+                            _planePositionY = 0;
+                            _planePositionX = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void MouseAndKeyboardRotation()
+        {
+            CalculateRotationAngle();
+
+            _angleHorz += _angleVelHorz;
+            if (!(_angleVert + _angleVelVert >= 1.5) && !(_angleVert + _angleVelVert <= -1.5))
+            {
+                _angleVert += _angleVelVert;
+            }
+
+            if (Mouse.LeftButton || (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0))
+            {
+                _inActiveTimer = 0f;
+            }
+
+            if (_inActiveTimer < 5f)
+            {
+                _inActiveTimer += DeltaTime;
+                Diagnostics.Debug("Cam: " + _angleVert + ", " + _angleHorz);
+                _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
+            }
+            else
+            {
+                if (_sphereIsVisible)
+                {
+                    RotationAfterInactivity();
+                }
+            }
+        }
+
+        public void CalculateRotationAngle()
+        {
+            if (Mouse.LeftButton)
+            {
+                _angleVelHorz = -RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
+                _angleVelVert = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
+            }
+            else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
+            {
+                var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
+                _angleVelHorz = -RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
+                _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
+
+                //_touchPosition = Touch.GetPosition(TouchPoints.Touchpoint_0);
+            }
+            else
+            {
+                if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
+                {
+                    _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
+
+                    if (_angleVert < 0)
+                    {
+                        _angleVelVert = -(RotationSpeed / (((_angleVert * -1) + 1) * (1.5f))) * Keyboard.UpDownAxis * DeltaTime;
+                    }
+                    else
+                    {
+                        _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
+                    }
+                }
+                else
+                {
+                    var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
+                    _angleVelHorz *= curDamp;
+                    _angleVelVert *= curDamp;
+                }
+            }
+        }
         public void SwitchBetweenViews()
         {
+            _inActiveTimer = 0f;
             _mainCam.Fov = M.PiOver4;
 
             //Animationsettings
-            _animTimeStart = Time.TimeSinceStart;
+            _animTimeStart = TimeSinceStart;
             _animActive = true;
 
             _sphereTransform.Translation = new float3(0, 0, 0);
