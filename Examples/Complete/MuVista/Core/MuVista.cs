@@ -36,7 +36,7 @@ namespace Fusee.Examples.MuVista.Core
         private GUI _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
-
+        private bool _keys;
         private SceneContainer _animScene;
         private Transform _sphereTransform;
         private Transform _planeTransform;
@@ -213,13 +213,15 @@ namespace Fusee.Examples.MuVista.Core
             //RC.Viewport(0, 0, Width, Height);
 
             #region Controls
-            MouseWheelZoom();
-            MouseAndKeyboardRotation();
+            // MouseWheelZoom();
+           // MouseAndKeyboardRotation();
 
 
             /*-----------------------------------------------------------------------
             * If Sphere is visible
             -----------------------------------------------------------------------*/
+            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
+
 
             if (_sphereIsVisible)
             {
@@ -380,7 +382,6 @@ namespace Fusee.Examples.MuVista.Core
 
         public void MouseWheelZoom()
         {
-            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
 
             if (_sphereIsVisible)
             {
@@ -397,11 +398,6 @@ namespace Fusee.Examples.MuVista.Core
                     if (!(_mainCam.Fov + _zoom >= M.PiOver3) && !(_mainCam.Fov + _zoom <= 0.3))
                     {
                         _mainCam.Fov += _zoom;
-                        if (_mainCam.Fov > 0.75f)  //um bei weitem herauszoomen das flackern zwischen den R�ndern zu verhindern
-                        {
-                            _planePositionY = 0;
-                            _planePositionX = 0;
-                        }
                     }
                 }
             }
