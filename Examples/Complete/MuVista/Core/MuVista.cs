@@ -68,7 +68,7 @@ namespace Fusee.Examples.MuVista.Core
         public override void Init()
         {
 
-            var sphereTex = new Texture(AssetStorage.Get<ImageData>("LadyBug_C1P2.jpg"));
+            var sphereTex = new Texture(AssetStorage.Get<ImageData>("test2.jpg"));
 
             sphereTex2 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C1P1.jpg"));
 
@@ -215,9 +215,9 @@ namespace Fusee.Examples.MuVista.Core
 
             MouseWheelZoom();
 
-            CalculateRotationAngle();
-
             HndGuiButtonInput();
+
+            CalculateRotationAngle();
 
             UpdateCameraTransform();
 
