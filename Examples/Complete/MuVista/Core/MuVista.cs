@@ -41,8 +41,15 @@ namespace Fusee.Examples.MuVista.Core
         private Transform _planeTransform;
 
         private Transform _mainCamTransform;
+        private Transform _minimapCamTransform;
         private readonly Camera _mainCam = new Camera(ProjectionMethod.Perspective, 3, 100, M.PiOver4);
+        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Perspective, 3, 100, M.PiOver4);
         private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
+
+        private readonly float4 _minimapViewport = new float4(77, 73, 40, 40);
+        private readonly float4 _mainCamViewport = new float4(0, 0, 100, 100);
+        private readonly int _minimapLayer = 5;
+        private readonly int _mainCamLayer = -1;
 
         private const float _planeHeight = 4096f / 300f;
         private const float _planeWidth = 8192f / 300f;
@@ -50,7 +57,7 @@ namespace Fusee.Examples.MuVista.Core
         private VertexAnimationSurfaceEffect _animationEffect;
 
         private bool _sphereIsVisible = true;
-
+        private bool _inverseCams = false;
         private const float AnimDuration = 2f;
         private bool _animActive;
         private float _animTimeStart = 0;
@@ -103,15 +110,25 @@ namespace Fusee.Examples.MuVista.Core
             };
 
             //Creating CameraComponent and TransformComponent
-            _mainCam.Viewport = new float4(0, 0, 100, 100);
+            _mainCam.Viewport = _mainCamViewport;
             _mainCam.BackgroundColor = new float4(0f, 0f, 0f, 1);
-            _mainCam.Layer = -1;
-            _mainCam.Active = true;
+            _mainCam.Layer = _mainCamLayer;
 
             _guiCam.ClearColor = false;
             _guiCam.ClearDepth = false;
             _guiCam.FrustumCullingOn = false;
             _guiCam.Layer = 99;
+
+            _minimapCam.Layer = _minimapLayer;
+            _minimapCam.BackgroundColor = new float4(0.5f, 0.5f, 0.5f, 1);
+            _minimapCam.Viewport = _minimapViewport;
+
+            _minimapCamTransform = new Transform()
+            {
+                Rotation = new float3(M.PiOver6, 0, 0),//float3.Zero,
+                Translation = new float3(10, 40, -60),
+                Scale = float3.One
+            };
 
             _mainCamTransform = new Transform()
             {
@@ -161,7 +178,6 @@ namespace Fusee.Examples.MuVista.Core
             // Set the clear color for the backbuffer to white (100% intensity in all color channels R, G, B, A).
             //RC.ClearColor = new float4(1, 1, 1, 1);
 
-
             //Scene with Main Camera and Mesh
             _animScene = new SceneContainer
             {
@@ -185,7 +201,16 @@ namespace Fusee.Examples.MuVista.Core
                             //CreateSphereAndPlane(10, 20, 50, _planeHeight * 2, _planeWidth * 2, DistancePlaneCamera)
                             sphereAndPlane
                         }
-                    }
+                    },
+                    new SceneNode
+                     {
+                        Name = "MiniMapCam",
+                        Components = new List<SceneComponent>()
+                        {
+                            _minimapCamTransform,
+                            _minimapCam
+                        }
+                     }
                 }
             };
 
@@ -198,7 +223,6 @@ namespace Fusee.Examples.MuVista.Core
 
             // Wrap a SceneRenderer around the model.
             _sceneRenderer = new SceneRendererForward(_animScene);
-
 
             _guiRenderer = new SceneRendererForward(_gui);
         }
@@ -229,6 +253,11 @@ namespace Fusee.Examples.MuVista.Core
             if (Keyboard.IsKeyDown(KeyCodes.Space))
             {
                 SwitchBetweenViews();
+            }
+
+            if (Keyboard.IsKeyDown(KeyCodes.F5))
+            {
+                SwitchCamViewport();
             }
 
             if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
@@ -284,6 +313,7 @@ namespace Fusee.Examples.MuVista.Core
             // Render the scene loaded in Init()
             //RC.View = view;
             //RC.Projection = perspective; //_sceneRenderer.Animate();
+
             _sceneRenderer.Render(RC);
             _guiRenderer.Render(RC);
 
@@ -434,6 +464,11 @@ namespace Fusee.Examples.MuVista.Core
             {
                 _gui._btnZoomIn.OnMouseDown += BtnZoomInDown;
             }
+
+            if(_gui._btnMiniMap.IsMouseOver)
+            {
+                _gui._btnMiniMap.OnMouseDown += OnMinimapDown;
+            }
         }
 
         public void RotationAfterInactivity()
@@ -474,6 +509,28 @@ namespace Fusee.Examples.MuVista.Core
                 }
             }
         }
-
+        
+        public void OnMinimapDown(CodeComponent sender)
+        {
+            SwitchCamViewport();
+        }
+        public void SwitchCamViewport()
+        {
+            _inverseCams = !_inverseCams;
+            if (_inverseCams)
+            {
+                _mainCam.Viewport = _minimapViewport;
+                _mainCam.Layer = _minimapLayer;
+                _minimapCam.Layer = _mainCamLayer;
+                _minimapCam.Viewport = _mainCamViewport;
+            }
+            else
+            {
+                _mainCam.Layer = _mainCamLayer;
+                _mainCam.Viewport = _mainCamViewport;
+                _minimapCam.Viewport = _minimapViewport;
+                _minimapCam.Layer = _minimapLayer;
+            }
+        }
     }
 }
