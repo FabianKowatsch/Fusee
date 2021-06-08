@@ -64,6 +64,10 @@ namespace Fusee.Examples.MuVista.Core
 
 
         private Texture sphereTex2;
+
+        private List<Texture> panos = new List<Texture>();
+        int activePano = 0;
+
         private TextureInputSpecular colorInput2;
 
 
@@ -74,6 +78,17 @@ namespace Fusee.Examples.MuVista.Core
         // Init is called on startup.
         public override void Init()
         {
+
+            Texture panos1 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C1P2.jpg"));
+            panos.Add(panos1);
+            Texture panos2 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C1P1.jpg"));
+            panos.Add(panos2);
+            Texture panos3 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C2P1.jpg"));
+            panos.Add(panos3);
+            Texture panos4 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C2P2.jpg"));
+            panos.Add(panos4);
+            Texture panos5 = new Texture(AssetStorage.Get<ImageData>("test2.jpg"));
+            panos.Add(panos5);
 
             var sphereTex = new Texture(AssetStorage.Get<ImageData>("test2.jpg"));
 
@@ -103,7 +118,7 @@ namespace Fusee.Examples.MuVista.Core
             };
             var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex;
 
-            _animationEffect = new VertexAnimationSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation)
+            _animationEffect = new VertexAnimationSurfaceEffect(lightingSetup, colorInput2, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation)
             {
                 PercentPerVertex = 1.0f,
                 PercentPerVertex1 = 0.0f
@@ -260,12 +275,29 @@ namespace Fusee.Examples.MuVista.Core
                 SwitchCamViewport();
             }
 
-            if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
+            if (Keyboard.IsKeyDown(KeyCodes.W))
+            {
+                Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.GetHashCode());
+                //Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.Roughness.GetHashCode());
+                Diagnostics.Debug("scene: " + _animScene);
+                //_animationEffect.SurfaceInput.Roughness = 10.0f;
+
+                activePano++;
+                if (activePano == panos.Count)
+                {
+                    activePano = 0;
+                }
+                colorInput2.AlbedoTex = panos[activePano];
+
+                //_animationEffect.SurfaceInput = colorInput2;
+            }
+
+            /*if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
             {
                 Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.GetHashCode());
                 Diagnostics.Debug("scene: " + _animScene);
                 _animationEffect.SurfaceInput = colorInput2;
-            }
+            }*/
 
             #endregion
 
