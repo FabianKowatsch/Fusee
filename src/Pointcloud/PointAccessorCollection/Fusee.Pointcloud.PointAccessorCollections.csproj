@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<RootNamespace>Fusee.PointCloud.PointAccessorCollections</RootNamespace>
+		<PackageId>Fusee.PointCloud.PointAccessorCollections</PackageId>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Description>Fusee PointCloud PointAccessorCollections</Description>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<OutputPath>$(BaseOutputPath)\Libraries</OutputPath>
+		<DocumentationFile>$(OutputPath)\$(RootNamespace).xml</DocumentationFile>
+	</PropertyGroup>
+	<ItemGroup>
+
+		<ProjectReference Include="$(FuseeEngineRoot)\src\Serialization\Fusee.Serialization.csproj">
+			<PrivateAssets>analyzers</PrivateAssets>
+		</ProjectReference>
+
+		<ProjectReference Include="..\Common\Fusee.PointCloud.Common.csproj">
+			<PrivateAssets>analyzers</PrivateAssets>
+		</ProjectReference>
+		<ProjectReference Include="..\OoCReaderWriter\Fusee.PointCloud.OoCReaderWriter.csproj" >
+			<PrivateAssets>analyzers</PrivateAssets>
+		</ProjectReference>
+		<ProjectReference Include="..\Reader\LASReader\Fusee.PointCloud.Reader.LASReader.csproj">
+			<PrivateAssets>analyzers</PrivateAssets>
+		</ProjectReference>
+	</ItemGroup>
+
+</Project>

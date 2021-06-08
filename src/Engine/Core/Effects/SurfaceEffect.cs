@@ -238,7 +238,6 @@ namespace Fusee.Engine.Core.Effects
                         continue;
                     default:
                         throw new ArgumentException($"Unknown shard category: {shardAttribute.ShardCategory}");
-
                 }
             }
 

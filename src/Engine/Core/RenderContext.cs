@@ -57,7 +57,7 @@ namespace Fusee.Engine.Core
         /// <summary>
         /// The world space frustum planes, derived from the current view-projection matrix.
         /// </summary>
-        public Frustum RenderFrustum { get; private set; }
+        public FrustumF RenderFrustum { get; private set; }
 
 
         /// <summary>
@@ -785,7 +785,7 @@ namespace Fusee.Engine.Core
             DefaultState = new RenderContextDefaultState();
             GlobalFXParams = new Dictionary<string, object>();
 
-            RenderFrustum = new Frustum();
+            RenderFrustum = new FrustumF();
 
             View = DefaultState.View;
             Model = float4x4.Identity;
@@ -1008,6 +1008,10 @@ namespace Fusee.Engine.Core
                 }
                 else
                 {
+                    var doRenderPoints = false;
+                    if (efType == typeof(PointCloudSurfaceEffect))
+                        doRenderPoints = true;
+
                     var surfEffect = (SurfaceEffect)ef;
 
                     var renderDependentShards = new List<KeyValuePair<ShardCategory, string>>();
@@ -1016,7 +1020,7 @@ namespace Fusee.Engine.Core
                     //May be difficult because we'd need to remove or add them (and only them) depending on the render method
                     if (fx == null) //effect was never build before
                     {
-                        surfEffect.VertexShaderSrc.Add(new KeyValuePair<ShardCategory, string>(ShardCategory.Main, ShaderShards.Vertex.VertMain.VertexMain(surfEffect.LightingSetup)));
+                        surfEffect.VertexShaderSrc.Add(new KeyValuePair<ShardCategory, string>(ShardCategory.Main, ShaderShards.Vertex.VertMain.VertexMain(surfEffect.LightingSetup, doRenderPoints)));
                         foreach (var dcl in SurfaceEffect.CreateForwardLightingParamDecls(ShaderShards.Fragment.Lighting.NumberOfLightsForward))
                             surfEffect.ParamDecl.Add(dcl.Name, dcl);
                     }
@@ -1485,7 +1489,7 @@ namespace Fusee.Engine.Core
         /// Sets the RenderTarget, if texture is null render target is the main screen, otherwise the picture will be rendered onto given texture
         /// </summary>
         /// <param name="renderTarget">The render target.</param>
-        public void SetRenderTarget(RenderTarget renderTarget = null)
+        internal void SetRenderTarget(RenderTarget renderTarget = null)
         {
             ITextureHandle[] texHandles = null;
             if (renderTarget != null)
@@ -1528,7 +1532,7 @@ namespace Fusee.Engine.Core
         /// Renders into the given texture.
         /// </summary>
         /// <param name="tex">The render texture.</param>
-        public void SetRenderTarget(IWritableCubeMap tex)
+        internal void SetRenderTarget(IWritableCubeMap tex)
         {
             var texHandle = _textureManager.GetTextureHandle((WritableCubeMap)tex);
             _rci.SetRenderTarget(tex, texHandle);

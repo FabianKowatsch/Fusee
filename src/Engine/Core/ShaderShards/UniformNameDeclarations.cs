@@ -217,6 +217,12 @@ namespace Fusee.Engine.Core.ShaderShards
 
         #endregion
 
+        #region Point Cloud
+
+        public const string PointSize = "PointSize";
+
+        #endregion
+
         /// <summary>
         /// The var name for the uniform PassNo variable.
         /// </summary>

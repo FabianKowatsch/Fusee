@@ -514,7 +514,6 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
             if (!string.IsNullOrEmpty(gs))
             {
                 geometryObject = GL.CreateShader(ShaderType.GeometryShader);
-
                 GL.ShaderSource(geometryObject, gs);
                 GL.CompileShader(geometryObject);
                 GL.GetShaderInfoLog(geometryObject, out info);
@@ -1489,7 +1488,6 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
                 GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).ColorBufferObject);
                 GL.VertexAttribPointer(AttributeLocations.ColorAttribLocation, 4, VertexAttribPointerType.UnsignedByte, true, 0, IntPtr.Zero);
             }
-
             if (((MeshImp)mr).UVBufferObject != 0)
             {
                 GL.EnableVertexAttribArray(AttributeLocations.UvAttribLocation);
@@ -1771,6 +1769,13 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
                         switch ((FillMode)value)
                         {
                             case FillMode.Point:
+                                if (!_isPtRenderingEnabled)
+                                {
+                                    _isPtRenderingEnabled = true;
+                                    GL.Enable(EnableCap.ProgramPointSize);
+                                    GL.Enable(EnableCap.PointSprite);
+                                    GL.Enable(EnableCap.VertexProgramPointSize);
+                                }
                                 pm = PolygonMode.Point;
                                 break;
                             case FillMode.Wireframe:
