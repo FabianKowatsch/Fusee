@@ -4,6 +4,9 @@ using Fusee.Base.Imp.Desktop;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Scene;
 using Fusee.Serialization;
+using Fusee.Examples.MuVista.Core;
+using Fusee.PointCloud.PointAccessorCollections;
+using System;
 using System.IO;
 using System.Reflection;
 using Path = Fusee.Base.Common.Path;
@@ -15,9 +18,9 @@ namespace Fusee.Examples.MuVista.Desktop
         public static void Main()
         {
             // Inject Fusee.Engine.Base InjectMe dependencies
-            IO.IOImp = new Fusee.Base.Imp.Desktop.IOImp();
+            IO.IOImp = new IOImp();
 
-            var fap = new Fusee.Base.Imp.Desktop.FileAssetProvider("Assets");
+            var fap = new FileAssetProvider("Assets");
             fap.RegisterTypeHandler(
                 new AssetHandler
                 {
@@ -43,7 +46,16 @@ namespace Fusee.Examples.MuVista.Desktop
 
             AssetStorage.RegisterProvider(fap);
 
-            var app = new Core.MuVista();
+            var ptType = AppSetupHelper.GetPtType(PtRenderingParams.PathToOocFile);
+            var ptEnumName = Enum.GetName(typeof(PointType), ptType);
+
+            var genericType = Type.GetType("Fusee.PointCloud.PointAccessorCollections." + ptEnumName + ", " + "Fusee.PointCloud.PointAccessorCollections");
+
+            var objectType = typeof(MuVista<>);
+            var objWithGenType = objectType.MakeGenericType(genericType);
+
+            var app = (PointCloud.Common.IPcRendering)Activator.CreateInstance(objWithGenType);
+            AppSetup.DoSetup(app, ptType, PtRenderingParams.MaxNoOfVisiblePoints, PtRenderingParams.PathToOocFile);
 
             // Inject Fusee.Engine InjectMe dependencies (hard coded)
             System.Drawing.Icon appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
@@ -51,11 +63,7 @@ namespace Fusee.Examples.MuVista.Desktop
             app.ContextImplementor = new Fusee.Engine.Imp.Graphics.Desktop.RenderContextImp(app.CanvasImplementor);
             Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.RenderCanvasInputDriverImp(app.CanvasImplementor));
             Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.WindowsTouchInputDriverImp(app.CanvasImplementor));
-            // app.InputImplementor = new Fusee.Engine.Imp.Graphics.Desktop.InputImp(app.CanvasImplementor);
-            // app.AudioImplementor = new Fusee.Engine.Imp.Sound.Desktop.AudioImp();
-            // app.NetworkImplementor = new Fusee.Engine.Imp.Network.Desktop.NetworkImp();
-            // app.InputDriverImplementor = new Fusee.Engine.Imp.Input.Desktop.InputDriverImp();
-            // app.VideoManagerImplementor = ImpFactory.CreateIVideoManagerImp();
+
 
             // Start the app
             app.Run();
