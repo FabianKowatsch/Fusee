@@ -11,6 +11,7 @@ using Fusee.PointCloud.PointAccessorCollections;
 using Fusee.Engine.GUI;
 using Fusee.Math.Core;
 using Fusee.Xene;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using static Fusee.Engine.Core.Input;
@@ -18,7 +19,7 @@ using static Fusee.Engine.Core.Time;
 
 namespace Fusee.Examples.MuVista.Core
 {
-    [FuseeApplication(Name = "FUSEE Point Cloud Viewer")]
+    [FuseeApplication(Name = "FUSEE MuVista Viewer", Description = "Viewer for Pointclouds and 360 degree pictures.")]
     public class MuVista<TPoint> : RenderCanvas, IPcRendering where TPoint : new()
     {
         public AppSetupHelper.AppSetupDelegate AppSetup;
@@ -34,12 +35,19 @@ namespace Fusee.Examples.MuVista.Core
         public bool IsInitialized { get; private set; } = false;
         public bool IsAlive { get; private set; }
 
+
+        private const float CamTranslationSpeed = -3;
+        private const float RotationSpeed = 7;
+        private const float Damping = 0.8f;
+
+        private const float _planeHeight = 4096f / 300f;
+        private const float _planeWidth = 8192f / 300f;
         // angle variables
-        private static float _angleHorz, _angleVert, _angleVelHorz, _angleVelVert, _angleRoll, _angleRollInit;
+        private static float _angleHorz, _angleVert, _angleVelHorz, _angleVelVert, _angleRoll, _angleRollInit, _zoom;
         private static float2 _offset;
         private static float2 _offsetInit;
 
-        private const float RotationSpeed = 7;
+        
 
         private SceneContainer _scene;
         private SceneRendererForward _sceneRenderer;
@@ -51,19 +59,26 @@ namespace Fusee.Examples.MuVista.Core
         private const float ZNear = 1f;
         private const float ZFar = 1000;
 
-        private readonly float _fovy = M.PiOver4;
+        private readonly float Fov = M.PiOver3;
 
         private SceneRendererForward _guiRenderer;
         private SceneContainer _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
-        private float _maxPinchSpeed;
-
         private float3 _initCamPos;
         public float3 InitCameraPos { get => _initCamPos; private set { _initCamPos = value; OocLoader.InitCamPos = _initCamPos; } }
 
+
+        private float3 _camPosBeforeSwitching = float3.Zero;
+
         private bool _isTexInitialized = false;
+        private bool _sphereIsVisible = true;
+        private bool _isSpaceMouseMoving;
+        private const float AnimDuration = 2f;
+        private bool _animActive;
+        private float _animTimeStart = 0;
+
 
         private Texture _octreeTex;
         private double3 _octreeRootCenter;
@@ -71,15 +86,19 @@ namespace Fusee.Examples.MuVista.Core
 
         private WritableTexture _depthTex;
 
-        private Transform _camTransform;
-        private Camera _cam;
+        private Transform _mainCamTransform;
+        private Camera _mainCam;
 
         private SixDOFDevice _spaceMouse;
+
+        private PanoSphere _panoSphere;
 
         // Init is called on startup. 
         public override void Init()
         {
-            _spaceMouse = Input.GetDevice<SixDOFDevice>();
+
+            _panoSphere = new PanoSphere();
+            _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
 
@@ -91,7 +110,7 @@ namespace Fusee.Examples.MuVista.Core
                 Children = new List<SceneNode>()
             };
 
-            _camTransform = new Transform()
+            _mainCamTransform = new Transform()
             {
                 Name = "MainCamTransform",
                 Scale = float3.One,
@@ -99,18 +118,19 @@ namespace Fusee.Examples.MuVista.Core
                 Rotation = float3.Zero
             };
 
-            _cam = new Camera(ProjectionMethod.Perspective, ZNear, ZFar, _fovy)
+            _mainCam = new Camera(ProjectionMethod.Perspective, ZNear, ZFar, Fov, RenderLayers.Layer01)
             {
                 BackgroundColor = float4.One
             };
+
 
             var mainCam = new SceneNode()
             {
                 Name = "MainCam",
                 Components = new List<SceneComponent>()
                 {
-                    _camTransform,
-                    _cam
+                    _mainCamTransform,
+                    _mainCam
                 }
             };
 
@@ -122,9 +142,14 @@ namespace Fusee.Examples.MuVista.Core
             _offsetInit = float2.Zero;
 
             // Set the clear color for the back buffer to white (100% intensity in all color channels R, G, B, A).            
-
             if (!UseWPF)
                 LoadPointCloudFromFile();
+
+            var sphereChildren = _panoSphere.initSphereNodes();
+
+            _scene.Children.Add(sphereChildren);
+
+
 
             _gui = CreateGui();
             //Create the interaction handler
@@ -134,10 +159,17 @@ namespace Fusee.Examples.MuVista.Core
             _sceneRenderer = new SceneRendererForward(_scene);
             _guiRenderer = new SceneRendererForward(_gui);
 
+            /*-----------------------------------------------------------------------
+            * Debuggingtools
+            -----------------------------------------------------------------------*/
+
+            //RC.SetRenderState(RenderState.CullMode, (uint)Cull.None);
+            //RC.SetRenderState(RenderState.FillMode, (uint)FillMode.Wireframe);
+
             IsInitialized = true;
             _spaceAxis= Keyboard.RegisterSingleButtonAxis(32);
-            
-            
+
+
         }
 
         // RenderAFrame is called once a frame
@@ -150,7 +182,7 @@ namespace Fusee.Examples.MuVista.Core
 
             if (IsSceneLoaded)
             {
-                var isSpaceMouseMoving = SpaceMouseMoving(out float3 velPos, out float3 velRot);
+                
 
                 // ------------ Enable to update the Scene only when the user isn't moving ------------------
                 /*if (Keyboard.WSAxis != 0 || Keyboard.ADAxis != 0 || (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint) || isSpaceMouseMoving)
@@ -162,58 +194,18 @@ namespace Fusee.Examples.MuVista.Core
 
                 if (Keyboard.IsKeyDown(KeyCodes.Enter))
                 {
-                    _pointCloudActive = !_pointCloudActive;
+                    switchModes();
                 }
 
-
-                    _camTransform.Translate(new float3(0, 0.1f * (Keyboard.GetAxis(_spaceAxis.Id)-1f) * -1f, 0));
-
-                // Mouse and keyboard movement
-                if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-                    _keys = true;
-
-                // UpDown / LeftRight rotation
-                
-
-                if (Mouse.LeftButton)
+                if (_pointCloudActive)
                 {
-                    _keys = false;
-
-                    _angleVelHorz = RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
-                    _angleVelVert = RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
-                }
-
-                else
-                {
-                    if (_keys)
-                    {
-                        _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
-                        _angleVelVert = RotationSpeed * Keyboard.UpDownAxis * DeltaTime;
-                    }
-                }
-
-                if (isSpaceMouseMoving)
-                {
-                    _angleHorz -= velRot.y;
-                    _angleVert -= velRot.x;
-
-                    float speed = DeltaTime * 12;
-
-                    _camTransform.FpsView(_angleHorz, _angleVert, velPos.z, velPos.x, speed);
-                    _camTransform.Translation.y += velPos.y * speed;
+                    pcUserInput();
                 }
                 else
                 {
-                    _angleHorz += _angleVelHorz;
-                    _angleVert += _angleVelVert;
-                    _angleVelHorz = 0;
-                    _angleVelVert = 0;
-
-                    if (HasUserMoved() || _camTransform.Translation == InitCameraPos)
-                    {
-                        _camTransform.FpsView(_angleHorz, _angleVert, Keyboard.WSAxis, Keyboard.ADAxis, DeltaTime * 20);
-                    }
+                    sphereUserInput();
                 }
+
 
                 #endregion
 
@@ -225,9 +217,9 @@ namespace Fusee.Examples.MuVista.Core
                     _scene.Children[1].RemoveComponent<ShaderEffect>();
                     _scene.Children[1].Components.Insert(1, PtRenderingParams.DepthPassEf);
 
-                    _cam.RenderTexture = _depthTex;
+                    _mainCam.RenderTexture = _depthTex;
                     _sceneRenderer.Render(RC);
-                    _cam.RenderTexture = null;
+                    _mainCam.RenderTexture = null;
                 }
 
                 //Render color pass
@@ -290,9 +282,210 @@ namespace Fusee.Examples.MuVista.Core
             velRot = float3.Zero;
             return false;
         }
+        private void pcUserInput()
+        {
+            _isSpaceMouseMoving = SpaceMouseMoving(out float3 velPos, out float3 velRot);
+            _mainCamTransform.Translate(new float3(0, 0.1f * (Keyboard.GetAxis(_spaceAxis.Id) - 1f) * -1f, 0));
+
+            // Mouse and keyboard movement
+            if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
+                _keys = true;
+
+            // UpDown / LeftRight rotation
 
 
+            if (Mouse.LeftButton)
+            {
+                _keys = false;
 
+                _angleVelHorz = RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
+                _angleVelVert = RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
+            }
+
+            else
+            {
+                if (_keys)
+                {
+                    _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
+                    _angleVelVert = RotationSpeed * Keyboard.UpDownAxis * DeltaTime;
+                }
+            }
+
+            if (_isSpaceMouseMoving)
+            {
+                _angleHorz -= velRot.y;
+                _angleVert -= velRot.x;
+
+                float speed = DeltaTime * 12;
+
+                _mainCamTransform.FpsView(_angleHorz, _angleVert, velPos.z, velPos.x, speed);
+                _mainCamTransform.Translation.y += velPos.y * speed;
+            }
+            else
+            {
+                _angleHorz += _angleVelHorz;
+                _angleVert += _angleVelVert;
+                _angleVelHorz = 0;
+                _angleVelVert = 0;
+
+                if (HasUserMoved() || _mainCamTransform.Translation == InitCameraPos)
+                {
+                    _mainCamTransform.FpsView(_angleHorz, _angleVert, Keyboard.WSAxis, Keyboard.ADAxis, DeltaTime * 20);
+                }
+            }
+        }
+
+        private void switchModes()
+        {
+            _pointCloudActive = !_pointCloudActive;
+
+            if (!_pointCloudActive)
+            {
+                _camPosBeforeSwitching = _mainCamTransform.Translation;
+                _mainCamTransform.Translation = float3.Zero;
+            }
+            else
+            {
+                _mainCamTransform.Translation = _camPosBeforeSwitching;
+                _mainCam.Fov = M.PiOver3;
+            }
+        }
+
+        private void sphereUserInput()
+        {
+            MouseWheelZoom();
+
+            //HndGuiButtonInput();
+
+            CalculateRotationAngle();
+
+            UpdateCameraTransform();
+
+
+            if (Keyboard.IsKeyDown(KeyCodes.Space))
+            {
+                SwitchBetweenViews();
+            }
+
+  /*          if (Keyboard.IsKeyDown(KeyCodes.F5))
+            {
+                SwitchCamViewport();
+            }*/
+
+/*            if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
+            {
+                Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.GetHashCode());
+                Diagnostics.Debug("scene: " + _animScene);
+                _animationEffect.SurfaceInput = colorInput2;
+            }*/
+        }
+
+
+        public void MouseWheelZoom()
+        {
+            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
+
+            if (_sphereIsVisible)
+            {
+                if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
+                {
+                    _mainCam.Fov += _zoom;
+                }
+            }
+            else
+            {
+                if (_zoom != 0)
+                {
+                    if (!(_mainCam.Fov + _zoom >= M.PiOver2) && !(_mainCam.Fov + _zoom <= 0.3))
+                    {
+                        _mainCam.Fov += _zoom;
+                    }
+                }
+            }
+        }
+
+        public void CalculateRotationAngle()
+        {
+            if (Mouse.LeftButton)
+            {
+                _angleVelHorz = -RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
+                _angleVelVert = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
+            }
+            else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
+            {
+                var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
+                _angleVelHorz = -RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
+                _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
+            }
+            else
+            {
+                if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
+                {
+                    _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
+
+                    if (_angleVert < 0)
+                    {
+                        _angleVelVert = -(RotationSpeed / (((_angleVert * -1) + 1) * (1.5f))) * Keyboard.UpDownAxis * DeltaTime;
+                    }
+                    else
+                    {
+                        _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
+                    }
+                }
+                else
+                {
+                    var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
+                    _angleVelHorz *= curDamp;
+                    _angleVelVert *= curDamp;
+                }
+            }
+            //Calculations to make sure the Camera has max vertical angle in Sphere View and max hor and vert translation in Plane View
+            if (!(_angleVert + _angleVelVert >= 1.5) && !(_angleVert + _angleVelVert <= -1.5))
+            {
+                _angleVert += _angleVelVert;
+            }
+            if (_sphereIsVisible)
+            {
+                _angleHorz += _angleVelHorz;
+            }
+            else
+            {
+                if ((_angleHorz + _angleVelHorz) * CamTranslationSpeed <= _planeWidth / 2f && (_angleHorz + _angleVelHorz) * CamTranslationSpeed >= _planeWidth / -2f)
+                {
+                    _angleHorz += _angleVelHorz;
+                }
+            }
+        }
+        public void UpdateCameraTransform()
+        {
+            if (_sphereIsVisible)
+            {
+                 _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
+               
+            }
+            else
+            {
+                 _mainCamTransform.Translation = new float3(_angleHorz * CamTranslationSpeed, _angleVert * CamTranslationSpeed, 0);
+            }
+        }
+        public void SwitchBetweenViews()
+        {
+            _mainCam.Fov = M.PiOver4;
+            //Animationsettings
+            _animTimeStart = TimeSinceStart;
+            _animActive = true;
+            _mainCamTransform.Translation = new float3(0, 0, 0);
+            _angleVelHorz = 0;
+            _angleVert = 0;
+            _angleVelVert = 0;
+            _mainCamTransform.Rotation = new float3(0, M.Pi, 0);
+            _sphereIsVisible = !_sphereIsVisible;
+
+            if (_sphereIsVisible)
+                _angleHorz = M.Pi;
+            else
+                _angleHorz = 0;
+        }
         // Is called when the window was resized
         public override void Resize(ResizeEventArgs e)
         {
@@ -367,8 +560,11 @@ namespace Fusee.Examples.MuVista.Core
             var root = OocFileReader.GetScene();
 
             var ptOctantComp = root.GetComponent<OctantD>();
-            InitCameraPos = _camTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
-
+            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
+            root.AddComponent(new RenderLayer()
+            {
+                Layer = RenderLayers.Layer01
+            });
             _scene.Children.Add(root);
 
             OocLoader.RootNode = root;
@@ -413,7 +609,7 @@ namespace Fusee.Examples.MuVista.Core
 
         public void ResetCamera()
         {
-            _camTransform.Translation = InitCameraPos;
+            _mainCamTransform.Translation = InitCameraPos;
             _angleHorz = _angleVert = 0;
         }
 

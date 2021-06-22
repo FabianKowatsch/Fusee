@@ -17,11 +17,9 @@ using static Fusee.Engine.Core.Time;
 
 namespace Fusee.Examples.MuVista.Core
 {
-    [FuseeApplication(Name = "FUSEE MuVista Viewer", Description = "Viewer for 360 degree pictures.")]
-    public class PanoSphere : RenderCanvas
+    
+    public class PanoSphere
     {
-
-
         //MuVista
         private static float _angleHorz = M.Pi, _angleVert = 0, _angleVelHorz, _angleVelVert, _zoom;
 
@@ -76,7 +74,7 @@ namespace Fusee.Examples.MuVista.Core
 
 
         // Init is called on startup.
-        public override void Init()
+        public SceneNode initSphereNodes()
         {
 
             var sphereTex = new Texture(AssetStorage.Get<ImageData>("test2.jpg"));
@@ -112,34 +110,24 @@ namespace Fusee.Examples.MuVista.Core
                 PercentPerVertex = 1.0f,
                 PercentPerVertex1 = 0.0f
             };
+            /*
+                        _minimapCam.Layer = _minimapLayer;
+                        _minimapCam.BackgroundColor = new float4(0.5f, 0.5f, 0.5f, 1);
+                        _minimapCam.Viewport = _minimapViewport;
 
-            //Creating CameraComponent and TransformComponent
-            _mainCam.Viewport = _mainCamViewport;
-            _mainCam.BackgroundColor = new float4(0f, 0f, 0f, 1);
-            _mainCam.Layer = _mainCamLayer;
+                        _minimapCamTransform = new Transform()
+                        {
+                            Rotation = new float3(M.PiOver6, 0, 0),//float3.Zero,
+                            Translation = new float3(10, 40, -60),
+                            Scale = float3.One
+                        };
 
-            _guiCam.ClearColor = false;
-            _guiCam.ClearDepth = false;
-            _guiCam.FrustumCullingOn = false;
-            _guiCam.Layer = 99;
-
-            _minimapCam.Layer = _minimapLayer;
-            _minimapCam.BackgroundColor = new float4(0.5f, 0.5f, 0.5f, 1);
-            _minimapCam.Viewport = _minimapViewport;
-
-            _minimapCamTransform = new Transform()
-            {
-                Rotation = new float3(M.PiOver6, 0, 0),//float3.Zero,
-                Translation = new float3(10, 40, -60),
-                Scale = float3.One
-            };
-
-            _mainCamTransform = new Transform()
-            {
-                Rotation = new float3(_angleVert, _angleHorz, 0),
-                Translation = new float3(0, 0, 0),
-                Scale = new float3(1, 1, 1)
-            };
+                        _mainCamTransform = new Transform()
+                        {
+                            Rotation = new float3(_angleVert, _angleHorz, 0),
+                            Translation = new float3(0, 0, 0),
+                            Scale = new float3(1, 1, 1)
+                        };*/
 
             _sphereTransform = new Transform()
             {
@@ -155,14 +143,6 @@ namespace Fusee.Examples.MuVista.Core
                 Translation = new float3(0, 0, 0)
             };
 
-            SceneNode planeNode = new SceneNode()
-            {
-                Components = new List<SceneComponent>()
-                {
-                    _planeTransform,
-                    plane,
-                }
-            };
 
             Mesh sphereAndPlane = new Mesh()
             {
@@ -174,20 +154,21 @@ namespace Fusee.Examples.MuVista.Core
                 Triangles = sphere.Triangles
             };
 
-            _gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
+            //_gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
 
             // Create the interaction handler
-            _sih = new SceneInteractionHandler(_gui);
 
             // Set the clear color for the backbuffer to white (100% intensity in all color channels R, G, B, A).
             //RC.ClearColor = new float4(1, 1, 1, 1);
 
             //Scene with Main Camera and Mesh
+
+            /*  
             _animScene = new SceneContainer
             {
                 Children = new List<SceneNode>
                 {
-                     new SceneNode
+                   new SceneNode
                      {
                         Name = "MainCam",
                         Components = new List<SceneComponent>()
@@ -195,18 +176,22 @@ namespace Fusee.Examples.MuVista.Core
                             _mainCamTransform,
                             _mainCam
                         }
-                     },
-                    new SceneNode
-                    {
-                        Components = new List<SceneComponent>
+                     },*/
+            var node = new SceneNode()
+            { 
+                Components = new List<SceneComponent>()
                         {
+                             new RenderLayer()
+                                {
+                                Layer = RenderLayers.Layer03
+                                },
                             _sphereTransform,
                             _animationEffect,
                             //CreateSphereAndPlane(10, 20, 50, _planeHeight * 2, _planeWidth * 2, DistancePlaneCamera)
-                            sphereAndPlane
+                            sphereAndPlane,
                         }
-                    },
-                    new SceneNode
+            };
+/*                    new SceneNode
                      {
                         Name = "MiniMapCam",
                         Components = new List<SceneComponent>()
@@ -214,10 +199,10 @@ namespace Fusee.Examples.MuVista.Core
                             _minimapCamTransform,
                             _minimapCam
                         }
-                     }
+                     
                 }
             };
-
+}*/
             /*-----------------------------------------------------------------------
              * Debuggingtools
              -----------------------------------------------------------------------*/
@@ -225,17 +210,13 @@ namespace Fusee.Examples.MuVista.Core
             //RC.SetRenderState(RenderState.CullMode, (uint)Cull.None);
             //RC.SetRenderState(RenderState.FillMode, (uint)FillMode.Wireframe);
 
-            // Wrap a SceneRenderer around the model.
-            _sceneRenderer = new SceneRendererForward(_animScene);
-
-            _guiRenderer = new SceneRendererForward(_gui);
+            return node;
         }
 
         // RenderAFrame is called once a frame
-        public override void RenderAFrame()
+        public void UpdateSphere()
         {
             // Clear the backbuffer
-            RC.Clear(ClearFlags.Color | ClearFlags.Depth);
 
             //RC.Viewport(0, 0, Width, Height);
 
@@ -305,12 +286,12 @@ namespace Fusee.Examples.MuVista.Core
                     }
                     _animActive = false;
                 }
-                #endregion
+                
             }
-
+            #endregion
 
             //var perspective = float4x4.CreatePerspectiveFieldOfView(_fovy, (float)Width / Height, ZNear, ZFar);
-            var orthographic = float4x4.CreateOrthographic(Width, Height, ZNear, ZFar);
+            //  var orthographic = float4x4.CreateOrthographic(Width, Height, ZNear, ZFar);
 
             _mainCam.ProjectionMethod = ProjectionMethod.Perspective;
 
@@ -318,21 +299,6 @@ namespace Fusee.Examples.MuVista.Core
             //RC.View = view;
             //RC.Projection = perspective; //_sceneRenderer.Animate();
 
-            _sceneRenderer.Render(RC);
-            _guiRenderer.Render(RC);
-
-            //Constantly check for interactive objects.
-            //RC.Projection = orthographic;
-
-            if (!Mouse.Desc.Contains("Android"))
-                _sih.CheckForInteractiveObjects(RC, Mouse.Position, Width, Height);
-            if (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint)
-            {
-                _sih.CheckForInteractiveObjects(RC, Touch.GetPosition(TouchPoints.Touchpoint_0), Width, Height);
-            }
-
-            // Swap buffers: Show the contents of the backbuffer (containing the currently rendered frame) on the front buffer.
-            Present();
         }
 
         public void MouseWheelZoom()
