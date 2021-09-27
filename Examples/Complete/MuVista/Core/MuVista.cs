@@ -67,6 +67,8 @@ namespace Fusee.Examples.MuVista.Core
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
         private float3 _initCamPos;
+        private float3 _spherePos;
+        private float3 _sphereRot;
         public float3 InitCameraPos { get => _initCamPos; private set { _initCamPos = value; OocLoader.InitCamPos = _initCamPos; } }
 
 
@@ -75,10 +77,6 @@ namespace Fusee.Examples.MuVista.Core
         private bool _isTexInitialized = false;
         private bool _sphereIsVisible = true;
         private bool _isSpaceMouseMoving;
-        private const float AnimDuration = 2f;
-        private bool _animActive;
-        private float _animTimeStart = 0;
-
 
         private Texture _octreeTex;
         private double3 _octreeRootCenter;
@@ -146,7 +144,8 @@ namespace Fusee.Examples.MuVista.Core
                 LoadPointCloudFromFile();
 
             var sphereChildren = _panoSphere.initSphereNodes();
-
+            sphereChildren.GetComponent<Transform>().Translation = _spherePos;
+            sphereChildren.GetComponent<Transform>().Rotation = _sphereRot;
             _scene.Children.Add(sphereChildren);
 
 
@@ -200,9 +199,11 @@ namespace Fusee.Examples.MuVista.Core
                 if (_pointCloudActive)
                 {
                     pcUserInput();
+
                 }
                 else
                 {
+                    
                     sphereUserInput();
                 }
 
@@ -258,7 +259,6 @@ namespace Fusee.Examples.MuVista.Core
 
             ReadyToLoadNewFile = true;
         }
-
         private bool SpaceMouseMoving(out float3 velPos, out float3 velRot)
         {
             if (_spaceMouse != null && _spaceMouse.IsConnected)
@@ -341,13 +341,13 @@ namespace Fusee.Examples.MuVista.Core
 
             if (!_pointCloudActive)
             {
-                _camPosBeforeSwitching = _mainCamTransform.Translation;
-                _mainCamTransform.Translation = float3.Zero;
+                _mainCamTransform.Translation = _spherePos;
+                _scene.Children[2].GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
             else
             {
-                _mainCamTransform.Translation = _camPosBeforeSwitching;
                 _mainCam.Fov = M.PiOver3;
+                _scene.Children[2].GetComponent<RenderLayer>().Layer = RenderLayers.Layer02;
             }
         }
 
@@ -362,11 +362,11 @@ namespace Fusee.Examples.MuVista.Core
             UpdateCameraTransform();
 
 
-            if (Keyboard.IsKeyDown(KeyCodes.Space))
+/*            if (Keyboard.IsKeyDown(KeyCodes.Space))
             {
                 SwitchBetweenViews();
             }
-
+*/
   /*          if (Keyboard.IsKeyDown(KeyCodes.F5))
             {
                 SwitchCamViewport();
@@ -468,7 +468,7 @@ namespace Fusee.Examples.MuVista.Core
                  _mainCamTransform.Translation = new float3(_angleHorz * CamTranslationSpeed, _angleVert * CamTranslationSpeed, 0);
             }
         }
-        public void SwitchBetweenViews()
+/*        public void SwitchBetweenViews()
         {
             _mainCam.Fov = M.PiOver4;
             //Animationsettings
@@ -485,7 +485,7 @@ namespace Fusee.Examples.MuVista.Core
                 _angleHorz = M.Pi;
             else
                 _angleHorz = 0;
-        }
+        }*/
         // Is called when the window was resized
         public override void Resize(ResizeEventArgs e)
         {
@@ -561,6 +561,8 @@ namespace Fusee.Examples.MuVista.Core
 
             var ptOctantComp = root.GetComponent<OctantD>();
             InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
+            _spherePos = new float3(47, 32, -2f);
+            _sphereRot = new float3(0, 5.95f, 0);
             root.AddComponent(new RenderLayer()
             {
                 Layer = RenderLayers.Layer01

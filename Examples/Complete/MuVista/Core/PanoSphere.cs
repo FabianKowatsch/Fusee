@@ -77,7 +77,7 @@ namespace Fusee.Examples.MuVista.Core
         public SceneNode initSphereNodes()
         {
 
-            var sphereTex = new Texture(AssetStorage.Get<ImageData>("test2.jpg"));
+            var sphereTex = new Texture(AssetStorage.Get<ImageData>("ladybug_18534664_20210113_GEO2111300_5561.jpg"));
 
             sphereTex2 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C1P1.jpg"));
 
@@ -183,7 +183,7 @@ namespace Fusee.Examples.MuVista.Core
                         {
                              new RenderLayer()
                                 {
-                                Layer = RenderLayers.Layer03
+                                Layer = RenderLayers.Layer02
                                 },
                             _sphereTransform,
                             _animationEffect,
