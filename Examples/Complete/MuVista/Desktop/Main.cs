@@ -3,7 +3,10 @@ using Fusee.Base.Core;
 using Fusee.Base.Imp.Desktop;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Scene;
+using Fusee.Examples.MuVista.Core;
+using Fusee.PointCloud.PointAccessorCollections;
 using Fusee.Serialization;
+using System;
 using System.IO;
 using System.Reflection;
 using Path = Fusee.Base.Common.Path;
@@ -43,7 +46,20 @@ namespace Fusee.Examples.MuVista.Desktop
 
             AssetStorage.RegisterProvider(fap);
 
-            var app = new Core.MuVista();
+            //Alt ausführen
+            //var app = new Core.MuVistaOld();
+
+            //Neu ausführen
+            var ptType = AppSetupHelper.GetPtType(PtRenderingParams.PathToOocFile);
+            var ptEnumName = Enum.GetName(typeof(PointType), ptType);
+
+            var genericType = Type.GetType("Fusee.PointCloud.PointAccessorCollections." + ptEnumName + ", " + "Fusee.PointCloud.PointAccessorCollections");
+
+            var objectType = typeof(MuVista<>);
+            var objWithGenType = objectType.MakeGenericType(genericType);
+
+            var app = (PointCloud.Common.IPcRendering)Activator.CreateInstance(objWithGenType);
+            AppSetup.DoSetup(app, ptType, PtRenderingParams.MaxNoOfVisiblePoints, PtRenderingParams.PathToOocFile);
 
             // Inject Fusee.Engine InjectMe dependencies (hard coded)
             System.Drawing.Icon appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
