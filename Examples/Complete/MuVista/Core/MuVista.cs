@@ -558,10 +558,12 @@ namespace Fusee.Examples.MuVista.Core
         {
             //create Scene from octree structure
             var root = OocFileReader.GetScene();
-
             var ptOctantComp = root.GetComponent<OctantD>();
-            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
-            _spherePos = new float3(47, 32, -2f);
+            var cameraZBasedOnCenter = (float)(ptOctantComp.Center.z - ptOctantComp.Size * 2f);
+            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y - 10, 0);
+            Diagnostics.Debug(ptOctantComp.Center.x + "/" + ptOctantComp.Center.y + "/" + ptOctantComp.Center.z);
+            //InitCameraPos = _mainCamTransform.Translation = new float3(0, 0, 0);
+            _spherePos = _spherePos = new float3(47, 310, -2f);
             _sphereRot = new float3(0, 5.95f, 0);
             root.AddComponent(new RenderLayer()
             {
@@ -583,8 +585,8 @@ namespace Fusee.Examples.MuVista.Core
             _octreeRootCenter = ptRootComponent.Center;
             _octreeRootLength = ptRootComponent.Size;
 
-            PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
-            PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), cameraZBasedOnCenter, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), cameraZBasedOnCenter, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
 
             _scene.Children[1].RemoveComponent<ShaderEffect>();
             if (PtRenderingParams.CalcSSAO || PtRenderingParams.Lighting != Lighting.Unlit)

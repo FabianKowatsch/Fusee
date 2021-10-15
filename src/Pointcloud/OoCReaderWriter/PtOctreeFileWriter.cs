@@ -33,12 +33,18 @@ namespace Fusee.PointCloud.OoCReaderWriter
         /// </summary>
         /// <param name="octree">The source octree.</param>
         /// <param name="ptAccessor">point accessor to get the actual point information.</param>
-        public void WriteCompleteData(PtOctree<TPoint> octree, PointAccessor<TPoint> ptAccessor)
+        /// <param name="offsetX">pointcloud X offset in Geo Coords.</param>
+        /// <param name="offsetY">pointcloud Y offset in Geo Coords.</param>
+        /// <param name="offsetZ">pointcloud Z offset in Geo Coords.</param>
+        /// <param name="scaleX">pointcloud X scale in Geo Coords.</param>
+        /// <param name="scaleY">pointcloud Y scale in Geo Coords.</param>
+        /// <param name="scaleZ">ppointcloud Z scale in Geo Coords.</param>
+        public void WriteCompleteData(PtOctree<TPoint> octree, PointAccessor<TPoint> ptAccessor, double offsetX, double offsetY, double offsetZ, double scaleX, double scaleY, double scaleZ)
         {
             var watch = new Stopwatch();
             watch.Restart();
 
-            WriteMeta(octree, ptAccessor);
+            WriteMeta(octree, ptAccessor, offsetX, offsetY, offsetZ, scaleX, scaleY, scaleZ);
             Diagnostics.Debug("-------------- Write meta file: " + watch.ElapsedMilliseconds + "ms.");
 
             watch.Restart();
@@ -102,7 +108,13 @@ namespace Fusee.PointCloud.OoCReaderWriter
         /// </summary>
         /// <param name="octree">The source octree.</param>
         /// <param name="ptAccessor">Point accessor to get the actual point information.</param>
-        public void WriteMeta(PtOctree<TPoint> octree, PointAccessor<TPoint> ptAccessor)
+        /// <param name="offsetX">pointcloud X offset in Geo Coords.</param>
+        /// <param name="offsetY">pointcloud Y offset in Geo Coords.</param>
+        /// <param name="offsetZ">pointcloud Z offset in Geo Coords.</param>
+        /// <param name="scaleX">pointcloud X scale in Geo Coords.</param>
+        /// <param name="scaleY">pointcloud Y scale in Geo Coords.</param>
+        /// <param name="scaleZ">ppointcloud Z scale in Geo Coords.</param>
+        public void WriteMeta(PtOctree<TPoint> octree, PointAccessor<TPoint> ptAccessor, double offsetX, double offsetY, double offsetZ, double scaleX, double scaleY, double scaleZ)
         {
             var rootCenter = octree.Root.Center;
             var rootSize = octree.Root.Size;
@@ -142,6 +154,15 @@ namespace Fusee.PointCloud.OoCReaderWriter
             var ptType = new JProperty("pointType", pointType.Name);
             jsonObj.Add(ptType);
 
+            var metaInfo = new JProperty("metaInfo", new JObject(
+                        new JProperty("offsetX", offsetX),
+                        new JProperty("offsetY", offsetY),
+                        new JProperty("offsetZ", offsetZ),
+                        new JProperty("scaleX", scaleX),
+                        new JProperty("scaleY", scaleY),
+                        new JProperty("scaleZ", scaleZ)
+                    ));
+            jsonObj.Add(metaInfo);
             //Write file
             using StreamWriter file = File.CreateText(_fileFolderPath + "/meta.json");
             file.Write(jsonObj.ToString());
