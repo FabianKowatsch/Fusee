@@ -66,7 +66,7 @@ namespace Fusee.Examples.MuVista.Core
 
 
         private Texture sphereTex2;
-        private TextureInputSpecular colorInput2;
+        private TextureInputOpacity colorInput2;
 
 
         //Inactivity Checker
@@ -84,9 +84,10 @@ namespace Fusee.Examples.MuVista.Core
             Sphere sphere = new Sphere(10, 20, 50);
             GridPlane plane = new GridPlane(20, 50, _planeHeight, _planeWidth, DistancePlaneCamera);
 
-            TextureInputSpecular colorInput = new TextureInputSpecular()
+            TextureInputOpacity colorInput = new TextureInputOpacity()
             {
                 Albedo = float4.One,
+                TexOpacity = 0.5f,
                 //Emission = float4.Zero,
                 //Shininess = 1.0f,
                 //SpecularStrength = 0.0f,
@@ -95,15 +96,16 @@ namespace Fusee.Examples.MuVista.Core
                 TexTiles = float2.One,
                 Roughness = 0.0f
             };
-            colorInput2 = new TextureInputSpecular()
+            colorInput2 = new TextureInputOpacity()
             {
                 Albedo = float4.One,
+                TexOpacity = 0.0f,
                 AlbedoMix = 1.0f,
                 AlbedoTex = sphereTex2,
                 TexTiles = float2.One,
                 Roughness = 0.0f
             };
-            var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex;
+            var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex | LightingSetupFlags.AlbedoTexOpacity;
 
             _animationEffect = new VertexAnimationSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation)
             {

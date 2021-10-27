@@ -266,6 +266,7 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fusee.Examples.MuVista.Core", "Examples\Complete\MuVista\Core\Fusee.Examples.MuVista.Core.csproj", "{63025F7C-1D14-4D47-A3A5-532CEDE21F70}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fusee.Examples.MuVista.Desktop", "Examples\Complete\MuVista\Desktop\Fusee.Examples.MuVista.Desktop.csproj", "{9A782D22-C485-4152-9B5E-BFACB9F973E0}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fusee.Structures", "src\Structures\Fusee.Structures.csproj", "{0A28C2C9-3274-4A4E-8E47-AD5CDD41C280}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fusee.PointCloud.OoCFileGenerator", "src\PointCloud\OoCFileGenerator\Fusee.PointCloud.OoCFileGenerator.csproj", "{FD43074B-FC58-4BE9-B7EE-007DCDBFF7FC}"
