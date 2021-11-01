@@ -143,10 +143,10 @@ namespace Fusee.Examples.MuVista.Core
             if (!UseWPF)
                 LoadPointCloudFromFile();
 
-            var sphereChildren = _panoSphere.initSphereNodes();
-            sphereChildren.GetComponent<Transform>().Translation = _spherePos;
-            sphereChildren.GetComponent<Transform>().Rotation = _sphereRot;
-            _scene.Children.Add(sphereChildren);
+            _panoSphere = new PanoSphere();
+            _panoSphere.GetComponent<Transform>().Translation = _spherePos;
+            _panoSphere.GetComponent<Transform>().Rotation = _sphereRot;
+            _scene.Children.Add(_panoSphere);
 
 
 
