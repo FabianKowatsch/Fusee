@@ -10,8 +10,11 @@ using Fusee.PointCloud.Common;
 using Fusee.Engine.GUI;
 using Fusee.Math.Core;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Fusee.Examples.MuVista.Core
 {
@@ -22,6 +25,8 @@ namespace Fusee.Examples.MuVista.Core
         private float acceptedRadius = 10;
         private Texture[] activeConnections;
         private float3[] activeConPos;
+        private String pathToInfoJson = "./input/data.json";
+        public List<JObject> allObjects;
 
         private static ConnectionCreator instance = null;
 
@@ -34,7 +39,25 @@ namespace Fusee.Examples.MuVista.Core
                 {
                     instance = new ConnectionCreator();
                 }
+                instance.readInfoJson();
                 return instance;
+            }
+        }
+
+        public void readInfoJson()
+        {
+            using (StreamReader sr = new StreamReader(pathToInfoJson))
+            {
+                string json = sr.ReadToEnd();
+                allObjects = JsonConvert.DeserializeObject<List<JObject>>(json);
+            }
+        }
+
+        public void showAllItems()
+        {
+            for(int i = 0; i < allObjects.Count; i++)
+            {
+                Diagnostics.Debug(allObjects[i]["filename"] + "|" + allObjects[i]["X"]);
             }
         }
 
