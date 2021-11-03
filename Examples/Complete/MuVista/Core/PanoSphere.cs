@@ -25,11 +25,11 @@ namespace Fusee.Examples.MuVista.Core
         private Texture _texture;
 
 
-        public PanoSphere()
+        public PanoSphere(string imageName)
         {
 
 
-            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\ladybug_18534664_20210113_GEO2111300_5561.jpg"));
+            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\"+ imageName +".jpg"));
 
             Sphere sphere = new Sphere(10, 20, 50);
 
