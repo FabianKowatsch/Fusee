@@ -25,7 +25,7 @@ namespace Fusee.Examples.MuVista.Core
         private float acceptedRadius = 10;
         private Texture[] activeConnections;
         private float3[] activeConPos;
-        private String pathToInfoJson = "./input/data.json";
+        private String pathToInfoJson = "D:/Studium/4._Semester/Projektmodul/test/Fusee/Examples/Complete/MuVista/Core/input/data.json";
         public List<JObject> allObjects;
 
         private static ConnectionCreator instance = null;
@@ -46,6 +46,8 @@ namespace Fusee.Examples.MuVista.Core
 
         public void readInfoJson()
         {
+            //D:\Studium\4._Semester\Projektmodul\test\Fusee\Examples\Complete\MuVista\Core\ConnectionCreator.cs
+            //D:\Studium\4._Semester\Projektmodul\test\Fusee\Examples\Complete\MuVista\Core\input\data.json
             using (StreamReader sr = new StreamReader(pathToInfoJson))
             {
                 string json = sr.ReadToEnd();
