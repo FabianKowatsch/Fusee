@@ -183,7 +183,7 @@ namespace Fusee.Examples.MuVista.Core
                         {
                              new RenderLayer()
                                 {
-                                Layer = RenderLayers.Layer02
+                                Layer = RenderLayers.Layer03
                                 },
                             _sphereTransform,
                             _animationEffect,
