@@ -67,8 +67,6 @@ namespace Fusee.Examples.MuVista.Core
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
         private float3 _initCamPos;
-        private float3 _spherePos;
-        private float3 _sphereRot;
         public float3 InitCameraPos { get => _initCamPos; private set { _initCamPos = value; OocLoader.InitCamPos = _initCamPos; } }
 
 
@@ -398,7 +396,7 @@ namespace Fusee.Examples.MuVista.Core
 
             if (!_pointCloudActive)
             {
-                _mainCamTransform.Translation = _spherePos;
+                _mainCamTransform.Translation = _panoSphere.sphereTransform.Translation;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
             else
@@ -527,8 +525,6 @@ namespace Fusee.Examples.MuVista.Core
             var ptOctantComp = root.GetComponent<OctantD>();
 
             InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, 0, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
-            _spherePos = new float3(47, 32, -2f);
-            _sphereRot = new float3(0, 5.95f, 0);
             root.AddComponent(new RenderLayer()
             {
                 Layer = RenderLayers.All

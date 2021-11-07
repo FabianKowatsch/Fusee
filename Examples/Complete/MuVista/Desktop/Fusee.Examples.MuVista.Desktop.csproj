@@ -1,18 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <OutputType>Exe</OutputType>
-    <OutputPath>$(BaseOutputPath)\Examples\MuVista\Desktop\</OutputPath>
-    <StartupObject></StartupObject>
-    <ApplicationIcon>C:\Users\jacko\OneDrive\Desktop\Hochschule\MuVista\Fusee\\\art\Deliverables\FuseeLogo.ico</ApplicationIcon>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<OutputType>Exe</OutputType>
+		<OutputPath>$(BaseOutputPath)\Examples\MuVista\Desktop\</OutputPath>
+		<StartupObject></StartupObject>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="System.Drawing.Common" Version="5.0.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="$(FuseeEngineRoot)\src\Base\Imp\Desktop\Fusee.Base.Imp.Desktop.csproj" />
-    <ProjectReference Include="$(FuseeEngineRoot)\src\Engine\Imp\Graphics\Desktop\Fusee.Engine.Imp.Graphics.Desktop.csproj" />
-    <ProjectReference Include="..\Core\Fusee.Examples.MuVista.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="$(FuseeEngineRoot)\src\Base\Imp\Desktop\Fusee.Base.Imp.Desktop.csproj" />
+		<ProjectReference Include="$(FuseeEngineRoot)\src\Engine\Imp\Graphics\Desktop\Fusee.Engine.Imp.Graphics.Desktop.csproj" />
+		<ProjectReference Include="..\Core\Fusee.Examples.MuVista.Core.csproj" />
+	</ItemGroup>
 </Project>

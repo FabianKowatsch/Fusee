@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 public class PanoSphereFactory
 {
-    private static string pathToImageData = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\input\\data.json";
+    private static string pathToImageData = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json";
 
     private static string pathToMeta = PtRenderingParams.PathToOocFile + "\\meta.json";
     private static double3 offset;
