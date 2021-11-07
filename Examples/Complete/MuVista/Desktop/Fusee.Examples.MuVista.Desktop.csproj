@@ -3,6 +3,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <OutputType>Exe</OutputType>
     <OutputPath>$(BaseOutputPath)\Examples\MuVista\Desktop\</OutputPath>
+    <StartupObject></StartupObject>
+    <ApplicationIcon>C:\Users\jacko\OneDrive\Desktop\Hochschule\MuVista\Fusee\\\art\Deliverables\FuseeLogo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="5.0.0" />

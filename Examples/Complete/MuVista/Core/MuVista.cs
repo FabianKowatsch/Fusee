@@ -48,6 +48,7 @@ namespace Fusee.Examples.MuVista.Core
         private static float2 _offsetInit;
 
 
+
         private SceneContainer _scene;
         private SceneRendererForward _sceneRenderer;
 
@@ -109,9 +110,8 @@ namespace Fusee.Examples.MuVista.Core
         // Init is called on startup. 
         public override void Init()
         {
-            _spaceMouse = Input.GetDevice<SixDOFDevice>();
 
-            _panoSphere = new PanoSphere();
+            _panoSphere = PanoSphereFactory.createPanoSpheres().ElementAt(0);
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
@@ -186,11 +186,6 @@ namespace Fusee.Examples.MuVista.Core
             // Set the clear color for the back buffer to white (100% intensity in all color channels R, G, B, A).            
             if (!UseWPF)
                 LoadPointCloudFromFile();
-
-            var sphereChildren = _panoSphere.initSphereNodes();
-            sphereChildren.GetComponent<Transform>().Translation = _spherePos;
-            sphereChildren.GetComponent<Transform>().Rotation = _sphereRot;
-            _scene.Children.Add(sphereChildren);
 
             _scene.Children.Add(CreateWaypoint(new float3(40, 40, 0)));
             _scene.Children.Add(CreateWaypoint(new float3(50, 40, 0)));
@@ -546,7 +541,6 @@ namespace Fusee.Examples.MuVista.Core
         {
             //create Scene from octree structure
             var root = OocFileReader.GetScene();
-
             var ptOctantComp = root.GetComponent<OctantD>();
 
             InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, 0, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
@@ -572,8 +566,8 @@ namespace Fusee.Examples.MuVista.Core
             _octreeRootCenter = ptRootComponent.Center;
             _octreeRootLength = ptRootComponent.Size;
 
-            PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
-            PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), cameraZBasedOnCenter, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), cameraZBasedOnCenter, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
 
             var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
             pointcloud.RemoveComponent<ShaderEffect>();
