@@ -1,4 +1,4 @@
-using Fusee.Base.Common;
+﻿using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core;
@@ -11,6 +11,7 @@ using Fusee.PointCloud.PointAccessorCollections;
 using Fusee.Engine.GUI;
 using Fusee.Math.Core;
 using Fusee.Xene;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using static Fusee.Engine.Core.Input;
@@ -18,7 +19,7 @@ using static Fusee.Engine.Core.Time;
 
 namespace Fusee.Examples.MuVista.Core
 {
-    [FuseeApplication(Name = "FUSEE Point Cloud Viewer")]
+    [FuseeApplication(Name = "FUSEE MuVista Viewer", Description = "Viewer for Pointclouds and 360 degree pictures.")]
     public class MuVista<TPoint> : RenderCanvas, IPcRendering where TPoint : new()
     {
         public AppSetupHelper.AppSetupDelegate AppSetup;
@@ -34,12 +35,18 @@ namespace Fusee.Examples.MuVista.Core
         public bool IsInitialized { get; private set; } = false;
         public bool IsAlive { get; private set; }
 
+
+        private const float CamTranslationSpeed = -3;
+        private const float RotationSpeed = 7;
+        private const float Damping = 0.8f;
+
+        private const float _planeHeight = 4096f / 300f;
+        private const float _planeWidth = 8192f / 300f;
         // angle variables
-        private static float _angleHorz, _angleVert, _angleVelHorz, _angleVelVert, _angleRoll, _angleRollInit;
+        private static float _angleHorz, _angleVert, _angleVelHorz, _angleVelVert, _angleRoll, _angleRollInit, _zoom;
         private static float2 _offset;
         private static float2 _offsetInit;
 
-        private const float RotationSpeed = 7;
 
         private SceneContainer _scene;
         private SceneRendererForward _sceneRenderer;
@@ -51,19 +58,24 @@ namespace Fusee.Examples.MuVista.Core
         private const float ZNear = 1f;
         private const float ZFar = 1000;
 
-        private readonly float _fovy = M.PiOver4;
+        private readonly float Fov = M.PiOver3;
 
         private SceneRendererForward _guiRenderer;
         private SceneContainer _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
-        private float _maxPinchSpeed;
-
         private float3 _initCamPos;
+        private float3 _spherePos;
+        private float3 _sphereRot;
         public float3 InitCameraPos { get => _initCamPos; private set { _initCamPos = value; OocLoader.InitCamPos = _initCamPos; } }
 
+
+        private float3 _camPosBeforeSwitching = float3.Zero;
+
         private bool _isTexInitialized = false;
+        private bool _sphereIsVisible = true;
+        private bool _isSpaceMouseMoving;
 
         private Texture _octreeTex;
         private double3 _octreeRootCenter;
@@ -71,15 +83,36 @@ namespace Fusee.Examples.MuVista.Core
 
         private WritableTexture _depthTex;
 
-        private Transform _camTransform;
-        private Camera _cam;
+        private Transform _mainCamTransform;
+        private Camera _mainCam;
+
+        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Perspective, 3, 100, M.PiOver4);
+        private Transform _minimapCamTransform;
+
+        private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
 
         private SixDOFDevice _spaceMouse;
+
+        private PanoSphere _panoSphere;
+
+        private bool _inverseCams = false;
+
+        private readonly float4 _minimapViewport = new float4(77, 73, 40, 40);
+        private readonly float4 _mainCamViewport = new float4(0, 0, 100, 100);
+        private readonly int _minimapLayer = 5;
+        private readonly int _mainCamLayer = 1;
+
+        private ScenePicker _scenePicker;
+        private PickResult _currentPick;
+        private float4 _oldColor;
 
         // Init is called on startup. 
         public override void Init()
         {
             _spaceMouse = Input.GetDevice<SixDOFDevice>();
+
+            _panoSphere = new PanoSphere();
+            _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
 
@@ -91,7 +124,7 @@ namespace Fusee.Examples.MuVista.Core
                 Children = new List<SceneNode>()
             };
 
-            _camTransform = new Transform()
+            _mainCamTransform = new Transform()
             {
                 Name = "MainCamTransform",
                 Scale = float3.One,
@@ -99,22 +132,51 @@ namespace Fusee.Examples.MuVista.Core
                 Rotation = float3.Zero
             };
 
-            _cam = new Camera(ProjectionMethod.Perspective, ZNear, ZFar, _fovy)
+            _mainCam = new Camera(ProjectionMethod.Perspective, ZNear, ZFar, Fov, RenderLayers.Layer01)
             {
                 BackgroundColor = float4.One
             };
+
 
             var mainCam = new SceneNode()
             {
                 Name = "MainCam",
                 Components = new List<SceneComponent>()
                 {
-                    _camTransform,
-                    _cam
+                    _mainCamTransform,
+                    _mainCam
                 }
             };
 
             _scene.Children.Insert(0, mainCam);
+
+            _minimapCam.Layer = _minimapLayer;
+            _minimapCam.BackgroundColor = new float4(0, 0, 0, 1);
+            _minimapCam.Viewport = _minimapViewport;
+            _minimapCam.RenderLayer = RenderLayers.Layer02;
+
+            _minimapCamTransform = new Transform()
+            {
+                Rotation = new float3(M.PiOver2, 0, 0),
+                Translation = new float3(0, 100, 0),
+                Scale = float3.One
+            };
+
+
+            var miniMapCam = new SceneNode()
+            {
+                Name = "MiniMapCam",
+                Components = new List<SceneComponent>()
+                {
+                    _minimapCamTransform,
+                    _minimapCam
+                }
+            };
+
+            _guiCam.ClearColor = false;
+            _guiCam.ClearDepth = false;
+            _guiCam.FrustumCullingOn = false;
+            _guiCam.Layer = 99;
 
             _angleRoll = 0;
             _angleRollInit = 0;
@@ -122,11 +184,20 @@ namespace Fusee.Examples.MuVista.Core
             _offsetInit = float2.Zero;
 
             // Set the clear color for the back buffer to white (100% intensity in all color channels R, G, B, A).            
-
             if (!UseWPF)
                 LoadPointCloudFromFile();
 
-            _gui = CreateGui();
+            var sphereChildren = _panoSphere.initSphereNodes();
+            sphereChildren.GetComponent<Transform>().Translation = _spherePos;
+            sphereChildren.GetComponent<Transform>().Rotation = _sphereRot;
+            _scene.Children.Add(sphereChildren);
+
+            _scene.Children.Add(CreateWaypoint(new float3(40, 40, 0)));
+            _scene.Children.Add(CreateWaypoint(new float3(50, 40, 0)));
+
+            //_scene.Children.Add(miniMapCam);
+
+            _gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
             //Create the interaction handler
             _sih = new SceneInteractionHandler(_gui);
 
@@ -134,10 +205,18 @@ namespace Fusee.Examples.MuVista.Core
             _sceneRenderer = new SceneRendererForward(_scene);
             _guiRenderer = new SceneRendererForward(_gui);
 
+            _scenePicker = new ScenePicker(_scene);
+            /*-----------------------------------------------------------------------
+            * Debuggingtools
+            -----------------------------------------------------------------------*/
+
+            //RC.SetRenderState(RenderState.CullMode, (uint)Cull.None);
+            //RC.SetRenderState(RenderState.FillMode, (uint)FillMode.Wireframe);
+
             IsInitialized = true;
-            _spaceAxis= Keyboard.RegisterSingleButtonAxis(32);
-            
-            
+            _spaceAxis = Keyboard.RegisterSingleButtonAxis(32);
+
+
         }
 
         // RenderAFrame is called once a frame
@@ -150,7 +229,7 @@ namespace Fusee.Examples.MuVista.Core
 
             if (IsSceneLoaded)
             {
-                var isSpaceMouseMoving = SpaceMouseMoving(out float3 velPos, out float3 velRot);
+
 
                 // ------------ Enable to update the Scene only when the user isn't moving ------------------
                 /*if (Keyboard.WSAxis != 0 || Keyboard.ADAxis != 0 || (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint) || isSpaceMouseMoving)
@@ -159,61 +238,34 @@ namespace Fusee.Examples.MuVista.Core
                     OocLoader.IsUserMoving = false;*/
                 //--------------------------------------------------------------------------------------------
                 #region Controls
+                HndGuiButtonInput();
+                MouseWheelZoom();
 
                 if (Keyboard.IsKeyDown(KeyCodes.Enter))
                 {
-                    _pointCloudActive = !_pointCloudActive;
+                    switchModes();
                 }
 
-
-                    _camTransform.Translate(new float3(0, 0.1f * (Keyboard.GetAxis(_spaceAxis.Id)-1f) * -1f, 0));
-
-                // Mouse and keyboard movement
-                if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-                    _keys = true;
-
-                // UpDown / LeftRight rotation
-                
-
-                if (Mouse.LeftButton)
+                if (Keyboard.IsKeyDown(KeyCodes.F5))
                 {
-                    _keys = false;
-
-                    _angleVelHorz = RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
-                    _angleVelVert = RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
+                    SwitchCamViewport();
                 }
 
-                else
+                if(_inverseCams)
                 {
-                    if (_keys)
-                    {
-                        _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
-                        _angleVelVert = RotationSpeed * Keyboard.UpDownAxis * DeltaTime;
-                    }
+                    CheckWaypointPicking();
                 }
 
-                if (isSpaceMouseMoving)
+                if (_pointCloudActive)
                 {
-                    _angleHorz -= velRot.y;
-                    _angleVert -= velRot.x;
+                    pcUserInput();
 
-                    float speed = DeltaTime * 12;
-
-                    _camTransform.FpsView(_angleHorz, _angleVert, velPos.z, velPos.x, speed);
-                    _camTransform.Translation.y += velPos.y * speed;
                 }
                 else
                 {
-                    _angleHorz += _angleVelHorz;
-                    _angleVert += _angleVelVert;
-                    _angleVelHorz = 0;
-                    _angleVelVert = 0;
-
-                    if (HasUserMoved() || _camTransform.Translation == InitCameraPos)
-                    {
-                        _camTransform.FpsView(_angleHorz, _angleVert, Keyboard.WSAxis, Keyboard.ADAxis, DeltaTime * 20);
-                    }
+                    sphereUserInput();
                 }
+
 
                 #endregion
 
@@ -225,9 +277,9 @@ namespace Fusee.Examples.MuVista.Core
                     _scene.Children[1].RemoveComponent<ShaderEffect>();
                     _scene.Children[1].Components.Insert(1, PtRenderingParams.DepthPassEf);
 
-                    _cam.RenderTexture = _depthTex;
+                    _mainCam.RenderTexture = _depthTex;
                     _sceneRenderer.Render(RC);
-                    _cam.RenderTexture = null;
+                    _mainCam.RenderTexture = null;
                 }
 
                 //Render color pass
@@ -259,14 +311,13 @@ namespace Fusee.Examples.MuVista.Core
             // Constantly check for interactive objects.
             _sih.CheckForInteractiveObjects(RC, Mouse.Position, Width, Height);
 
-            //_guiRenderer.Render(RC);
+            _guiRenderer.Render(RC);
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rendered frame) on the front buffer.
             Present();
 
             ReadyToLoadNewFile = true;
         }
-
         private bool SpaceMouseMoving(out float3 velPos, out float3 velRot)
         {
             if (_spaceMouse != null && _spaceMouse.IsConnected)
@@ -290,9 +341,139 @@ namespace Fusee.Examples.MuVista.Core
             velRot = float3.Zero;
             return false;
         }
+        private void pcUserInput()
+        {
+            _isSpaceMouseMoving = SpaceMouseMoving(out float3 velPos, out float3 velRot);
+            _mainCamTransform.Translate(new float3(0, 0.1f * (Keyboard.GetAxis(_spaceAxis.Id) - 1f) * -1f, 0));
+
+            // Mouse and keyboard movement
+            if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
+                _keys = true;
+
+            // UpDown / LeftRight rotation
 
 
+            if (Mouse.LeftButton)
+            {
+                _keys = false;
 
+                _angleVelHorz = RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
+                _angleVelVert = RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
+            }
+
+            else
+            {
+                if (_keys)
+                {
+                    _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
+                    _angleVelVert = RotationSpeed * Keyboard.UpDownAxis * DeltaTime;
+                }
+            }
+
+            if (_isSpaceMouseMoving)
+            {
+                _angleHorz -= velRot.y;
+                _angleVert -= velRot.x;
+
+                float speed = DeltaTime * 12;
+
+                _mainCamTransform.FpsView(_angleHorz, _angleVert, velPos.z, velPos.x, speed);
+                _mainCamTransform.Translation.y += velPos.y * speed;
+            }
+            else
+            {
+                _angleHorz += _angleVelHorz;
+                _angleVert += _angleVelVert;
+                _angleVelHorz = 0;
+                _angleVelVert = 0;
+
+                if (HasUserMoved() || _mainCamTransform.Translation == InitCameraPos)
+                {
+                    _mainCamTransform.FpsView(_angleHorz, _angleVert, Keyboard.WSAxis, Keyboard.ADAxis, DeltaTime * 20);
+                }
+            }
+
+            _minimapCamTransform.Translation.z = _mainCamTransform.Translation.z;
+            _minimapCamTransform.Translation.x = _mainCamTransform.Translation.x;
+        }
+
+        private void switchModes()
+        {
+            _pointCloudActive = !_pointCloudActive;
+
+            if (!_pointCloudActive)
+            {
+                _mainCamTransform.Translation = _spherePos;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+            }
+            else
+            {
+                _mainCam.Fov = M.PiOver3;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer02;
+            }
+        }
+
+        private void sphereUserInput()
+        {
+            CalculateRotationAngle();
+
+            UpdateCameraTransform();
+
+
+            /*            if (Keyboard.IsKeyDown(KeyCodes.Space))
+                        {
+                            SwitchBetweenViews();
+                        }
+            */
+            /*          if (Keyboard.IsKeyDown(KeyCodes.F5))
+                      {
+                          SwitchCamViewport();
+                      }*/
+
+            /*            if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
+                        {
+                            Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.GetHashCode());
+                            Diagnostics.Debug("scene: " + _animScene);
+                            _animationEffect.SurfaceInput = colorInput2;
+                        }*/
+        }
+
+        public void CalculateRotationAngle()
+        {
+            IsAlive = false;
+            base.DeInit();
+
+        }
+        public void UpdateCameraTransform()
+        {
+            if (_sphereIsVisible)
+            {
+                _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
+
+            }
+            else
+            {
+                _mainCamTransform.Translation = new float3(_angleHorz * CamTranslationSpeed, _angleVert * CamTranslationSpeed, 0);
+            }
+        }
+        /*        public void SwitchBetweenViews()
+                {
+                    _mainCam.Fov = M.PiOver4;
+                    //Animationsettings
+                    _animTimeStart = TimeSinceStart;
+                    _animActive = true;
+                    _mainCamTransform.Translation = new float3(0, 0, 0);
+                    _angleVelHorz = 0;
+                    _angleVert = 0;
+                    _angleVelVert = 0;
+                    _mainCamTransform.Rotation = new float3(0, M.Pi, 0);
+                    _sphereIsVisible = !_sphereIsVisible;
+
+                    if (_sphereIsVisible)
+                        _angleHorz = M.Pi;
+                    else
+                        _angleHorz = 0;
+                }*/
         // Is called when the window was resized
         public override void Resize(ResizeEventArgs e)
         {
@@ -367,8 +548,14 @@ namespace Fusee.Examples.MuVista.Core
             var root = OocFileReader.GetScene();
 
             var ptOctantComp = root.GetComponent<OctantD>();
-            InitCameraPos = _camTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
 
+            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, 0, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
+            _spherePos = new float3(47, 32, -2f);
+            _sphereRot = new float3(0, 5.95f, 0);
+            root.AddComponent(new RenderLayer()
+            {
+                Layer = RenderLayers.All
+            });
             _scene.Children.Add(root);
 
             OocLoader.RootNode = root;
@@ -388,11 +575,12 @@ namespace Fusee.Examples.MuVista.Core
             PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
             PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
 
-            _scene.Children[1].RemoveComponent<ShaderEffect>();
+            var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
+            pointcloud.RemoveComponent<ShaderEffect>();
             if (PtRenderingParams.CalcSSAO || PtRenderingParams.Lighting != Lighting.Unlit)
-                _scene.Children[1].AddComponent(PtRenderingParams.DepthPassEf);
+                pointcloud.AddComponent(PtRenderingParams.DepthPassEf);
             else
-                _scene.Children[1].AddComponent(PtRenderingParams.ColorPassEf);
+                pointcloud.AddComponent(PtRenderingParams.ColorPassEf);
 
             IsSceneLoaded = true;
         }
@@ -413,7 +601,7 @@ namespace Fusee.Examples.MuVista.Core
 
         public void ResetCamera()
         {
-            _camTransform.Translation = InitCameraPos;
+            _mainCamTransform.Translation = InitCameraPos;
             _angleHorz = _angleVert = 0;
         }
 
@@ -444,84 +632,104 @@ namespace Fusee.Examples.MuVista.Core
             PtRenderingParams.ShaderParamsToUpdate.Clear();
         }
 
-        #region UI
-
-        private SceneContainer CreateGui()
+        public void HndGuiButtonInput()
         {
-            var vsTex = AssetStorage.Get<string>("texture.vert");
-            var psTex = AssetStorage.Get<string>("texture.frag");
-            var psText = AssetStorage.Get<string>("text.frag");
+            return OocLoader.WasSceneUpdated;
+        }
 
-            var canvasWidth = Width / 100f;
-            var canvasHeight = Height / 100f;
+        public int GetOocLoaderPointThreshold()
+        {
+            return OocLoader.PointThreshold;
+        }
 
-            var btnFuseeLogo = new GUIButton
+            if (_gui._btnMiniMap.IsMouseOver)
             {
-                Name = "Canvas_Button"
-            };
-            btnFuseeLogo.OnMouseEnter += BtnLogoEnter;
-            btnFuseeLogo.OnMouseExit += BtnLogoExit;
-            btnFuseeLogo.OnMouseDown += BtnLogoDown;
+                _gui._btnMiniMap.OnMouseDown += OnMinimapDown;
+            }
+        }
 
-            var guiFuseeLogo = new Texture(AssetStorage.Get<ImageData>("FuseeText.png"));
-            var fuseeLogo = new TextureNode(
-                "fuseeLogo",
-                vsTex,
-                psTex,
-                //Set the albedo texture you want to use.
-                guiFuseeLogo,
-                //Define anchor points. They are given in percent, seen from the lower left corner, respectively to the width/height of the parent.
-                //In this setup the element will stretch horizontally but stay the same vertically if the parent element is scaled.
-                UIElementPosition.GetAnchors(AnchorPos.TopTopLeft),
-                //Define Offset and therefor the size of the element.
-                UIElementPosition.CalcOffsets(AnchorPos.TopTopLeft, new float2(0, canvasHeight - 0.5f), canvasHeight, canvasWidth, new float2(1.75f, 0.5f)),
-                float2.One
-                );
-            fuseeLogo.AddComponent(btnFuseeLogo);
+        public void MouseWheelZoom()
+        {
+            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
 
-            var fontLato = AssetStorage.Get<Font>("Lato-Black.ttf");
-            var guiLatoBlack = new FontMap(fontLato, 24);
-
-            var text = new TextNode(
-                "FUSEE Simple Example",
-                "ButtonText",
-                vsTex,
-                psText,
-                UIElementPosition.GetAnchors(AnchorPos.StretchHorizontal),
-                UIElementPosition.CalcOffsets(AnchorPos.StretchHorizontal, new float2(canvasWidth / 2 - 4, 0), canvasHeight, canvasWidth, new float2(8, 1)),
-                guiLatoBlack,
-                ColorUint.Tofloat4(ColorUint.Greenery),
-                HorizontalTextAlignment.Center,
-                VerticalTextAlignment.Center);
-
-            var canvas = new CanvasNode(
-                "Canvas",
-                _canvasRenderMode,
-                new MinMaxRect
-                {
-                    Min = new float2(-canvasWidth / 2, -canvasHeight / 2f),
-                    Max = new float2(canvasWidth / 2, canvasHeight / 2f)
-                })
+            if (_sphereIsVisible)
             {
-                Children = new ChildList()
+                if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
                 {
-                    //Simple Texture Node, contains the fusee logo.
-                    fuseeLogo,
-                    text
+                    _mainCam.Fov += _zoom;
+                }
+            }
+            else
+            {
+                if (_zoom != 0)
+                {
+                    if (!(_mainCam.Fov + _zoom >= M.PiOver2) && !(_mainCam.Fov + _zoom <= 0.3))
+                    {
+                        _mainCam.Fov += _zoom;
+                    }
+                }
+            }
+        }
+
+        public void BtnZoomOutDown(CodeComponent sender)
+        {
+            if (_sphereIsVisible)
+            {
+                if (_inverseCams)
+                {
+                    if (_minimapCam.Fov + 0.001 <= 1.2f)
+                    {
+                        _minimapCam.Fov += 0.001f;
+                    }
+                }
+                else
+                {
+                    if (_mainCam.Fov + 0.001 <= 1.2f)
+                    {
+                        _mainCam.Fov += 0.001f;
+                    }
+                }
+            }
+            else
+            {
+                if (_inverseCams)
+                {
+                    if (!(_minimapCam.Fov + 0.001f >= M.PiOver3) && !(_minimapCam.Fov + 0.001f <= 0.3))
+                    {
+                        _minimapCam.Fov += 0.001f;
+                    }
+                }
+                else
+                {
+                    if (!(_mainCam.Fov + 0.001f >= M.PiOver3) && !(_mainCam.Fov + 0.001f <= 0.3))
+                    {
+                        _mainCam.Fov += 0.001f;
+                    }
+                }
+            }
+        }
+
+        public void BtnZoomInDown(CodeComponent sender)
+        {
+            if (_inverseCams)
+            {
+                if (!(_minimapCam.Fov - 0.001 <= 0.3))
+                {
+                    _minimapCam.Fov -= 0.001f;
                 }
             };
 
             return new SceneContainer
             {
-                Children = new List<SceneNode>
+                if (!(_mainCam.Fov - 0.001 <= 0.3))
                 {
-                    //Add canvas.
-                    canvas
+                    _mainCam.Fov -= 0.001f;
                 }
-            };
+            }
+
         }
 
-        public void BtnLogoEnter(CodeComponent sender)
+        public void OnMinimapDown(CodeComponent sender)
         {
             var effect = _gui.Children.FindNodes(node => node.Name == "fuseeLogo").First().GetComponent<Effect>();
             effect.SetFxParam(UniformNameDeclarations.Albedo, new float4(0.0f, 0.0f, 0.0f, 1f));
@@ -535,11 +743,158 @@ namespace Fusee.Examples.MuVista.Core
             effect.SetFxParam(UniformNameDeclarations.AlbedoMix, 1f);
         }
 
-        public void BtnLogoDown(CodeComponent sender)
+        public SceneNode CreateWaypoint(float3 translation)
         {
-            OpenLink("http://fusee3d.org");
+            return new SceneNode()
+            {
+                Name = "Waypoint",
+                Components = new List<SceneComponent>
+                {
+                    new RenderLayer {Layer = RenderLayers.Layer02 },
+                    new Transform {Translation=translation,  Scale = float3.One },
+                    MakeEffect.FromDiffuseSpecular((float4)ColorUint.Red, float4.Zero, 4.0f, 1f),
+                    CreateCuboid(new float3(3, 10, 3))
+                }
+            };
         }
 
-        #endregion       
+        public static Mesh CreateCuboid(float3 size)
+        {
+            return new Mesh
+            {
+                Vertices = new[]
+                {
+                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
+                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
+                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z}
+                },
+
+                Triangles = new ushort[]
+                {
+                    // front face
+                    0, 2, 1, 0, 3, 2,
+
+                    // right face
+                    4, 6, 5, 4, 7, 6,
+
+                    // back face
+                    8, 10, 9, 8, 11, 10,
+
+                    // left face
+                    12, 14, 13, 12, 15, 14,
+
+                    // top face
+                    16, 18, 17, 16, 19, 18,
+
+                    // bottom face
+                    20, 22, 21, 20, 23, 22
+                },
+
+                Normals = new[]
+                {
+                    new float3(0, 0, 1),
+                    new float3(0, 0, 1),
+                    new float3(0, 0, 1),
+                    new float3(0, 0, 1),
+                    new float3(1, 0, 0),
+                    new float3(1, 0, 0),
+                    new float3(1, 0, 0),
+                    new float3(1, 0, 0),
+                    new float3(0, 0, -1),
+                    new float3(0, 0, -1),
+                    new float3(0, 0, -1),
+                    new float3(0, 0, -1),
+                    new float3(-1, 0, 0),
+                    new float3(-1, 0, 0),
+                    new float3(-1, 0, 0),
+                    new float3(-1, 0, 0),
+                    new float3(0, 1, 0),
+                    new float3(0, 1, 0),
+                    new float3(0, 1, 0),
+                    new float3(0, 1, 0),
+                    new float3(0, -1, 0),
+                    new float3(0, -1, 0),
+                    new float3(0, -1, 0),
+                    new float3(0, -1, 0)
+                },
+
+                UVs = new[]
+                {
+                    new float2(1, 0),
+                    new float2(1, 1),
+                    new float2(0, 1),
+                    new float2(0, 0),
+                    new float2(1, 0),
+                    new float2(1, 1),
+                    new float2(0, 1),
+                    new float2(0, 0),
+                    new float2(1, 0),
+                    new float2(1, 1),
+                    new float2(0, 1),
+                    new float2(0, 0),
+                    new float2(1, 0),
+                    new float2(1, 1),
+                    new float2(0, 1),
+                    new float2(0, 0),
+                    new float2(1, 0),
+                    new float2(1, 1),
+                    new float2(0, 1),
+                    new float2(0, 0),
+                    new float2(1, 0),
+                    new float2(1, 1),
+                    new float2(0, 1),
+                    new float2(0, 0)
+                },
+                BoundingBox = new AABBf(-0.5f * size, 0.5f * size)
+            };
+        }
+
+        public void CheckWaypointPicking()
+        {
+            if (Mouse.LeftButton)
+            {
+                //float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
+
+                //PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
+
+                //Diagnostics.Debug(newPick.Node.Name);
+                //if (newPick?.Node != _currentPick?.Node)
+                //{
+                //    if (_currentPick != null)
+                //    {
+                //        var ef = _currentPick.Node.GetComponent<DefaultSurfaceEffect>();
+                //        ef.SurfaceInput.Albedo = _oldColor;
+                //    }
+                //    if (newPick != null)
+                //    {
+                //        var ef = newPick.Node.GetComponent<SurfaceEffect>();
+                //        _oldColor = ef.SurfaceInput.Albedo;
+                //        ef.SurfaceInput.Albedo = (float4)ColorUint.OrangeRed;
+                //    }
+                //    _currentPick = newPick;
+                //}
+            }
+        }
     }
 }

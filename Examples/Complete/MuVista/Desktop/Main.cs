@@ -3,6 +3,8 @@ using Fusee.Base.Core;
 using Fusee.Base.Imp.Desktop;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Scene;
+using Fusee.Examples.MuVista.Core;
+using Fusee.PointCloud.PointAccessorCollections;
 using Fusee.Serialization;
 using Fusee.Examples.MuVista.Core;
 using Fusee.PointCloud.PointAccessorCollections;

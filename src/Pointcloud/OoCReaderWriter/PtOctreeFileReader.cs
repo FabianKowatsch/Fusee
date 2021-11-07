@@ -97,9 +97,10 @@ namespace Fusee.PointCloud.OoCReaderWriter
                             PosInParent = -1, //root!
                             //Resolution = size/128
                         
-                    }
+                    },
 
-                }
+                },
+                Name="Pointcloud"
             };
             //scene.Children.Add(rootSnc);
             NumberOfOctants++;

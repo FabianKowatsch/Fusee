@@ -361,3 +361,4 @@ Resource.Designer.cs
 ext/protobuf/Debug/protobuf-net.dll.mdb
 ext/protobuf/Release/protobuf-net.dll.mdb
 *~.slnf
+Examples/Complete/MuVista/Core/PtRenderParams.cs
