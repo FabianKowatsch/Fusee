@@ -62,7 +62,7 @@ namespace Fusee.Examples.MuVista.Core
         private readonly float Fov = M.PiOver3;
 
         private SceneRendererForward _guiRenderer;
-        private SceneContainer _gui;
+        private GUI _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
@@ -246,7 +246,7 @@ namespace Fusee.Examples.MuVista.Core
                     SwitchCamViewport();
                 }
 
-                if(_inverseCams)
+                if (_inverseCams)
                 {
                     CheckWaypointPicking();
                 }
@@ -414,23 +414,6 @@ namespace Fusee.Examples.MuVista.Core
 
             UpdateCameraTransform();
 
-
-            /*            if (Keyboard.IsKeyDown(KeyCodes.Space))
-                        {
-                            SwitchBetweenViews();
-                        }
-            */
-            /*          if (Keyboard.IsKeyDown(KeyCodes.F5))
-                      {
-                          SwitchCamViewport();
-                      }*/
-
-            /*            if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
-                        {
-                            Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.GetHashCode());
-                            Diagnostics.Debug("scene: " + _animScene);
-                            _animationEffect.SurfaceInput = colorInput2;
-                        }*/
         }
 
         public void CalculateRotationAngle()
@@ -566,8 +549,8 @@ namespace Fusee.Examples.MuVista.Core
             _octreeRootCenter = ptRootComponent.Center;
             _octreeRootLength = ptRootComponent.Size;
 
-            PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), cameraZBasedOnCenter, _octreeTex, _octreeRootCenter, _octreeRootLength);
-            PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), cameraZBasedOnCenter, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
 
             var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
             pointcloud.RemoveComponent<ShaderEffect>();
@@ -628,13 +611,15 @@ namespace Fusee.Examples.MuVista.Core
 
         public void HndGuiButtonInput()
         {
-            return OocLoader.WasSceneUpdated;
-        }
+            if (_gui._btnZoomOut.IsMouseOver)
+            {
+                _gui._btnZoomOut.OnMouseDown += BtnZoomOutDown;
+            }
 
-        public int GetOocLoaderPointThreshold()
-        {
-            return OocLoader.PointThreshold;
-        }
+            if (_gui._btnZoomIn.IsMouseOver)
+            {
+                _gui._btnZoomIn.OnMouseDown += BtnZoomInDown;
+            }
 
             if (_gui._btnMiniMap.IsMouseOver)
             {
@@ -711,9 +696,8 @@ namespace Fusee.Examples.MuVista.Core
                 {
                     _minimapCam.Fov -= 0.001f;
                 }
-            };
-
-            return new SceneContainer
+            }
+            else
             {
                 if (!(_mainCam.Fov - 0.001 <= 0.3))
                 {
@@ -725,16 +709,25 @@ namespace Fusee.Examples.MuVista.Core
 
         public void OnMinimapDown(CodeComponent sender)
         {
-            var effect = _gui.Children.FindNodes(node => node.Name == "fuseeLogo").First().GetComponent<Effect>();
-            effect.SetFxParam(UniformNameDeclarations.Albedo, new float4(0.0f, 0.0f, 0.0f, 1f));
-            effect.SetFxParam(UniformNameDeclarations.AlbedoMix, 0.8f);
+            SwitchCamViewport();
         }
-
-        public void BtnLogoExit(CodeComponent sender)
+        public void SwitchCamViewport()
         {
-            var effect = _gui.Children.FindNodes(node => node.Name == "fuseeLogo").First().GetComponent<Effect>();
-            effect.SetFxParam(UniformNameDeclarations.Albedo, float4.One);
-            effect.SetFxParam(UniformNameDeclarations.AlbedoMix, 1f);
+            _inverseCams = !_inverseCams;
+            if (_inverseCams)
+            {
+                _mainCam.Viewport = _minimapViewport;
+                _mainCam.Layer = _minimapLayer;
+                _minimapCam.Layer = _mainCamLayer;
+                _minimapCam.Viewport = _mainCamViewport;
+            }
+            else
+            {
+                _mainCam.Layer = _mainCamLayer;
+                _mainCam.Viewport = _mainCamViewport;
+                _minimapCam.Viewport = _minimapViewport;
+                _minimapCam.Layer = _minimapLayer;
+            }
         }
 
         public SceneNode CreateWaypoint(float3 translation)

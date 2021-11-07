@@ -57,7 +57,7 @@ namespace Fusee.Examples.MuVista.Core
 
         public void showAllItems()
         {
-            for(int i = 0; i < allObjects.Count; i++)
+            for (int i = 0; i < allObjects.Count; i++)
             {
                 Diagnostics.Debug(allObjects[i]["filename"] + "|" + allObjects[i]["X"]);
             }

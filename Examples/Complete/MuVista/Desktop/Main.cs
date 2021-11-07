@@ -6,8 +6,6 @@ using Fusee.Engine.Core.Scene;
 using Fusee.Examples.MuVista.Core;
 using Fusee.PointCloud.PointAccessorCollections;
 using Fusee.Serialization;
-using Fusee.Examples.MuVista.Core;
-using Fusee.PointCloud.PointAccessorCollections;
 using System;
 using System.IO;
 using System.Reflection;
