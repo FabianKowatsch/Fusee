@@ -29,7 +29,7 @@ namespace Fusee.Examples.MuVista.Core
         {
 
 
-            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\"+ imageName +".jpg"));
+            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"));
 
             Sphere sphere = new Sphere(10, 20, 50);
 
@@ -45,6 +45,46 @@ namespace Fusee.Examples.MuVista.Core
                 TexTiles = float2.One,
                 Roughness = 0.0f
             };
+
+            /*
+             *  var sphereTex = new Texture(AssetStorage.Get<ImageData>("ladybug_18534664_20210113_GEO2111300_5561.jpg"));
+
+            sphereTex2 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C1P1.jpg"));
+
+            Sphere sphere = new Sphere(10, 20, 50);
+            GridPlane plane = new GridPlane(20, 50, _planeHeight, _planeWidth, DistancePlaneCamera);
+
+            TextureInputOpacity colorInput = new TextureInputOpacity()
+            {
+                Albedo = float4.One,
+                TexOpacity = 0.5f,
+                //Emission = float4.Zero,
+                //Shininess = 1.0f,
+                //SpecularStrength = 0.0f,
+                AlbedoMix = 1.0f,
+                AlbedoTex = sphereTex,
+                TexTiles = float2.One,
+                Roughness = 0.0f
+            };
+            colorInput2 = new TextureInputOpacity()
+            {
+                Albedo = float4.One,
+                TexOpacity = 0.0f,
+                AlbedoMix = 1.0f,
+                AlbedoTex = sphereTex2,
+                TexTiles = float2.One,
+                Roughness = 0.0f
+            };
+            var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex | LightingSetupFlags.AlbedoTexOpacity;
+
+            _animationEffect = new VertexAnimationSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation)
+            {
+                PercentPerVertex = 1.0f,
+                PercentPerVertex1 = 0.0f
+            };
+             * */
+
+
 
             var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex;
 
