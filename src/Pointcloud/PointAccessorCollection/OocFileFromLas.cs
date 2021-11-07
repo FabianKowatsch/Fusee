@@ -118,14 +118,26 @@ namespace Fusee.PointCloud.PointAccessorCollections
             Console.WriteLine("Octree creation took: " + watch.ElapsedMilliseconds + "ms.");
 
             watch.Restart();
+            var meta = getLasMetaInfo(pathToFile);
             var occFileWriter = new PtOctreeFileWriter<TPoint>(pathToFolder);
-            occFileWriter.WriteCompleteData(octree, ptAcc);
+            occFileWriter.WriteCompleteData(octree, ptAcc, meta.OffsetX, meta.OffsetY, meta.OffsetZ, meta.ScaleFactorX, meta.ScaleFactorY, meta.ScaleFactorZ);
+            Console.WriteLine("Writing metadata took: " + watch.ElapsedMilliseconds + "ms.");
+            watch.Restart();
             Console.WriteLine("Writing files took: " + watch.ElapsedMilliseconds + "ms.");
+        }
+
+        private static MetaInfo getLasMetaInfo(string pathToPc)
+        {
+            var reader = new LASPointReader(pathToPc);
+            var meta = (MetaInfo)reader.MetaInfo;
+
+            return meta;
         }
 
         private static List<TPoint> FromLasToList<TPoint>(PointAccessor<TPoint> ptAcc, string pathToPc, bool doExchangeYZ) where TPoint : new()
         {
             var reader = new LASPointReader(pathToPc);
+
             var pointCnt = (MetaInfo)reader.MetaInfo;
 
             var points = new TPoint[(int)pointCnt.PointCnt];
@@ -154,7 +166,6 @@ namespace Fusee.PointCloud.PointAccessorCollections
             else if (ptAcc.HasPositionFloat3_64)
             {
                 var firstPoint = ptAcc.GetPositionFloat3_64(ref points[0]);
-
                 for (int i = 0; i < points.Length; i++)
                 {
                     var pt = points[i];

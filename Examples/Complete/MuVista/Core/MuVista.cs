@@ -5,15 +5,15 @@ using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
 using Fusee.Engine.Core.Scene;
 using Fusee.Engine.Core.ShaderShards;
+using Fusee.Engine.GUI;
+using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
 using Fusee.PointCloud.OoCReaderWriter;
 using Fusee.PointCloud.PointAccessorCollections;
-using Fusee.Engine.GUI;
-using Fusee.Math.Core;
 using Fusee.Xene;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
 
@@ -48,6 +48,7 @@ namespace Fusee.Examples.MuVista.Core
         private static float2 _offsetInit;
 
 
+
         private SceneContainer _scene;
         private SceneRendererForward _sceneRenderer;
 
@@ -66,8 +67,6 @@ namespace Fusee.Examples.MuVista.Core
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
         private float3 _initCamPos;
-        private float3 _spherePos;
-        private float3 _sphereRot;
         public float3 InitCameraPos { get => _initCamPos; private set { _initCamPos = value; OocLoader.InitCamPos = _initCamPos; } }
 
 
@@ -110,7 +109,7 @@ namespace Fusee.Examples.MuVista.Core
         public override void Init()
         {
 
-            _panoSphere = new PanoSphere();
+            _panoSphere = PanoSphereFactory.createPanoSpheres().ElementAt(0);
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
@@ -186,11 +185,6 @@ namespace Fusee.Examples.MuVista.Core
             if (!UseWPF)
                 LoadPointCloudFromFile();
 
-            var sphereChildren = _panoSphere.initSphereNodes();
-            sphereChildren.GetComponent<Transform>().Translation = _spherePos;
-            sphereChildren.GetComponent<Transform>().Rotation = _sphereRot;
-            _scene.Children.Add(sphereChildren);
-
             _scene.Children.Add(CreateWaypoint(new float3(40, 40, 0)));
             _scene.Children.Add(CreateWaypoint(new float3(50, 40, 0)));
 
@@ -250,7 +244,7 @@ namespace Fusee.Examples.MuVista.Core
                     SwitchCamViewport();
                 }
 
-                if(_inverseCams)
+                if (_inverseCams)
                 {
                     CheckWaypointPicking();
                 }
@@ -402,7 +396,7 @@ namespace Fusee.Examples.MuVista.Core
 
             if (!_pointCloudActive)
             {
-                _mainCamTransform.Translation = _spherePos;
+                _mainCamTransform.Translation = _panoSphere.sphereTransform.Translation;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
                 _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
@@ -420,76 +414,13 @@ namespace Fusee.Examples.MuVista.Core
 
             UpdateCameraTransform();
 
-
-            /*            if (Keyboard.IsKeyDown(KeyCodes.Space))
-                        {
-                            SwitchBetweenViews();
-                        }
-            */
-            /*          if (Keyboard.IsKeyDown(KeyCodes.F5))
-                      {
-                          SwitchCamViewport();
-                      }*/
-
-            /*            if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
-                        {
-                            Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.GetHashCode());
-                            Diagnostics.Debug("scene: " + _animScene);
-                            _animationEffect.SurfaceInput = colorInput2;
-                        }*/
         }
 
         public void CalculateRotationAngle()
         {
-            if (Mouse.LeftButton)
-            {
-                _angleVelHorz = -RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
-                _angleVelVert = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
-            }
-            else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
-            {
-                var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
-                _angleVelHorz = -RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
-                _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
-            }
-            else
-            {
-                if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-                {
-                    _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
+            IsAlive = false;
+            base.DeInit();
 
-                    if (_angleVert < 0)
-                    {
-                        _angleVelVert = -(RotationSpeed / (((_angleVert * -1) + 1) * (1.5f))) * Keyboard.UpDownAxis * DeltaTime;
-                    }
-                    else
-                    {
-                        _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
-                    }
-                }
-                else
-                {
-                    var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
-                    _angleVelHorz *= curDamp;
-                    _angleVelVert *= curDamp;
-                }
-            }
-            //Calculations to make sure the Camera has max vertical angle in Sphere View and max hor and vert translation in Plane View
-            if (!(_angleVert + _angleVelVert >= 1.5) && !(_angleVert + _angleVelVert <= -1.5))
-            {
-                _angleVert += _angleVelVert;
-            }
-            if (_sphereIsVisible)
-            {
-                _angleHorz += _angleVelHorz;
-            }
-            else
-            {
-                if ((_angleHorz + _angleVelHorz) * CamTranslationSpeed <= _planeWidth / 2f && (_angleHorz + _angleVelHorz) * CamTranslationSpeed >= _planeWidth / -2f)
-                {
-                    _angleHorz += _angleVelHorz;
-                }
-            }
         }
         public void UpdateCameraTransform()
         {
@@ -593,12 +524,9 @@ namespace Fusee.Examples.MuVista.Core
         {
             //create Scene from octree structure
             var root = OocFileReader.GetScene();
-
             var ptOctantComp = root.GetComponent<OctantD>();
 
             InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, 0, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
-            _spherePos = new float3(47, 32, -2f);
-            _sphereRot = new float3(0, 5.95f, 0);
             root.AddComponent(new RenderLayer()
             {
                 Layer = RenderLayers.All

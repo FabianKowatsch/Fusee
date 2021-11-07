@@ -89,7 +89,7 @@ namespace Fusee.PointCloud.OoCReaderWriter
                     new Transform
                     {
                         Scale = float3.One,
-                        //Translation = (float3) center
+                        //Translation = (float3)(-0.5*center)
                     },
                     new OctantD(center, size)
                     {
@@ -100,7 +100,7 @@ namespace Fusee.PointCloud.OoCReaderWriter
                     },
 
                 },
-                Name="Pointcloud"
+                Name = "Pointcloud"
             };
             //scene.Children.Add(rootSnc);
             NumberOfOctants++;
