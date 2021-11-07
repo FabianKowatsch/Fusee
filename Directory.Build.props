@@ -3,16 +3,18 @@
     <FuseeEngineRoot Condition=" '$(FuseeRoot)' != '' ">$(FuseeRoot)\</FuseeEngineRoot>
     <FuseeEngineRoot Condition=" '$(FuseeEngineRoot)' == '' ">$(MSBuildThisFileDirectory)\</FuseeEngineRoot>
     <BaseOutputPath>$(FuseeEngineRoot)\bin\$(Configuration)</BaseOutputPath>
-   
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+	<LangVersion>9</LangVersion>
+	  
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
       
     <Authors>FuseeProjectTeam</Authors>
     <Company>Furtwangen University</Company>
     <Product>FUSEE</Product>
-    <Version>0.9.1.0</Version>
-    <AssemblyVersion>0.9.1.0</AssemblyVersion>
-    <FileVersion>0.9.1.0</FileVersion>
-    <PackageVersion>0.9.1.0</PackageVersion>
+    <Version>0.10.2.0</Version>
+    <AssemblyVersion>0.10.2.0</AssemblyVersion>
+    <FileVersion>0.10.2.0</FileVersion>
+    <PackageVersion>0.10.2.0</PackageVersion>
     <Copyright>Copyright © 2013-today</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://fusee3d.org/</PackageProjectUrl>
@@ -26,23 +28,31 @@
 
     <TieredCompilation>false</TieredCompilation>
 
-    <!--<Deterministic>true</Deterministic>
-    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">True</ContinuousIntegrationBuild>
-    <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">True</ContinuousIntegrationBuild>-->
-
     <PackageOutputPath>$(FuseeEngineRoot)\bin\Release\nuget</PackageOutputPath>
 
     <ApplicationIcon>$(FuseeEngineRoot)\art\Deliverables\FuseeLogo.ico</ApplicationIcon>
-    
-    <!--
+
+	<!--
     Suppress warnings
     1701 and 1702 is standard.
-    NU1701: Package restore of OpenTK 3.1 with net462 - remove after update to OpenTK 4
     -->
-    <NoWarn>1701;1702;NU1701</NoWarn>
+    <NoWarn>1701;1702</NoWarn>
+
+	<!--
+	<WarningLevel>9999</WarningLevel>
+    <TreatWarningsAsErrors Condition="'$(Configuration)'=='Release'">true</TreatWarningsAsErrors>
+	-->
   </PropertyGroup>
 
+  <!-- This enables deterministic builds when building NuGet and when running on GitHub Actions or Azure DevOps -->
+  <PropertyGroup Condition="'$(NUGET_BUILD)' == 'true' Or '$(GITHUB_ACTIONS)' == 'true' Or '$(TF_BUILD)' == 'true'">
+    <Deterministic>True</Deterministic>
+    <ContinuousIntegrationBuild>True</ContinuousIntegrationBuild>
+    <DeterministicSourcePaths>True</DeterministicSourcePaths>
+  </PropertyGroup>
+  
   <ItemGroup>
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
     <Content Include="$(FuseeEngineRoot)\art\Deliverables\FuseeIcon128WithTextSquare.png" Link="NuGet\icon.png" PackagePath="images\icon.png" Condition="$(IsPackable) == 'true' AND !$(AssemblyName.Contains('Example'))" />
   </ItemGroup>
 </Project>

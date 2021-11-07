@@ -86,7 +86,7 @@ namespace Fusee.Tools.CmdLine.Verbs
             Type tApp = null;
 
             string modelFile = null;
-            List<string> assetDirs = new List<string>();
+            List<string> assetDirs = new();
             TryAddDir(assetDirs, "Assets");
 
             string ExeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -181,12 +181,18 @@ namespace Fusee.Tools.CmdLine.Verbs
                     ReturnedType = typeof(Font),
                     Decoder = (string id, object storage) =>
                     {
-                        if (!Path.GetExtension(id).Contains("ttf", StringComparison.OrdinalIgnoreCase)) return null;
+                        if (!Path.GetExtension(id).Contains("ttf", System.StringComparison.OrdinalIgnoreCase)) return null;
                         return new Font { _fontImp = new FontImp((Stream)storage) };
                     },
-                    Checker = id => Path.GetExtension(id).Contains("ttf", StringComparison.OrdinalIgnoreCase)
+                    DecoderAsync = async (string id, object storage) =>
+                    {
+                        if (!Path.GetExtension(id).Contains("ttf", System.StringComparison.OrdinalIgnoreCase)) return await Task.FromResult(false).ConfigureAwait(false);
+                        return await Task.FromResult(new Font { _fontImp = new FontImp((Stream)storage) }).ConfigureAwait(false);
+                    },
+                    Checker = id => Path.GetExtension(id).Contains("ttf", System.StringComparison.OrdinalIgnoreCase)
                 });
             fap.RegisterTypeHandler(
+
                 new AssetHandler
                 {
                     ReturnedType = typeof(SceneContainer),
@@ -196,7 +202,12 @@ namespace Fusee.Tools.CmdLine.Verbs
 
                         return FusSceneConverter.ConvertFrom(ProtoBuf.Serializer.Deserialize<FusFile>((Stream)storage), id);
                     },
-                    Checker = id => Path.GetExtension(id).Contains("fus", StringComparison.OrdinalIgnoreCase)
+                    DecoderAsync = async (string id, object storage) =>
+                    {
+                        if (!Path.GetExtension(id).Contains("fus", System.StringComparison.OrdinalIgnoreCase)) return await Task.FromResult(false).ConfigureAwait(false);
+                        return await Task.FromResult(FusSceneConverter.ConvertFrom(ProtoBuf.Serializer.Deserialize<FusFile>((Stream)storage), id)).ConfigureAwait(false);
+                    },
+                    Checker = id => Path.GetExtension(id).Contains("fus", System.StringComparison.OrdinalIgnoreCase)
                 });
 
             AssetStorage.RegisterProvider(fap);
@@ -210,10 +221,10 @@ namespace Fusee.Tools.CmdLine.Verbs
             else
             {
                 // invoke the first public constructor with no parameters.
-                RenderCanvas app = (RenderCanvas)ctor.Invoke(new object[] { });
+                RenderCanvas app = (RenderCanvas)ctor.Invoke(Array.Empty<object>());
 
-                if (!string.IsNullOrEmpty(modelFile) && app is Fusee.Engine.Player.Core.Player)
-                    ((Fusee.Engine.Player.Core.Player)app).ModelFile = modelFile;
+                if (!string.IsNullOrEmpty(modelFile) && app is Fusee.Engine.Player.Core.Player player)
+                    player.ModelFile = modelFile;
 
                 // Inject Fusee.Engine InjectMe dependencies (hard coded)
                 System.Drawing.Icon appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
@@ -223,8 +234,6 @@ namespace Fusee.Tools.CmdLine.Verbs
                 Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.WindowsSpaceMouseDriverImp(app.CanvasImplementor));
                 Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.WindowsTouchInputDriverImp(app.CanvasImplementor));
                 // app.InputImplementor = new Fusee.Engine.Imp.Graphics.Desktop.InputImp(app.CanvasImplementor);
-                // app.AudioImplementor = new Fusee.Engine.Imp.Sound.Desktop.AudioImp();
-                // app.NetworkImplementor = new Fusee.Engine.Imp.Network.Desktop.NetworkImp();
                 // app.InputDriverImplementor = new Fusee.Engine.Imp.Input.Desktop.InputDriverImp();
                 // app.VideoManagerImplementor = ImpFactory.CreateIVideoManagerImp();
 
@@ -255,7 +264,7 @@ namespace Fusee.Tools.CmdLine.Verbs
 
                     Console.WriteLine(" - SUCCESS");
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     Console.WriteLine(" - FAILD");
                     status = false;
