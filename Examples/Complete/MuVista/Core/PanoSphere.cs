@@ -183,26 +183,15 @@ namespace Fusee.Examples.MuVista.Core
                         {
                              new RenderLayer()
                                 {
-                                Layer = RenderLayers.Layer03
+                                Layer = RenderLayers.None
                                 },
                             _sphereTransform,
                             _animationEffect,
                             //CreateSphereAndPlane(10, 20, 50, _planeHeight * 2, _planeWidth * 2, DistancePlaneCamera)
                             sphereAndPlane,
-                        }
+                        },
+                Name = "Panosphere"
             };
-            /*                    new SceneNode
-                                 {
-                                    Name = "MiniMapCam",
-                                    Components = new List<SceneComponent>()
-                                    {
-                                        _minimapCamTransform,
-                                        _minimapCam
-                                    }
-
-                            }
-                        };
-            }*/
             /*-----------------------------------------------------------------------
              * Debuggingtools
              -----------------------------------------------------------------------*/

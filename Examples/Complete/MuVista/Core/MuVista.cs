@@ -1,4 +1,4 @@
-﻿using Fusee.Base.Common;
+using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core;
@@ -404,11 +404,13 @@ namespace Fusee.Examples.MuVista.Core
             {
                 _mainCamTransform.Translation = _spherePos;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
             else
             {
                 _mainCam.Fov = M.PiOver3;
-                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer02;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.None;
             }
         }
 

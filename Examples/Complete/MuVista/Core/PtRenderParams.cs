@@ -12,7 +12,7 @@ namespace Fusee.Examples.MuVista.Core
     {
         public static ConcurrentDictionary<string, object> ShaderParamsToUpdate = new ConcurrentDictionary<string, object>();
         public static int MaxNoOfVisiblePoints = 500000;
-        public static string PathToOocFile = "E://BwSync//MuVista//Data//ProcessedPointCloud//firstTry";
+        public static string PathToOocFile = "E://BwSync//MuVista//Data//ProcessedPointCloud//testCloud_10Clouds";
 
         public static ShaderEffect DepthPassEf;
         public static ShaderEffect ColorPassEf;
