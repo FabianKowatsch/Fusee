@@ -47,7 +47,7 @@ namespace Fusee.Examples.MuVista.Core
         private static float2 _offset;
         private static float2 _offsetInit;
 
-        
+
 
         private SceneContainer _scene;
         private SceneRendererForward _sceneRenderer;
@@ -95,7 +95,7 @@ namespace Fusee.Examples.MuVista.Core
         public override void Init()
         {
 
-            _panoSphere = new PanoSphere();
+            _panoSphere = PanoSphereFactory.createPanoSpheres().ElementAt(0);
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
@@ -143,9 +143,6 @@ namespace Fusee.Examples.MuVista.Core
             if (!UseWPF)
                 LoadPointCloudFromFile();
 
-            _panoSphere = new PanoSphere();
-            _panoSphere.GetComponent<Transform>().Translation = _spherePos;
-            _panoSphere.GetComponent<Transform>().Rotation = _sphereRot;
             _scene.Children.Add(_panoSphere);
 
 
@@ -166,7 +163,7 @@ namespace Fusee.Examples.MuVista.Core
             //RC.SetRenderState(RenderState.FillMode, (uint)FillMode.Wireframe);
 
             IsInitialized = true;
-            _spaceAxis= Keyboard.RegisterSingleButtonAxis(32);
+            _spaceAxis = Keyboard.RegisterSingleButtonAxis(32);
 
 
         }
@@ -181,7 +178,7 @@ namespace Fusee.Examples.MuVista.Core
 
             if (IsSceneLoaded)
             {
-                
+
 
                 // ------------ Enable to update the Scene only when the user isn't moving ------------------
                 /*if (Keyboard.WSAxis != 0 || Keyboard.ADAxis != 0 || (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint) || isSpaceMouseMoving)
@@ -203,7 +200,7 @@ namespace Fusee.Examples.MuVista.Core
                 }
                 else
                 {
-                    
+
                     sphereUserInput();
                 }
 
@@ -361,23 +358,6 @@ namespace Fusee.Examples.MuVista.Core
 
             UpdateCameraTransform();
 
-
-/*            if (Keyboard.IsKeyDown(KeyCodes.Space))
-            {
-                SwitchBetweenViews();
-            }
-*/
-  /*          if (Keyboard.IsKeyDown(KeyCodes.F5))
-            {
-                SwitchCamViewport();
-            }*/
-
-/*            if (Keyboard.IsKeyDown(KeyCodes.W) || Keyboard.IsKeyDown(KeyCodes.S))
-            {
-                Diagnostics.Debug("surface: " + _animationEffect.SurfaceInput.GetHashCode());
-                Diagnostics.Debug("scene: " + _animScene);
-                _animationEffect.SurfaceInput = colorInput2;
-            }*/
         }
 
 
@@ -460,32 +440,32 @@ namespace Fusee.Examples.MuVista.Core
         {
             if (_sphereIsVisible)
             {
-                 _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
-               
+                _mainCamTransform.Rotation = new float3(_angleVert, _angleHorz, 0);
+
             }
             else
             {
-                 _mainCamTransform.Translation = new float3(_angleHorz * CamTranslationSpeed, _angleVert * CamTranslationSpeed, 0);
+                _mainCamTransform.Translation = new float3(_angleHorz * CamTranslationSpeed, _angleVert * CamTranslationSpeed, 0);
             }
         }
-/*        public void SwitchBetweenViews()
-        {
-            _mainCam.Fov = M.PiOver4;
-            //Animationsettings
-            _animTimeStart = TimeSinceStart;
-            _animActive = true;
-            _mainCamTransform.Translation = new float3(0, 0, 0);
-            _angleVelHorz = 0;
-            _angleVert = 0;
-            _angleVelVert = 0;
-            _mainCamTransform.Rotation = new float3(0, M.Pi, 0);
-            _sphereIsVisible = !_sphereIsVisible;
+        /*        public void SwitchBetweenViews()
+                {
+                    _mainCam.Fov = M.PiOver4;
+                    //Animationsettings
+                    _animTimeStart = TimeSinceStart;
+                    _animActive = true;
+                    _mainCamTransform.Translation = new float3(0, 0, 0);
+                    _angleVelHorz = 0;
+                    _angleVert = 0;
+                    _angleVelVert = 0;
+                    _mainCamTransform.Rotation = new float3(0, M.Pi, 0);
+                    _sphereIsVisible = !_sphereIsVisible;
 
-            if (_sphereIsVisible)
-                _angleHorz = M.Pi;
-            else
-                _angleHorz = 0;
-        }*/
+                    if (_sphereIsVisible)
+                        _angleHorz = M.Pi;
+                    else
+                        _angleHorz = 0;
+                }*/
         // Is called when the window was resized
         public override void Resize(ResizeEventArgs e)
         {

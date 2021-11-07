@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 public class PanoSphereFactory
 {
-    private static string pathToImageData = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\input\\data.json";
+    private static string pathToImageData = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json";
 
     private static string pathToMeta = PtRenderingParams.PathToOocFile + "\\meta.json";
     private static double3 offset;
@@ -61,6 +61,7 @@ public class PanoSphereFactory
 
     private static PanoSphere createSphereWithShift(PanoImage img)
     {
+        System.Diagnostics.Debug.WriteLine(img.filename);
         PanoSphere sphere = new PanoSphere(img.filename);
         sphere.sphereTransform.Translation = new float3(new double3(img.X - offset.x, img.Y - offset.y, img.Z - offset.z));
         sphere.sphereTransform.Rotation = new float3(new double3(img.roll, img.pitch, img.heading));
