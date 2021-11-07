@@ -33,9 +33,10 @@ namespace Fusee.Examples.MuVista.Core
 
             Sphere sphere = new Sphere(10, 20, 50);
 
-            TextureInputSpecular colorInput = new TextureInputSpecular()
+            TextureInputOpacity colorInput = new TextureInputOpacity()
             {
                 Albedo = float4.One,
+                TexOpacity = 0.5f,
                 //Emission = float4.Zero,
                 //Shininess = 1.0f,
                 //SpecularStrength = 0.0f,
