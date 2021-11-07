@@ -100,7 +100,7 @@ namespace Fusee.PointCloud.OoCReaderWriter
                     },
 
                 },
-                Name="Pointcloud"
+                Name = "Pointcloud"
             };
             //scene.Children.Add(rootSnc);
             NumberOfOctants++;
