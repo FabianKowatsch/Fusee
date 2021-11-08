@@ -28,10 +28,10 @@ namespace Fusee.Examples.MuVista.Core
         public PanoSphere(string imageName)
         {
 
-
             _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"));
 
             Sphere sphere = new Sphere(10, 20, 50);
+
 
             TextureInputOpacity colorInput = new TextureInputOpacity()
             {
@@ -88,7 +88,7 @@ namespace Fusee.Examples.MuVista.Core
 
             var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex;
 
-            _surfaceEffect = new DefaultSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation);
+            _surfaceEffect = new DefaultSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_Pos);
 
             sphereTransform = new Transform()
             {
@@ -97,13 +97,6 @@ namespace Fusee.Examples.MuVista.Core
                 Translation = new float3(0, 0, 0)
             };
 
-            Mesh sphereMesh = new Mesh()
-            {
-                Vertices = sphere.Vertices,
-                Normals = sphere.Normals,
-                UVs = sphere.UVs,
-                Triangles = sphere.Triangles
-            };
 
 
             Components = new List<SceneComponent>()
@@ -114,7 +107,7 @@ namespace Fusee.Examples.MuVista.Core
                 },
                 sphereTransform,
                 _surfaceEffect,
-                sphereMesh,
+                sphere,
             };
         }
     }

@@ -4,6 +4,8 @@ using System.IO;
 using Fusee.Math.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Fusee.Base.Core;
+using System;
 
 public class PanoSphereFactory
 {
@@ -62,8 +64,17 @@ public class PanoSphereFactory
     private static PanoSphere createSphereWithShift(PanoImage img)
     {
         PanoSphere sphere = new PanoSphere(img.filename);
-        sphere.sphereTransform.Translation = new float3(new double3(img.X - offset.x, img.Y - offset.y, img.Z - offset.z));
-        sphere.sphereTransform.Rotation = new float3(new double3(img.roll, img.pitch, img.heading));
+        sphere.sphereTransform.Translation = new float3(new double3(center.x + img.X - offset.x, center.y + img.Y - offset.y, center.z + img.Z - offset.z));
+        sphere.sphereTransform.Rotation = new float3(new double3(degreeToRadian(img.roll), degreeToRadian(img.pitch), degreeToRadian(img.heading)));
+        //Diagnostics.Debug("imgX:" + (img.X - offset.x) + " | imgY" + (img.Y - offset.y) + " | imgZ" + (img.Z - offset.z));
+
+        Diagnostics.Debug("roll:" + img.roll + " | pitch" + img.pitch + " | heading" + img.heading);
+
         return sphere;
+    }
+
+    private static double degreeToRadian(double val)
+    {
+        return (Math.PI / 180) * val;
     }
 }

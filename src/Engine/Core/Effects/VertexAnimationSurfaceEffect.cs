@@ -10,8 +10,7 @@ namespace Fusee.Engine.Core.Effects
     /// </summary>
     public class VertexAnimationSurfaceEffect : DefaultSurfaceEffect
     {
-        private float _percentPerVertex;
-        private float _percentPerVertex1;
+
         /// <summary>
         /// The shader shard containing the PercentPerVertex uniform.
         /// </summary>
@@ -30,6 +29,7 @@ namespace Fusee.Engine.Core.Effects
             }
         }
 
+        private float _percentPerVertex = 1f;
         /// <summary>
         ///  The shader shard containing the PercentPerVertex1 uniform.
         /// </summary>
@@ -47,7 +47,7 @@ namespace Fusee.Engine.Core.Effects
                 SetFxParam(nameof(PercentPerVertex1), _percentPerVertex1);
             }
         }
-
+        private float _percentPerVertex1 = 0f;
 
         /// <summary>
         /// Creates a new instance of type VertexAnimationSurfaceEffect.

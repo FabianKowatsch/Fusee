@@ -110,6 +110,7 @@ namespace Fusee.Examples.MuVista.Core
         {
 
             _panoSphere = PanoSphereFactory.createPanoSpheres().ElementAt(0);
+            _panoSphere.Name = "PanoSphere";
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
@@ -187,6 +188,9 @@ namespace Fusee.Examples.MuVista.Core
 
             _scene.Children.Add(CreateWaypoint(new float3(40, 40, 0)));
             _scene.Children.Add(CreateWaypoint(new float3(50, 40, 0)));
+
+
+            _scene.Children.Add(_panoSphere);
 
             //_scene.Children.Add(miniMapCam);
 
@@ -397,12 +401,15 @@ namespace Fusee.Examples.MuVista.Core
             if (!_pointCloudActive)
             {
                 _mainCamTransform.Translation = _panoSphere.sphereTransform.Translation;
-                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                // _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
             else
             {
                 _mainCam.Fov = M.PiOver3;
-                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer02;
+                //_scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer02;
+                Diagnostics.Debug(_scene.Children.Find(children => children.Name == "PanoSphere"));
+                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer03;
             }
         }
 
@@ -416,8 +423,57 @@ namespace Fusee.Examples.MuVista.Core
 
         public void CalculateRotationAngle()
         {
-            IsAlive = false;
-            base.DeInit();
+            {
+                if (Mouse.LeftButton)
+                {
+                    _angleVelHorz = -RotationSpeed * Mouse.XVel * DeltaTime * 0.0005f;
+                    _angleVelVert = -RotationSpeed * Mouse.YVel * DeltaTime * 0.0005f;
+                }
+                else if (Touch.GetTouchActive(TouchPoints.Touchpoint_0))
+                {
+                    var touchVel = Touch.GetVelocity(TouchPoints.Touchpoint_0);
+                    _angleVelHorz = -RotationSpeed * touchVel.x * DeltaTime * 0.0005f;
+                    _angleVelVert = -RotationSpeed * touchVel.y * DeltaTime * 0.0005f;
+                }
+                else
+                {
+                    if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
+                    {
+                        _angleVelHorz = RotationSpeed * Keyboard.LeftRightAxis * DeltaTime;
+
+                        if (_angleVert < 0)
+                        {
+                            _angleVelVert = -(RotationSpeed / (((_angleVert * -1) + 1) * (1.5f))) * Keyboard.UpDownAxis * DeltaTime;
+                        }
+                        else
+                        {
+                            _angleVelVert = -(RotationSpeed / ((_angleVert + 1) * 1.5f)) * Keyboard.UpDownAxis * DeltaTime;
+                        }
+                    }
+                    else
+                    {
+                        var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
+                        _angleVelHorz *= curDamp;
+                        _angleVelVert *= curDamp;
+                    }
+                }
+                //Calculations to make sure the Camera has max vertical angle in Sphere View and max hor and vert translation in Plane View
+                if (!(_angleVert + _angleVelVert >= 1.5) && !(_angleVert + _angleVelVert <= -1.5))
+                {
+                    _angleVert += _angleVelVert;
+                }
+                if (_sphereIsVisible)
+                {
+                    _angleHorz += _angleVelHorz;
+                }
+                else
+                {
+                    if ((_angleHorz + _angleVelHorz) * CamTranslationSpeed <= _planeWidth / 2f && (_angleHorz + _angleVelHorz) * CamTranslationSpeed >= _planeWidth / -2f)
+                    {
+                        _angleHorz += _angleVelHorz;
+                    }
+                }
+            }
 
         }
         public void UpdateCameraTransform()
@@ -530,7 +586,7 @@ namespace Fusee.Examples.MuVista.Core
                 Layer = RenderLayers.All
             });
             _scene.Children.Add(root);
-
+            Diagnostics.Debug(root.GetComponent<Transform>().Translation);
             OocLoader.RootNode = root;
             OocLoader.FileFolderPath = PtRenderingParams.PathToOocFile;
 
