@@ -6,15 +6,15 @@ using Fusee.Engine.Core.Scene;
 using Fusee.Engine.Core.ShaderShards;
 using Fusee.Engine.Core.ShaderShards.Fragment;
 using Fusee.Engine.Core.ShaderShards.Vertex;
-using Fusee.PointCloud.Common;
 using Fusee.Engine.GUI;
 using Fusee.Math.Core;
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Text;
+using Fusee.PointCloud.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace Fusee.Examples.MuVista.Core
 {

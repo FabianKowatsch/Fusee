@@ -1,19 +1,19 @@
-﻿using Fusee.Base.Common;
+using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
 using Fusee.Engine.Core.Scene;
 using Fusee.Engine.Core.ShaderShards;
+using Fusee.Engine.GUI;
+using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
 using Fusee.PointCloud.OoCReaderWriter;
 using Fusee.PointCloud.PointAccessorCollections;
-using Fusee.Engine.GUI;
-using Fusee.Math.Core;
 using Fusee.Xene;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
 
@@ -401,15 +401,14 @@ namespace Fusee.Examples.MuVista.Core
             if (!_pointCloudActive)
             {
                 _mainCamTransform.Translation = _panoSphere.sphereTransform.Translation;
-                // _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
-                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
             else
             {
                 _mainCam.Fov = M.PiOver3;
-                //_scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer02;
-                Diagnostics.Debug(_scene.Children.Find(children => children.Name == "PanoSphere"));
-                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer03;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.None;
             }
         }
 

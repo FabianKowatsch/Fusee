@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Fusee.Math.Core;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Fusee.Math.Core;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 namespace JSONReducer
 {
     class Program
@@ -20,7 +20,7 @@ namespace JSONReducer
 
             List<PanoImage> newPanoList = alteredPanoList(imageFiles);
 
-            foreach(PanoImage img in newPanoList)
+            foreach (PanoImage img in newPanoList)
             {
                 Console.WriteLine(img.filename);
             }

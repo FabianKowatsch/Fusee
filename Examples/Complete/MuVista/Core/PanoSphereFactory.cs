@@ -1,6 +1,4 @@
 ﻿using Fusee.Examples.MuVista.Core;
-using System.Collections.Generic;
-using System.IO;
 using Fusee.Math.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
