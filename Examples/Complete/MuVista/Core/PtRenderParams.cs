@@ -17,9 +17,6 @@ namespace Fusee.Examples.MuVista.Core
 
         public static PtRenderingParams Instance { get; private set; } = new();
 
-        public ConcurrentDictionary<int, object> ShaderParamsToUpdate = new();
-        public int MaxNoOfVisiblePoints = 500000;
-        public string PathToOocFile = "E://BwSync//MuVista//Data//ProcessedPointCloud//small_workingCloud";
 
         public ShaderEffect DepthPassEf;
         public ShaderEffect ColorPassEf;
