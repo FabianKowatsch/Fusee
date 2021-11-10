@@ -3,158 +3,183 @@ using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
 using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Fusee.Examples.MuVista.Core
 {
-    public static class PtRenderingParams
+    public sealed class PtRenderingParams : IDisposable
     {
-        public static ConcurrentDictionary<string, object> ShaderParamsToUpdate = new ConcurrentDictionary<string, object>();
-        public static int MaxNoOfVisiblePoints = 500000;
-        public static string PathToOocFile = "E://BwSync//MuVista//Data//ProcessedPointCloud//testCloud_10Clouds";
 
-        public static ShaderEffect DepthPassEf;
-        public static ShaderEffect ColorPassEf;
+        public static PtRenderingParams Instance { get; private set; } = new();
 
-        private static Lighting _lighting = Lighting.Edl;
-        public static Lighting Lighting
+        public ConcurrentDictionary<int, object> ShaderParamsToUpdate = new();
+        public int MaxNoOfVisiblePoints = 500000;
+        public string PathToOocFile = "E://BwSync//MuVista//Data//ProcessedPointCloud//small_workingCloud";
+
+        public ShaderEffect DepthPassEf;
+        public ShaderEffect ColorPassEf;
+
+
+        private readonly int _lightingParamHash = "Lighting".GetHashCode();
+        private readonly int _pointShapeParamHash = "PointShape".GetHashCode();
+        private readonly int _pointModeParamHash = "PointMode".GetHashCode();
+        private readonly int _colorModeParamHash = "ColorMode".GetHashCode();
+        private readonly int _shininessParamHash = "Shininess".GetHashCode();
+        private readonly int _pointSizeParamHash = "PointSize".GetHashCode();
+        private readonly int _colorParamHash = "Color".GetHashCode();
+        private readonly int _calcSSAOParamHash = "CalcSSAO".GetHashCode();
+        private readonly int _ssaoStrengthParamHash = "SSAOStrength".GetHashCode();
+        private readonly int _edlNeighbourPixelsParamHash = "EDLNeighbourPixels".GetHashCode();
+        private readonly int _edlStrengthParamHash = "EDLStrength".GetHashCode();
+        private readonly int _specularStrengthParamHash = "SpecularStrength".GetHashCode();
+
+        private Lighting _lighting = Lighting.Edl;
+        public Lighting Lighting
         {
             get { return _lighting; }
             set
             {
                 _lighting = value;
-                ShaderParamsToUpdate.AddOrUpdate("Lighting", (int)Lighting, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_lightingParamHash, (int)Lighting, (key, val) => val);
             }
         }
 
-        private static PointShape _shape = PointShape.Paraboloid;
-        public static PointShape Shape
+        private PointShape _shape = PointShape.Paraboloid;
+        public PointShape Shape
         {
             get { return _shape; }
             set
             {
                 _shape = value;
-                ShaderParamsToUpdate.AddOrUpdate("PointShape", (int)Shape, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_pointShapeParamHash, (int)Shape, (key, val) => val);
             }
         }
 
-        private static PointSizeMode _ptMode = PointSizeMode.FixedPixelSize;
-        public static PointSizeMode PtMode
+        private PointSizeMode _ptMode = PointSizeMode.FixedPixelSize;
+        public PointSizeMode PtMode
         {
             get { return _ptMode; }
             set
             {
                 _ptMode = value;
-                ShaderParamsToUpdate.AddOrUpdate("PointMode", (int)PtMode, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_pointModeParamHash, (int)PtMode, (key, val) => val);
             }
         }
 
-        private static ColorMode _colorMode = ColorMode.Point;
-        public static ColorMode ColorMode
+        private ColorMode _colorMode = ColorMode.Single;
+
+        public ColorMode ColorMode
         {
             get { return _colorMode; }
             set
             {
                 _colorMode = value;
-                ShaderParamsToUpdate.AddOrUpdate("ColorMode", (int)ColorMode, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_colorModeParamHash, (int)ColorMode, (key, val) => val);
             }
         }
 
-        private static int _size = 10;
-        public static int Size
+        private int _size = 10;
+        public int Size
         {
             get { return _size; }
             set
             {
                 _size = value;
-                ShaderParamsToUpdate.AddOrUpdate("PointSize", Size, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_pointSizeParamHash, Size, (key, val) => val);
             }
         }
 
-        private static float4 _singleColor = new float4(0.8f, 0.8f, 0.8f, 1);
-        public static float4 SingleColor
+        private float4 _singleColor = new(0.8f, 0.8f, 0.8f, 1);
+        public float4 SingleColor
         {
-            get { return _singleColor; }
+            get => _singleColor;
             set
             {
                 _singleColor = value;
-                ShaderParamsToUpdate.AddOrUpdate("Color", SingleColor, (key, val) => val);
+                _ = ShaderParamsToUpdate.AddOrUpdate(_colorParamHash, SingleColor, (key, val) => val);
             }
         }
 
-        private static bool _calcSSAO = false;
-        public static bool CalcSSAO
+        private bool _calcSSAO = false;
+        public bool CalcSSAO
         {
             get { return _calcSSAO; }
             set
             {
                 _calcSSAO = value;
-                ShaderParamsToUpdate.AddOrUpdate("CalcSSAO", CalcSSAO ? 1 : 0, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_calcSSAOParamHash, CalcSSAO ? 1 : 0, (key, val) => val);
             }
         }
 
-        private static float _ssaoStrength = 0.2f;
-        public static float SSAOStrength
+        private float _ssaoStrength = 0.2f;
+        public float SSAOStrength
         {
             get { return _ssaoStrength; }
             set
             {
                 _ssaoStrength = value;
-                ShaderParamsToUpdate.AddOrUpdate("SSAOStrength", SSAOStrength, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_ssaoStrengthParamHash, SSAOStrength, (key, val) => val);
             }
         }
 
-        private static int _edlNoOfNeighbourPx = 2;
-        public static int EdlNoOfNeighbourPx
+        private int _edlNoOfNeighbourPx = 2;
+        public int EdlNoOfNeighbourPx
         {
             get { return _edlNoOfNeighbourPx; }
             set
             {
                 _edlNoOfNeighbourPx = value;
-                ShaderParamsToUpdate.AddOrUpdate("EDLNeighbourPixels", EdlNoOfNeighbourPx, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_edlNeighbourPixelsParamHash, EdlNoOfNeighbourPx, (key, val) => val);
             }
         }
 
-        private static float _edlStrength = 0.1f;
-        public static float EdlStrength
+        private float _edlStrength = 0.1f;
+        public float EdlStrength
         {
             get { return _edlStrength; }
             set
             {
                 _edlStrength = value;
-                ShaderParamsToUpdate.AddOrUpdate("EDLStrength", EdlStrength, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_edlStrengthParamHash, EdlStrength, (key, val) => val);
             }
         }
 
-        private static float _specularStrength = 0.2f;
-        public static float SpecularStrength
+        private float _specularStrength = 0.2f;
+        public float SpecularStrength
         {
             get { return _specularStrength; }
             set
             {
                 _specularStrength = value;
-                ShaderParamsToUpdate.AddOrUpdate("SpecularStrength", SpecularStrength, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_specularStrengthParamHash, SpecularStrength, (key, val) => val);
             }
         }
 
-        private static float _shininess = 2000;
-        public static float Shininess
+        private float _shininess = 2000;
+        public float Shininess
         {
             get { return _shininess; }
             set
             {
                 _shininess = value;
-                ShaderParamsToUpdate.AddOrUpdate("Shininess", Shininess, (key, val) => val);
+                ShaderParamsToUpdate.AddOrUpdate(_shininessParamHash, Shininess, (key, val) => val);
             }
         }
 
-        internal static ShaderEffect CreateDepthPassEffect(float2 screenParams, float initCamPosZ, Texture octreeTex, double3 octreeRootCenter, double octreeRootLength)
+        // Explicit static constructor to tell C# compiler
+        // not to mark type as beforefieldinit
+        static PtRenderingParams()
+        {
+        }
+
+        internal ShaderEffect CreateDepthPassEffect(float2 screenParams, float initCamPosZ, Texture octreeTex, double3 octreeRootCenter, double octreeRootLength)
         {
             return new ShaderEffect(
             new FxPassDeclaration
             {
-                VS = AssetStorage.Get<string>("PointCloud.vert"),
+                VS = AssetStorage.Get<string>("PointCloudLod.vert"),
                 PS = AssetStorage.Get<string>("PointDepth.frag"),
                 StateSet = new RenderStateSet
                 {
@@ -188,17 +213,17 @@ namespace Fusee.Examples.MuVista.Core
             });
         }
 
-        internal static ShaderEffect CreateColorPassEffect(float2 screenParams, float initCamPosZ, float2 clipPlaneDist, WritableTexture depthTex, Texture octreeTex, double3 octreeRootCenter, double octreeRootLength)
+        internal ShaderEffect CreateColorPassEffect(float2 screenParams, float initCamPosZ, float2 clipPlaneDist, WritableTexture depthTex, Texture octreeTex, double3 octreeRootCenter, double octreeRootLength)
         {
             var kernelLength = 32;
-            var ssaoKernel = SSAOHelper.CreateKernel(kernelLength);
-            var ssaoNoiseTex = SSAOHelper.CreateNoiseTex(32);
+            var ssaoKernel = FuseeSsaoHelper.CreateKernel(kernelLength);
+            var ssaoNoiseTex = FuseeSsaoHelper.CreateNoiseTex(32);
 
             return new ShaderEffect(
                 new FxPassDeclaration
                 {
-                    VS = AssetStorage.Get<string>("PointCloud.vert"),
-                    PS = AssetStorage.Get<string>("PointCloud.frag"),
+                    VS = AssetStorage.Get<string>("PointCloudLod.vert"),
+                    PS = AssetStorage.Get<string>("PointCloudLod.frag"),
                     StateSet = new RenderStateSet
                     {
                         AlphaBlendEnable = true,
@@ -246,6 +271,35 @@ namespace Fusee.Examples.MuVista.Core
                 new FxParamDeclaration<int> {Name = "CalcSSAO", Value = CalcSSAO ? 1 : 0},
                 new FxParamDeclaration<float> {Name = "SSAOStrength", Value = SSAOStrength}
             });
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private bool _disposed;
+
+        void Dispose(bool disposing)
+        {
+            // Check to see if Dispose has already been called.
+            if (!_disposed)
+            {
+                if (Instance != null)
+                {
+                    Instance = null;
+                }
+
+                // Note disposing has been done.
+                _disposed = true;
+            }
+
+        }
+
+        ~PtRenderingParams()
+        {
+            Dispose(false);
         }
     }
 }

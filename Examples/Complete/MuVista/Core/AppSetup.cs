@@ -1,5 +1,7 @@
 ﻿using Fusee.PointCloud.Common;
-using Fusee.PointCloud.PointAccessorCollections;
+using Fusee.PointCloud.Core;
+using Fusee.PointCloud.OoCReaderWriter;
+using System;
 
 namespace Fusee.Examples.MuVista.Core
 {
@@ -12,158 +14,125 @@ namespace Fusee.Examples.MuVista.Core
         /// <param name="ptType">The point type.</param>
         /// <param name="pointThreshold">Initial point threshold.</param>
         /// <param name="pathToFile">Path to the ooc file.</param>
-        public static void DoSetup(IPcRendering app, PointType ptType, int pointThreshold, string pathToFile)
+        public static void DoSetup(out IPcRendering app, PointType ptType, int pointThreshold, string pathToFile)
         {
             switch (ptType)
             {
                 case PointType.Pos64:
                     {
-                        var appImp = (MuVista<Pos64>)app;
+                        app = new MuVista<Pos64>(
 
-                        appImp.AppSetup = () =>
-                        {
+                             new PtOctantLoader<Pos64>(pathToFile, PointType.Pos64)
+                             {
+                                 PointThreshold = pointThreshold,
+                                 PtAcc = new Pos64_Accessor()
 
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64>(pathToFile, appImp.GetRc())
-                            {
-                                PointThreshold = pointThreshold,
-                                PtAcc = new Pos64_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64
+                             },
+                             new PtOctreeFileReader<Pos64>(pathToFile)
+                        );
 
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64>(pathToFile);
-                        };
-
-                        app = appImp;
                         break;
                     }
                 case PointType.Pos64Col32IShort:
                     {
-                        var appImp = (MuVista<Pos64Col32IShort>)app;
-
-                        appImp.AppSetup = () =>
-                        {
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64Col32IShort>(pathToFile, appImp.GetRc())
+                        app = new MuVista<Pos64Col32IShort>
+                        (
+                            new PtOctantLoader<Pos64Col32IShort>(pathToFile, PointType.Pos64Col32IShort)
                             {
                                 PointThreshold = pointThreshold,
-                                PtAcc = new Pos64Col32IShort_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64Col32IShort
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64Col32IShort>(pathToFile);
-                        };
+                                PtAcc = new Pos64Col32IShort_Accessor()
 
-                        app = appImp;
+                            },
+                            new PtOctreeFileReader<Pos64Col32IShort>(pathToFile)
+                        );
                         break;
                     }
                 case PointType.Pos64IShort:
                     {
-                        var appImp = (MuVista<Pos64IShort>)app;
-
-                        appImp.AppSetup = () =>
-                        {
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64IShort>(pathToFile, appImp.GetRc())
+                        app = new MuVista<Pos64IShort>
+                        (
+                            new PtOctantLoader<Pos64IShort>(pathToFile, PointType.Pos64IShort)
                             {
                                 PointThreshold = pointThreshold,
-                                PtAcc = new Pos64IShort_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64IShort
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64IShort>(pathToFile);
-                        };
+                                PtAcc = new Pos64IShort_Accessor()
 
-                        app = appImp;
+                            },
+                            new PtOctreeFileReader<Pos64IShort>(pathToFile)
+                        );
                         break;
                     }
                 case PointType.Pos64Col32:
                     {
-                        var appImp = (MuVista<Pos64Col32>)app;
-
-                        appImp.AppSetup = () =>
-                        {
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64Col32>(pathToFile, appImp.GetRc())
+                        app = new MuVista<Pos64Col32>
+                        (
+                            new PtOctantLoader<Pos64Col32>(pathToFile, PointType.Pos64Col32)
                             {
                                 PointThreshold = pointThreshold,
-                                PtAcc = new Pos64Col32_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64Col32
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64Col32>(pathToFile);
-                        };
+                                PtAcc = new Pos64Col32_Accessor()
 
-                        app = appImp;
+                            },
+                            new PtOctreeFileReader<Pos64Col32>(pathToFile)
+                        );
                         break;
                     }
                 case PointType.Pos64Label8:
                     {
-                        var appImp = (MuVista<Pos64Label8>)app;
-
-                        appImp.AppSetup = () =>
-                        {
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64Label8>(pathToFile, appImp.GetRc())
+                        app = new MuVista<Pos64Label8>
+                        (
+                            new PtOctantLoader<Pos64Label8>(pathToFile, PointType.Pos64Label8)
                             {
                                 PointThreshold = pointThreshold,
-                                PtAcc = new Pos64Label8_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64Label8
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64Label8>(pathToFile);
-                        };
+                                PtAcc = new Pos64Label8_Accessor()
 
-                        app = appImp;
+                            },
+                            new PtOctreeFileReader<Pos64Col32>(pathToFile)
+                        );
                         break;
                     }
                 case PointType.Pos64Nor32Col32IShort:
                     {
-                        var appImp = (MuVista<Pos64Nor32Col32IShort>)app;
-
-                        appImp.AppSetup = () =>
-                        {
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64Nor32Col32IShort>(pathToFile, appImp.GetRc())
+                        app = new MuVista<Pos64Nor32Col32IShort>
+                        (
+                            new PtOctantLoader<Pos64Nor32Col32IShort>(pathToFile, PointType.Pos64Nor32Col32IShort)
                             {
                                 PointThreshold = pointThreshold,
-                                PtAcc = new Pos64Nor32Col32IShort_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64Nor32Col32IShort
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64Nor32Col32IShort>(pathToFile);
-                        };
+                                PtAcc = new Pos64Nor32Col32IShort_Accessor()
 
-                        app = appImp;
+                            },
+                            new PtOctreeFileReader<Pos64Nor32Col32IShort>(pathToFile)
+                        );
                         break;
                     }
                 case PointType.Pos64Nor32IShort:
                     {
-                        var appImp = (MuVista<Pos64Nor32IShort>)app;
-
-                        appImp.AppSetup = () =>
-                        {
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64Nor32IShort>(pathToFile, appImp.GetRc())
+                        app = new MuVista<Pos64Nor32IShort>
+                        (
+                            new PtOctantLoader<Pos64Nor32IShort>(pathToFile, PointType.Pos64Nor32IShort)
                             {
                                 PointThreshold = pointThreshold,
-                                PtAcc = new Pos64Nor32IShort_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64Nor32IShort
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64Nor32IShort>(pathToFile);
-                        };
+                                PtAcc = new Pos64Nor32IShort_Accessor()
 
-                        app = appImp;
+                            },
+                            new PtOctreeFileReader<Pos64Nor32IShort>(pathToFile)
+                        );
                         break;
                     }
                 case PointType.Pos64Nor32Col32:
                     {
-                        var appImp = (MuVista<Pos64Nor32Col32>)app;
-
-                        appImp.AppSetup = () =>
-                        {
-                            appImp.OocLoader = new PointCloud.OoCReaderWriter.PtOctantLoader<Pos64Nor32Col32>(pathToFile, appImp.GetRc())
+                        app = new MuVista<Pos64Nor32Col32>
+                        (
+                            new PtOctantLoader<Pos64Nor32Col32>(pathToFile, PointType.Pos64Nor32Col32)
                             {
                                 PointThreshold = pointThreshold,
-                                PtAcc = new Pos64Nor32Col32_Accessor(),
-                                GetMeshsForNode = MeshFromOocFile.GetMeshsForNode_Pos64Nor32Col32
-                            };
-                            appImp.OocFileReader = new PointCloud.OoCReaderWriter.PtOctreeFileReader<Pos64Nor32Col32>(pathToFile);
-                        };
+                                PtAcc = new Pos64Nor32Col32_Accessor()
 
-                        app = appImp;
+                            },
+                            new PtOctreeFileReader<Pos64Nor32Col32>(pathToFile)
+                        );
                         break;
                     }
                 default:
-                    break;
+                    throw new ArgumentException($"Unsupported point type: {ptType}");
             }
         }
     }

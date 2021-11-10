@@ -5,11 +5,10 @@ using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
 using Fusee.Engine.Core.Scene;
 using Fusee.Engine.Core.ShaderShards;
-using Fusee.Engine.GUI;
+using Fusee.Engine.Gui;
 using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
 using Fusee.PointCloud.OoCReaderWriter;
-using Fusee.PointCloud.PointAccessorCollections;
 using Fusee.Xene;
 using System;
 using System.Collections.Generic;
@@ -22,11 +21,15 @@ namespace Fusee.Examples.MuVista.Core
     [FuseeApplication(Name = "FUSEE MuVista Viewer", Description = "Viewer for Pointclouds and 360 degree pictures.")]
     public class MuVista<TPoint> : RenderCanvas, IPcRendering where TPoint : new()
     {
-        public AppSetupHelper.AppSetupDelegate AppSetup;
+        public MuVista(IPtOctantLoader oocLoader, IPtOctreeFileReader oocFileReader)
+        {
+            OocLoader = oocLoader;
+            OocFileReader = oocFileReader;
+        }
+        public IPtOctantLoader OocLoader { get; }
+        public IPtOctreeFileReader OocFileReader { get; }
 
-        public PtOctantLoader<TPoint> OocLoader { get; set; }
-
-        public PtOctreeFileReader<TPoint> OocFileReader { get; set; }
+        //public AppSetupHelper.AppSetupDelegate AppSetup;
 
         public bool UseWPF { get; set; }
         public bool DoShowOctants { get; set; }
@@ -35,6 +38,18 @@ namespace Fusee.Examples.MuVista.Core
         public bool IsInitialized { get; private set; } = false;
         public bool IsAlive { get; private set; }
 
+        public bool ClosingRequested
+        {
+            get
+            {
+                return _closingRequested;
+            }
+            set
+            {
+                _closingRequested = value;
+            }
+        }
+        private bool _closingRequested;
 
         private const float CamTranslationSpeed = -3;
         private const float RotationSpeed = 7;
@@ -62,12 +77,20 @@ namespace Fusee.Examples.MuVista.Core
         private readonly float Fov = M.PiOver3;
 
         private SceneRendererForward _guiRenderer;
-        private GUI _gui;
+        //private GUI _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
         private float3 _initCamPos;
-        public float3 InitCameraPos { get => _initCamPos; private set { _initCamPos = value; OocLoader.InitCamPos = _initCamPos; } }
+        public float3 InitCameraPos
+        {
+            get => _initCamPos;
+            private set
+            {
+                _initCamPos = value;
+                OocLoader.InitCamPos = new double3(_initCamPos.x, _initCamPos.y, _initCamPos.z);
+            }
+        }
 
 
         private float3 _camPosBeforeSwitching = float3.Zero;
@@ -113,10 +136,10 @@ namespace Fusee.Examples.MuVista.Core
             _panoSphere.Name = "PanoSphere";
             _spaceMouse = GetDevice<SixDOFDevice>();
 
-            _depthTex = WritableTexture.CreateDepthTex(Width, Height);
+            _depthTex = WritableTexture.CreateDepthTex(Width, Height, new ImagePixelFormat(ColorFormat.Depth24));
 
             IsAlive = true;
-            AppSetup();
+            //AppSetup();
 
             _scene = new SceneContainer
             {
@@ -192,15 +215,15 @@ namespace Fusee.Examples.MuVista.Core
 
             _scene.Children.Add(_panoSphere);
 
-            //_scene.Children.Add(miniMapCam);
+            _scene.Children.Add(miniMapCam);
 
-            _gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
+            //_gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
             //Create the interaction handler
-            _sih = new SceneInteractionHandler(_gui);
+            //_sih = new SceneInteractionHandler(_gui);
 
             // Wrap a SceneRenderer around the model.
             _sceneRenderer = new SceneRendererForward(_scene);
-            _guiRenderer = new SceneRendererForward(_gui);
+            //_guiRenderer = new SceneRendererForward(_gui);
 
             _scenePicker = new ScenePicker(_scene);
             /*-----------------------------------------------------------------------
@@ -235,8 +258,8 @@ namespace Fusee.Examples.MuVista.Core
                     OocLoader.IsUserMoving = false;*/
                 //--------------------------------------------------------------------------------------------
                 #region Controls
-                HndGuiButtonInput();
-                MouseWheelZoom();
+                //HndGuiButtonInput();
+                //MouseWheelZoom();
 
                 if (Keyboard.IsKeyDown(KeyCodes.Enter))
                 {
@@ -248,10 +271,10 @@ namespace Fusee.Examples.MuVista.Core
                     SwitchCamViewport();
                 }
 
-                if (_inverseCams)
-                {
+                //if (_inverseCams)
+                //{
                     CheckWaypointPicking();
-                }
+                //}
 
                 if (_pointCloudActive)
                 {
@@ -268,11 +291,11 @@ namespace Fusee.Examples.MuVista.Core
 
                 //----------------------------  
 
-                if (PtRenderingParams.CalcSSAO || PtRenderingParams.Lighting != Lighting.Unlit)
+                if (PtRenderingParams.Instance.CalcSSAO || PtRenderingParams.Instance.Lighting != Lighting.Unlit)
                 {
                     //Render Depth-only pass
                     _scene.Children[1].RemoveComponent<ShaderEffect>();
-                    _scene.Children[1].Components.Insert(1, PtRenderingParams.DepthPassEf);
+                    _scene.Children[1].Components.Insert(1, PtRenderingParams.Instance.DepthPassEf);
 
                     _mainCam.RenderTexture = _depthTex;
                     _sceneRenderer.Render(RC);
@@ -282,19 +305,19 @@ namespace Fusee.Examples.MuVista.Core
                 //Render color pass
                 //Change shader effect in complete scene
                 _scene.Children[1].RemoveComponent<ShaderEffect>();
-                _scene.Children[1].Components.Insert(1, PtRenderingParams.ColorPassEf);
+                _scene.Children[1].Components.Insert(1, PtRenderingParams.Instance.ColorPassEf);
                 _sceneRenderer.Render(RC);
 
                 //UpdateScene after Render / Traverse because there we calculate the view matrix (when using a camera) we need for the update.
-                OocLoader.RC = RC;
-                OocLoader.UpdateScene(PtRenderingParams.PtMode, PtRenderingParams.DepthPassEf, PtRenderingParams.ColorPassEf);
+                //OocLoader.RC = RC;
+                OocLoader.UpdateScene(PtRenderingParams.Instance.PtMode, PtRenderingParams.Instance.DepthPassEf, PtRenderingParams.Instance.ColorPassEf);
 
                 if (UseWPF)
                 {
-                    if (PtRenderingParams.ShaderParamsToUpdate.Count != 0)
+                    if (PtRenderingParams.Instance.ShaderParamsToUpdate.Count != 0)
                     {
                         UpdateShaderParams();
-                        PtRenderingParams.ShaderParamsToUpdate.Clear();
+                        PtRenderingParams.Instance.ShaderParamsToUpdate.Clear();
                     }
                 }
 
@@ -375,7 +398,7 @@ namespace Fusee.Examples.MuVista.Core
                 float speed = DeltaTime * 12;
 
                 _mainCamTransform.FpsView(_angleHorz, _angleVert, velPos.z, velPos.x, speed);
-                _mainCamTransform.Translation.y += velPos.y * speed;
+                //_mainCamTransform.Translation.y += velPos.y * speed;
             }
             else
             {
@@ -390,8 +413,8 @@ namespace Fusee.Examples.MuVista.Core
                 }
             }
 
-            _minimapCamTransform.Translation.z = _mainCamTransform.Translation.z;
-            _minimapCamTransform.Translation.x = _mainCamTransform.Translation.x;
+            //_minimapCamTransform.Translation.z = _mainCamTransform.Translation.z;
+            //_minimapCamTransform.Translation.x = _mainCamTransform.Translation.x;
         }
 
         private void switchModes()
@@ -402,13 +425,13 @@ namespace Fusee.Examples.MuVista.Core
             {
                 _mainCamTransform.Translation = _panoSphere.sphereTransform.Translation;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
-                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
             else
             {
                 _mainCam.Fov = M.PiOver3;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
-                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.None;
+                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.None;
             }
         }
 
@@ -508,16 +531,16 @@ namespace Fusee.Examples.MuVista.Core
         // Is called when the window was resized
         public override void Resize(ResizeEventArgs e)
         {
-            if (!PtRenderingParams.CalcSSAO && PtRenderingParams.Lighting == Lighting.Unlit) return;
+            if (!PtRenderingParams.Instance.CalcSSAO && PtRenderingParams.Instance.Lighting == Lighting.Unlit) return;
 
             //(re)create depth tex and fbo
             if (_isTexInitialized)
             {
-                _depthTex = WritableTexture.CreateDepthTex(Width, Height);
+                _depthTex = WritableTexture.CreateDepthTex(Width, Height, new ImagePixelFormat(ColorFormat.Depth24));
 
-                PtRenderingParams.DepthPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
-                PtRenderingParams.ColorPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
-                PtRenderingParams.ColorPassEf.SetFxParam("DepthTex", _depthTex);
+                PtRenderingParams.Instance.DepthPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
+                PtRenderingParams.Instance.ColorPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
+                PtRenderingParams.Instance.ColorPassEf.SetFxParam("DepthTex", _depthTex);
             }
 
             _isTexInitialized = true;
@@ -587,7 +610,7 @@ namespace Fusee.Examples.MuVista.Core
             _scene.Children.Add(root);
             Diagnostics.Debug(root.GetComponent<Transform>().Translation);
             OocLoader.RootNode = root;
-            OocLoader.FileFolderPath = PtRenderingParams.PathToOocFile;
+            OocLoader.FileFolderPath = PtRenderingParams.Instance.PathToOocFile;
 
             var octreeTexImgData = new ImageData(ColorFormat.uiRgb8, OocFileReader.NumberOfOctants, 1);
             _octreeTex = new Texture(octreeTexImgData);
@@ -600,15 +623,15 @@ namespace Fusee.Examples.MuVista.Core
             _octreeRootCenter = ptRootComponent.Center;
             _octreeRootLength = ptRootComponent.Size;
 
-            PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
-            PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.Instance.DepthPassEf = PtRenderingParams.Instance.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.Instance.ColorPassEf = PtRenderingParams.Instance.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
 
             var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
             pointcloud.RemoveComponent<ShaderEffect>();
-            if (PtRenderingParams.CalcSSAO || PtRenderingParams.Lighting != Lighting.Unlit)
-                pointcloud.AddComponent(PtRenderingParams.DepthPassEf);
+            if (PtRenderingParams.Instance.CalcSSAO || PtRenderingParams.Instance.Lighting != Lighting.Unlit)
+                pointcloud.AddComponent(PtRenderingParams.Instance.DepthPassEf);
             else
-                pointcloud.AddComponent(PtRenderingParams.ColorPassEf);
+                pointcloud.AddComponent(PtRenderingParams.Instance.ColorPassEf);
 
             IsSceneLoaded = true;
         }
@@ -642,102 +665,101 @@ namespace Fusee.Examples.MuVista.Core
                 continue;
             }
 
-            DoShowOctants = false;
-            OocLoader.DeleteOctants(_scene);
-            IsSceneLoaded = true;
+            if (OocLoader.RootNode != null)
+                _scene.Children.Remove(OocLoader.RootNode);
         }
 
-        private void UpdateShaderParams()
+        private static void UpdateShaderParams()
         {
-            foreach (var param in PtRenderingParams.ShaderParamsToUpdate)
+            foreach (var param in PtRenderingParams.Instance.ShaderParamsToUpdate)
             {
-                if (PtRenderingParams.DepthPassEf.ParamDecl.ContainsKey(param.Key))
-                    PtRenderingParams.DepthPassEf.SetFxParam(param.Key, param.Value);
-                if (PtRenderingParams.ColorPassEf.ParamDecl.ContainsKey(param.Key))
-                    PtRenderingParams.ColorPassEf.SetFxParam(param.Key, param.Value);
+                if (PtRenderingParams.Instance.DepthPassEf.ParamDecl.ContainsKey(param.Key))
+                    PtRenderingParams.Instance.DepthPassEf.SetFxParam(param.Key, param.Value);
+                if (PtRenderingParams.Instance.ColorPassEf.ParamDecl.ContainsKey(param.Key))
+                    PtRenderingParams.Instance.ColorPassEf.SetFxParam(param.Key, param.Value);
             }
 
-            PtRenderingParams.ShaderParamsToUpdate.Clear();
+            PtRenderingParams.Instance.ShaderParamsToUpdate.Clear();
         }
 
-        public void HndGuiButtonInput()
-        {
-            if (_gui._btnZoomOut.IsMouseOver)
-            {
-                _gui._btnZoomOut.OnMouseDown += BtnZoomOutDown;
-            }
+        //public void HndGuiButtonInput()
+        //{
+        //    if (_gui._btnZoomOut.IsMouseOver)
+        //    {
+        //        _gui._btnZoomOut.OnMouseDown += BtnZoomOutDown;
+        //    }
 
-            if (_gui._btnZoomIn.IsMouseOver)
-            {
-                _gui._btnZoomIn.OnMouseDown += BtnZoomInDown;
-            }
+        //    if (_gui._btnZoomIn.IsMouseOver)
+        //    {
+        //        _gui._btnZoomIn.OnMouseDown += BtnZoomInDown;
+        //    }
 
-            if (_gui._btnMiniMap.IsMouseOver)
-            {
-                _gui._btnMiniMap.OnMouseDown += OnMinimapDown;
-            }
-        }
+        //    if (_gui._btnMiniMap.IsMouseOver)
+        //    {
+        //        _gui._btnMiniMap.OnMouseDown += OnMinimapDown;
+        //    }
+        //}
 
-        public void MouseWheelZoom()
-        {
-            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
+        //public void MouseWheelZoom()
+        //{
+        //    _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
 
-            if (_sphereIsVisible)
-            {
-                if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
-                {
-                    _mainCam.Fov += _zoom;
-                }
-            }
-            else
-            {
-                if (_zoom != 0)
-                {
-                    if (!(_mainCam.Fov + _zoom >= M.PiOver2) && !(_mainCam.Fov + _zoom <= 0.3))
-                    {
-                        _mainCam.Fov += _zoom;
-                    }
-                }
-            }
-        }
+        //    if (_sphereIsVisible)
+        //    {
+        //        if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
+        //        {
+        //            _mainCam.Fov += _zoom;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (_zoom != 0)
+        //        {
+        //            if (!(_mainCam.Fov + _zoom >= M.PiOver2) && !(_mainCam.Fov + _zoom <= 0.3))
+        //            {
+        //                _mainCam.Fov += _zoom;
+        //            }
+        //        }
+        //    }
+        //}
 
-        public void BtnZoomOutDown(CodeComponent sender)
-        {
-            if (_sphereIsVisible)
-            {
-                if (_inverseCams)
-                {
-                    if (_minimapCam.Fov + 0.001 <= 1.2f)
-                    {
-                        _minimapCam.Fov += 0.001f;
-                    }
-                }
-                else
-                {
-                    if (_mainCam.Fov + 0.001 <= 1.2f)
-                    {
-                        _mainCam.Fov += 0.001f;
-                    }
-                }
-            }
-            else
-            {
-                if (_inverseCams)
-                {
-                    if (!(_minimapCam.Fov + 0.001f >= M.PiOver3) && !(_minimapCam.Fov + 0.001f <= 0.3))
-                    {
-                        _minimapCam.Fov += 0.001f;
-                    }
-                }
-                else
-                {
-                    if (!(_mainCam.Fov + 0.001f >= M.PiOver3) && !(_mainCam.Fov + 0.001f <= 0.3))
-                    {
-                        _mainCam.Fov += 0.001f;
-                    }
-                }
-            }
-        }
+        //public void BtnZoomOutDown(CodeComponent sender)
+        //{
+        //    if (_sphereIsVisible)
+        //    {
+        //        if (_inverseCams)
+        //        {
+        //            if (_minimapCam.Fov + 0.001 <= 1.2f)
+        //            {
+        //                _minimapCam.Fov += 0.001f;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            if (_mainCam.Fov + 0.001 <= 1.2f)
+        //            {
+        //                _mainCam.Fov += 0.001f;
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (_inverseCams)
+        //        {
+        //            if (!(_minimapCam.Fov + 0.001f >= M.PiOver3) && !(_minimapCam.Fov + 0.001f <= 0.3))
+        //            {
+        //                _minimapCam.Fov += 0.001f;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            if (!(_mainCam.Fov + 0.001f >= M.PiOver3) && !(_mainCam.Fov + 0.001f <= 0.3))
+        //            {
+        //                _mainCam.Fov += 0.001f;
+        //            }
+        //        }
+        //    }
+        //}
 
         public void BtnZoomInDown(CodeComponent sender)
         {
@@ -912,11 +934,11 @@ namespace Fusee.Examples.MuVista.Core
         {
             if (Mouse.LeftButton)
             {
-                //float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
+                float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
 
-                //PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
+                PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
 
-                //Diagnostics.Debug(newPick.Node.Name);
+                Diagnostics.Debug(newPick.Node.Name);
                 //if (newPick?.Node != _currentPick?.Node)
                 //{
                 //    if (_currentPick != null)

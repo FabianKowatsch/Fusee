@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputPath>$(BaseOutputPath)\Examples\MuVista\Core\</OutputPath>
   </PropertyGroup>
 
@@ -25,7 +25,5 @@
 	<ProjectReference Include="$(FuseeEngineRoot)\src\Serialization\Fusee.Serialization.csproj" />
 	<ProjectReference Include="$(FuseeEngineRoot)\src\Pointcloud\Common\Fusee.PointCloud.Common.csproj" />
 	<ProjectReference Include="$(FuseeEngineRoot)\src\Pointcloud\PointAccessorCollection\Fusee.PointCloud.PointAccessorCollections.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Pointcloud\Common\Fusee.PointCloud.Common.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Pointcloud\PointAccessorCollection\Fusee.PointCloud.PointAccessorCollections.csproj" />
   </ItemGroup>
 </Project>

@@ -7,6 +7,7 @@ using Fusee.Engine.Core.Scene;
 using Fusee.Engine.Core.ShaderShards;
 using Fusee.Engine.Core.ShaderShards.Fragment;
 using Fusee.Engine.Core.ShaderShards.Vertex;
+using Fusee.Engine.Gui;
 using Fusee.Engine.GUI;
 using Fusee.Math.Core;
 using Fusee.Xene;
@@ -40,8 +41,8 @@ namespace Fusee.Examples.SphereImageViewer.Core
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
-        private GUIButton _btnZoomIn;
-        private GUIButton _btnZoomOut;
+        private GuiButton _btnZoomIn;
+        private GuiButton _btnZoomOut;
 
         private bool _keys;
 

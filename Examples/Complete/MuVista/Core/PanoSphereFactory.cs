@@ -4,12 +4,14 @@ using Fusee.Math.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.IO;
 
 public class PanoSphereFactory
 {
-    private static string pathToImageData = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json";
+    private static string pathToImageData = "E:\\Users\\Joni\\Dokumente\\GitHub\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json";
 
-    private static string pathToMeta = PtRenderingParams.PathToOocFile + "\\meta.json";
+    private static string pathToMeta = PtRenderingParams.Instance.PathToOocFile + "\\meta.json";
     private static double3 offset;
     private static double3 scale;
     private static double3 center;
