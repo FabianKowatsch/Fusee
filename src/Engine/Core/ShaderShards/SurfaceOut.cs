@@ -33,6 +33,10 @@ namespace Fusee.Engine.Core.ShaderShards
         Edl = 128,
 
         /// <summary>
+        /// Does this Effect have an albedo texture and does it have a variable opacity?
+        /// </summary>
+        AlbedoTexOpacity = 128,
+        /// <summary>
         /// This effect is fully metallic by default - needs a roughness value.
         /// </summary>
         Glossy = 64,

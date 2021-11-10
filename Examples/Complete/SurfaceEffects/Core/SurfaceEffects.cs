@@ -1,3 +1,5 @@
+
+using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core;
@@ -105,6 +107,19 @@ namespace Fusee.Examples.SurfaceEffects.Core
                 ior: 1.519f,
                 subsurface: 0
             );
+
+            _subsurf_brdfFx = MakeEffect.FromBRDF
+            (
+                albedoColor: new float4(255f / 256f, 234f / 256f, 215f / 256f, 1.0f).LinearColorFromSRgb(),
+                emissionColor: new float4(),
+                roughness: 0.508f,
+                metallic: 0,
+                specular: 0.079f,
+                ior: 1.4f,
+                subsurface: 1.0f
+            );
+
+
 
             _rocketScene.Children[0].Components[1] = _testFx;//_subsurf_brdfFx;
             _rocketScene.Children[1].Components[1] = _rubber_brdfFx;

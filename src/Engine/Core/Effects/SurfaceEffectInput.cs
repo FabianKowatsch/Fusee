@@ -347,6 +347,32 @@ namespace Fusee.Engine.Core.Effects
 
     /// <summary>
     /// Class that can be used to collect properties that will serve as uniforms for a specific lighting setup.
+    /// In this case for specular lighting with strength, shininess and opacity.
+    /// </summary>
+    public class TextureInputOpacity : TextureInputSpecular
+    {
+        /// <summary>
+        /// The roughness value. If 0.0 the diffuse component gives standard Lambertian reflection, higher values activate the Oren-Nayar calculation.
+        /// </summary>
+        public float TexOpacity
+        {
+            get => _texOpacity;
+
+            set
+            {
+                if (value != _texOpacity)
+                {
+                    _texOpacity = value;
+                    NotifyPropertyChanged(_texOpacity.GetType(), nameof(TexOpacity), _texOpacity);
+                }
+            }
+        }
+        private float _texOpacity = 1f;
+    }
+
+
+    /// <summary>
+    /// Class that can be used to collect properties that will serve as uniforms for a specific lighting setup.
     /// In this case for specular lighting with strength and shininess.
     /// </summary>
     public class TextureInputColorUnlit : ColorInput

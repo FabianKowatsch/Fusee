@@ -596,9 +596,11 @@ namespace Fusee.Engine.Imp.Graphics.Android
 
             // enable GLSL (ES) shaders to use fuVertex, fuColor and fuNormal attributes
             GL.BindAttribLocation(program, AttributeLocations.VertexAttribLocation, UniformNameDeclarations.Vertex);
+            GL.BindAttribLocation(program, AttributeLocations.VertexAttribLocation, UniformNameDeclarations.Vertex1);
             GL.BindAttribLocation(program, AttributeLocations.ColorAttribLocation, UniformNameDeclarations.VertexColor);
             GL.BindAttribLocation(program, AttributeLocations.UvAttribLocation, UniformNameDeclarations.TextureCoordinates);
             GL.BindAttribLocation(program, AttributeLocations.NormalAttribLocation, UniformNameDeclarations.Normal);
+            GL.BindAttribLocation(program, AttributeLocations.NormalAttribLocation, UniformNameDeclarations.Normal1);
             GL.BindAttribLocation(program, AttributeLocations.TangentAttribLocation, UniformNameDeclarations.Tangent);
             GL.BindAttribLocation(program, AttributeLocations.BoneIndexAttribLocation, UniformNameDeclarations.BoneIndex);
             GL.BindAttribLocation(program, AttributeLocations.BoneWeightAttribLocation, UniformNameDeclarations.BoneWeight);
@@ -1200,12 +1202,34 @@ namespace Fusee.Engine.Imp.Graphics.Android
         }
 
         /// <summary>
-        /// Binds the tangents onto the GL render context and assigns an TangentBuffer index to the passed <see cref="IMeshImp" /> instance.
+        /// Binds the second vertices onto the GL render context and assigns an VertexBuffer index to the passed <see cref="IMeshImp" /> instance.
         /// </summary>
         /// <param name="mr">The <see cref="IMeshImp" /> instance.</param>
-        /// <param name="tangents">The tangents.</param>
-        /// <exception cref="System.ArgumentException">Tangents must not be null or empty</exception>
+        /// <param name="vertices1">The second vertices.</param>
+        /// <exception cref="System.ArgumentException">Vertices1 must not be null or empty</exception>
         /// <exception cref="System.ApplicationException"></exception>
+        public void SetVertices1(IMeshImp mr, float3[] vertices1)
+        {
+            if (vertices1 == null || vertices1.Length == 0)
+            {
+                throw new ArgumentException("Vertices1 must not be null or empty");
+            }
+
+            int vboBytes;
+            int vertsBytes = vertices1.Length * 3 * sizeof(float);
+            if (((MeshImp)mr).Vertex1BufferObject == 0)
+                GL.GenBuffers(1, out ((MeshImp)mr).Vertex1BufferObject);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).Vertex1BufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(vertsBytes), vertices1, BufferUsage.StaticDraw);
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out vboBytes);
+            if (vboBytes != vertsBytes)
+                throw new ApplicationException(string.Format(
+                    "Problem uploading vertex buffer to VBO (vertices1). Tried to upload {0} bytes, uploaded {1}.",
+                    vertsBytes, vboBytes));
+
+        }
+
         public void SetTangents(IMeshImp mr, float4[] tangents)
         {
             if (tangents == null || tangents.Length == 0)
@@ -1278,6 +1302,33 @@ namespace Fusee.Engine.Imp.Graphics.Android
             if (vboBytes != normsBytes)
                 throw new ApplicationException(String.Format(
                     "Problem uploading normal buffer to VBO (normals). Tried to upload {0} bytes, uploaded {1}.",
+                    normsBytes, vboBytes));
+        }
+
+        /// <summary>
+        /// Binds the normals onto the GL Render context and assigns an NormalBuffer index to the passed <see cref="IMeshImp" /> instance.
+        /// </summary>
+        /// <param name="mr">The <see cref="IMeshImp" /> instance.</param>
+        /// <param name="normals">The normals.</param>
+        /// <exception cref="System.ArgumentException">Normals must not be null or empty</exception>
+        /// <exception cref="System.ApplicationException"></exception>
+        public void SetNormals1(IMeshImp mr, float3[] normals1)
+        {
+            if (normals1 == null || normals1.Length == 0)
+            {
+                throw new ArgumentException("Normals1 must not be null or empty");
+            }
+
+            int normsBytes = normals1.Length * 3 * sizeof(float);
+            if (((MeshImp)mr).Normal1BufferObject == 0)
+                GL.GenBuffers(1, out ((MeshImp)mr).Normal1BufferObject);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).Normal1BufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(normsBytes), normals1, BufferUsage.StaticDraw);
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out int vboBytes);
+            if (vboBytes != normsBytes)
+                throw new ApplicationException(String.Format(
+                    "Problem uploading normal buffer to VBO (normals1). Tried to upload {0} bytes, uploaded {1}.",
                     normsBytes, vboBytes));
         }
 
@@ -1431,7 +1482,17 @@ namespace Fusee.Engine.Imp.Graphics.Android
         /// <summary>
         /// Deletes the buffer associated with the mesh implementation.
         /// </summary>
-        /// <param name="mr">The mesh which buffer respectively GPU memory should be deleted.</param>
+        /// <param name="mesh">The mesh which buffer respectively GPU memory should be deleted.</param>
+        public void RemoveVertices1(IMeshImp mr)
+        {
+            GL.DeleteBuffers(1, ref ((MeshImp)mr).Vertex1BufferObject);
+            ((MeshImp)mr).InvalidateVertices1();
+        }
+
+        /// <summary>
+        /// Deletes the buffer associated with the mesh implementation.
+        /// </summary>
+        /// <param name="mesh">The mesh which buffer respectively GPU memory should be deleted.</param>
         public void RemoveNormals(IMeshImp mr)
         {
             GL.DeleteBuffers(1, ref ((MeshImp)mr).NormalBufferObject);
@@ -1441,7 +1502,17 @@ namespace Fusee.Engine.Imp.Graphics.Android
         /// <summary>
         /// Deletes the buffer associated with the mesh implementation.
         /// </summary>
-        /// <param name="mr">The mesh which buffer respectively GPU memory should be deleted.</param>
+        /// <param name="mesh">The mesh which buffer respectively GPU memory should be deleted.</param>
+        public void RemoveNormals1(IMeshImp mr)
+        {
+            GL.DeleteBuffers(1, ref ((MeshImp)mr).Normal1BufferObject);
+            ((MeshImp)mr).InvalidateNormals1();
+        }
+
+        /// <summary>
+        /// Deletes the buffer associated with the mesh implementation.
+        /// </summary>
+        /// <param name="mesh">The mesh which buffer respectively GPU memory should be deleted.</param>
         public void RemoveColors(IMeshImp mr)
         {
             GL.DeleteBuffers(1, ref ((MeshImp)mr).ColorBufferObject);
@@ -1541,6 +1612,13 @@ namespace Fusee.Engine.Imp.Graphics.Android
                 GL.VertexAttribPointer(AttributeLocations.VertexAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
                     IntPtr.Zero);
             }
+            if (((MeshImp)mr).Vertex1BufferObject != 0)
+            {
+                GL.EnableVertex1AttribArray(AttributeLocations.Vertex1AttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).Vertex1BufferObject);
+                GL.VertexAttribPointer(AttributeLocations.Vertex1AttribLocation, 3, VertexAttribPointerType.Float, false, 0,
+                    IntPtr.Zero);
+            }
             if (((MeshImp)mr).ColorBufferObject != 0)
             {
                 GL.EnableVertexAttribArray(AttributeLocations.ColorAttribLocation);
@@ -1561,6 +1639,13 @@ namespace Fusee.Engine.Imp.Graphics.Android
                 GL.EnableVertexAttribArray(AttributeLocations.NormalAttribLocation);
                 GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).NormalBufferObject);
                 GL.VertexAttribPointer(AttributeLocations.NormalAttribLocation, 3, VertexAttribPointerType.Float, false, 0,
+                    IntPtr.Zero);
+            }
+            if (((MeshImp)mr).Normal1BufferObject != 0)
+            {
+                GL.EnableVertex1AttribArray(AttributeLocations.Normal1AttribLocation);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, ((MeshImp)mr).Normal1BufferObject);
+                GL.VertexAttribPointer(AttributeLocations.Normal1AttribLocation, 3, VertexAttribPointerType.Float, false, 0,
                     IntPtr.Zero);
             }
             if (((MeshImp)mr).BoneIndexBufferObject != 0)
@@ -1646,6 +1731,11 @@ namespace Fusee.Engine.Imp.Graphics.Android
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
                 GL.DisableVertexAttribArray(AttributeLocations.VertexAttribLocation);
             }
+            if (((MeshImp)mr).Vertex1BufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.DisableVertexAttribArray(AttributeLocations.Vertex1AttribLocation);
+            }
             if (((MeshImp)mr).ColorBufferObject != 0)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -1655,6 +1745,11 @@ namespace Fusee.Engine.Imp.Graphics.Android
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
                 GL.DisableVertexAttribArray(AttributeLocations.NormalAttribLocation);
+            }
+            if (((MeshImp)mr).Normal1BufferObject != 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.DisableVertexAttribArray(AttributeLocations.Normal1AttribLocation);
             }
             if (((MeshImp)mr).UVBufferObject != 0)
             {

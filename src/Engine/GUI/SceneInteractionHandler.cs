@@ -67,6 +67,7 @@ namespace Fusee.Engine.Gui
             var pickResNodes = pickResults.Select(x => x.Node).ToList();
             var firstPickRes = pickResults.FirstOrDefault();
 
+
             _pickRes = null;
 
             if (firstPickRes != null)

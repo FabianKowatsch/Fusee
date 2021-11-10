@@ -103,7 +103,8 @@ namespace Fusee.PointCloud.OoCReaderWriter
                         PosInParent = -1, //root!
                     }
 
-                }
+                },
+                Name = "Pointcloud"
             };
 
             NumberOfOctants++;

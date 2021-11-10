@@ -56,8 +56,8 @@ namespace Fusee.Engine.Core.ShaderShards.Vertex
             var vertMainBody = new List<string>
             {
                 $"{SurfaceOut.SurfOutVaryingName} = {SurfaceOut.ChangeSurfVert}();",
-                $"vec4 changedVert = {SurfaceOut.SurfOutVaryingName}.{SurfaceOut.Pos.Item2};",
-                $"{SurfaceOut.SurfOutVaryingName}.{SurfaceOut.Pos.Item2} = {UniformNameDeclarations.ModelView} * {SurfaceOut.SurfOutVaryingName}.{SurfaceOut.Pos.Item2};",
+                $"vec4 changedPos = { SurfaceOut.SurfOutVaryingName}.{ SurfaceOut.Pos.Item2};",
+                $"{SurfaceOut.SurfOutVaryingName}.{SurfaceOut.Pos.Item2} = ({UniformNameDeclarations.ModelView} * {SurfaceOut.SurfOutVaryingName}.position);",
             };
 
             if (!setup.HasFlag(LightingSetupFlags.Unlit) && !setup.HasFlag(LightingSetupFlags.Edl))

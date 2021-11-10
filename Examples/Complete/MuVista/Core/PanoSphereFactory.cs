@@ -1,8 +1,8 @@
-﻿using Fusee.Examples.MuVista.Core;
+﻿using Fusee.Base.Core;
+using Fusee.Examples.MuVista.Core;
 using Fusee.Math.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Fusee.Base.Core;
 using System;
 
 public class PanoSphereFactory
