@@ -402,13 +402,13 @@ namespace Fusee.Examples.MuVista.Core
             {
                 _mainCamTransform.Translation = _panoSphere.sphereTransform.Translation;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
-                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
             }
             else
             {
                 _mainCam.Fov = M.PiOver3;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
-                _scene.Children.Find(children => children.Name == "Panosphere").GetComponent<RenderLayer>().Layer = RenderLayers.None;
+                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.None;
             }
         }
 
