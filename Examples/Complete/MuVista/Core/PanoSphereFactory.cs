@@ -9,7 +9,7 @@ using System.IO;
 
 public class PanoSphereFactory
 {
-    private static string pathToImageData = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json";
+    private static string pathToImageData = "..\\..\\..\\..\\..\\Examples\\Complete\\JSONReducer\\output\\data.json";
 
     private static string pathToMeta = PtRenderingParams.PathToOocFile + "\\meta.json";
     private static double3 offset;
@@ -65,7 +65,7 @@ public class PanoSphereFactory
     {
         PanoSphere sphere = new PanoSphere(img.filename);
         sphere.sphereTransform.Translation = new float3(new double3(center.x + img.X - offset.x, center.y + img.Y - offset.y, center.z + img.Z - offset.z));
-        sphere.sphereTransform.Rotation = new float3(new double3(degreeToRadian(img.roll), degreeToRadian(img.pitch), degreeToRadian(img.heading)));
+        //sphere.sphereTransform.Rotation = new float3(new double3(degreeToRadian(img.roll), degreeToRadian(img.pitch), degreeToRadian(img.heading)));
         //Diagnostics.Debug("imgX:" + (img.X - offset.x) + " | imgY" + (img.Y - offset.y) + " | imgZ" + (img.Z - offset.z));
 
         Diagnostics.Debug("roll:" + img.roll + " | pitch" + img.pitch + " | heading" + img.heading);

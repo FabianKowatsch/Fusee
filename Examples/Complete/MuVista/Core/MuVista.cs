@@ -54,6 +54,7 @@ namespace Fusee.Examples.MuVista.Core
 
         private bool _keys;
         private bool _pointCloudActive = true;
+        private bool _isSpaceUsed = false;
         private AxisDescription _spaceAxis;
 
         private const float ZNear = 1f;
@@ -210,9 +211,11 @@ namespace Fusee.Examples.MuVista.Core
             //RC.SetRenderState(RenderState.CullMode, (uint)Cull.None);
             //RC.SetRenderState(RenderState.FillMode, (uint)FillMode.Wireframe);
 
-            IsInitialized = true;
+
             _spaceAxis = Keyboard.RegisterSingleButtonAxis(32);
 
+
+            IsInitialized = true;
 
         }
 
@@ -341,7 +344,20 @@ namespace Fusee.Examples.MuVista.Core
         private void pcUserInput()
         {
             _isSpaceMouseMoving = SpaceMouseMoving(out float3 velPos, out float3 velRot);
-            _mainCamTransform.Translate(new float3(0, 0.1f * (Keyboard.GetAxis(_spaceAxis.Id) - 1f) * -1f, 0));
+            Diagnostics.Debug(Keyboard.GetAxis(_spaceAxis.Id));
+            Diagnostics.Debug(Keyboard.GetAxisRaw(_spaceAxis.Id));
+
+            if (Keyboard.GetAxis(_spaceAxis.Id) > 0f && _isSpaceUsed == false)
+            {
+                _isSpaceUsed = true;
+            }
+
+            if (_isSpaceUsed)
+            {
+                _mainCamTransform.Translate(new float3(0, -0.2f * (Keyboard.GetAxis(_spaceAxis.Id) - 1f), 0));
+            }
+
+
 
             // Mouse and keyboard movement
             if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
