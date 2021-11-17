@@ -64,7 +64,12 @@ public class PanoSphereFactory
     private static PanoSphere createSphereWithShift(PanoImage img)
     {
         PanoSphere sphere = new PanoSphere(img.filename);
-        sphere.sphereTransform.Translation = new float3(new double3(center.x + img.X - offset.x, center.y + img.Y - offset.y, center.z + img.Z - offset.z));
+        double shiftedX = shiftImgCoords(offset.x, img.X, center.x);
+        double shiftedY = shiftImgCoords(offset.y, img.Y, center.y);
+        double shiftedZ = shiftImgCoords(offset.z, img.Z, center.z);
+        Diagnostics.Debug(shiftedX + "|" + shiftedY + "|" + shiftedZ);
+        sphere.sphereTransform.Translation = new float3(new double3(shiftedX, shiftedY, shiftedZ));
+        //sphere.sphereTransform.Translation = new float3(new double3(center.x + img.X - offset.x, center.y + img.Y - offset.y, center.z + img.Z - offset.z));
         sphere.sphereTransform.Rotation = new float3(new double3(degreeToRadian(img.roll), degreeToRadian(img.pitch), degreeToRadian(img.heading)));
         //Diagnostics.Debug("imgX:" + (img.X - offset.x) + " | imgY" + (img.Y - offset.y) + " | imgZ" + (img.Z - offset.z));
 
@@ -76,5 +81,10 @@ public class PanoSphereFactory
     private static double degreeToRadian(double val)
     {
         return (Math.PI / 180) * val;
+    }
+
+    private static double shiftImgCoords(double offset, double img, double center)
+    {
+        return img - offset + center;
     }
 }
