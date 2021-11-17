@@ -32,6 +32,8 @@ namespace Fusee.Examples.MuVista.Core
 
             Sphere sphere = new Sphere(10, 20, 50);
 
+            Children = ConnectionCreator.Instance.getAllConnections(imageName);
+
 
             TextureInputOpacity colorInput = new TextureInputOpacity()
             {
@@ -108,6 +110,7 @@ namespace Fusee.Examples.MuVista.Core
                 sphereTransform,
                 _surfaceEffect,
                 sphere,
+                
             };
         }
     }
