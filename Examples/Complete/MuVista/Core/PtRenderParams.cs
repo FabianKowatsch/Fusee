@@ -13,7 +13,7 @@ namespace Fusee.Examples.MuVista.Core
     {
         public static ConcurrentDictionary<string, object> ShaderParamsToUpdate = new ConcurrentDictionary<string, object>();
         public static int MaxNoOfVisiblePoints = 500000;
-        public static string PathToOocFile = "G://Studium//Semester 4//MuVista//Testcloud";
+        public static string PathToOocFile = "G:\\BwSync\\Data\\ProcessedPointCloud\\small_workingCloud";
 
         public static PtRenderingParams Instance { get; private set; } = new();
 

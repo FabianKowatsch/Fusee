@@ -47,13 +47,14 @@ namespace Fusee.Examples.PointCloudOutOfCore.Desktop
             AssetStorage.RegisterProvider(fap);
 
             var ptType = FuseePointCloudHelper.GetPtTypeFromMetaJson(PtRenderingParams.Instance.PathToOocFile);
+            /*
             var ptEnumName = Enum.GetName(typeof(PointType), ptType);
 
             var genericType = Type.GetType("Fusee.PointCloud.PointAccessorCollections." + ptEnumName + ", " + "Fusee.PointCloud.PointAccessorCollections");
 
             var objectType = typeof(PointCloudOutOfCore<>);
             var objWithGenType = objectType.MakeGenericType(genericType);
-
+            */
             AppSetup.DoSetup(out IPcRendering app, ptType, PtRenderingParams.Instance.MaxNoOfVisiblePoints, PtRenderingParams.Instance.PathToOocFile);
 
             // Inject Fusee.Engine InjectMe dependencies (hard coded)
