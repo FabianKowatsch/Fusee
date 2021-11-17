@@ -110,7 +110,7 @@ namespace Fusee.Examples.MuVista.Core
                 sphereTransform,
                 _surfaceEffect,
                 sphere,
-                
+
             };
         }
     }
