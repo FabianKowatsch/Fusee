@@ -25,8 +25,6 @@ namespace Fusee.Examples.MuVista.Core
         private float acceptedRadius = 10;
         private Texture[] activeConnections;
         private float3[] activeConPos;
-        private String pathToInfoJson = "D:/Studium/4._Semester/Projektmodul/test/Fusee/Examples/Complete/MuVista/Core/input/data.json";
-        public List<JObject> allObjects;
 
         private static ConnectionCreator instance = null;
 
@@ -48,20 +46,16 @@ namespace Fusee.Examples.MuVista.Core
         {
             //D:\Studium\4._Semester\Projektmodul\test\Fusee\Examples\Complete\MuVista\Core\ConnectionCreator.cs
             //D:\Studium\4._Semester\Projektmodul\test\Fusee\Examples\Complete\MuVista\Core\input\data.json
-            using (StreamReader sr = new StreamReader(pathToInfoJson))
-            {
-                string json = sr.ReadToEnd();
-                allObjects = JsonConvert.DeserializeObject<List<JObject>>(json);
-            }
+
         }
 
-        public void showAllItems()
+        /*public void showAllItems()
         {
             for (int i = 0; i < allObjects.Count; i++)
             {
                 Diagnostics.Debug(allObjects[i]["filename"] + "|" + allObjects[i]["X"]);
             }
-        }
+        }*/
 
 
         public void searchConnections()
@@ -82,12 +76,19 @@ namespace Fusee.Examples.MuVista.Core
             this.activePano = _newTex;
         }
 
-        public void createArrows()
+        public ChildList getAllConnections(String imageName)
         {
-            /*
-             * creates all theSprites with the arrow Texture
-             * Position is where the ray from the camera to the connection hits the sphere
-             */
+            ChildList result = new ChildList();
+            result.Add(this.createArrow(new float3(10, 0, 0)));
+            return result;
+        }
+
+        public SceneNode createArrow(float3 pos)
+        {
+            SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("test.fus");
+            SceneNode arrow = blenderScene.Children[0];
+            arrow.GetComponent<Transform>(0).Translation = pos;
+            return arrow;
         }
     }
 }
