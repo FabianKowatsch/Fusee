@@ -79,10 +79,10 @@ namespace Fusee.Examples.MuVista.Core
         public ChildList getAllConnections(String imageName)
         {
             ChildList result = new ChildList();
-            result.Add(this.createArrow(new float3(10,0,0)));
+            result.Add(this.createArrow(new float3(10, 0, 0)));
             return result;
         }
-        
+
         public SceneNode createArrow(float3 pos)
         {
             SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("test.fus");
