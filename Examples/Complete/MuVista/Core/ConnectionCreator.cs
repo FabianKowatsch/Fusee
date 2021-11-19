@@ -62,7 +62,7 @@ namespace Fusee.Examples.MuVista.Core
         {
             /*if(Mouse.LeftButton)*/
 
-            if((bool)_picked?.Node.Name.Contains("_connection"))
+            if ((bool)_picked?.Node.Name.Contains("_connection"))
             {
                 Diagnostics.Debug(_picked?.Node.Name);
             }
@@ -90,14 +90,14 @@ namespace Fusee.Examples.MuVista.Core
             foreach (PanoImage panoImage in panoImages)
             {
                 Diagnostics.Debug(panoImage.filename);
-                if(panoImage.filename != imageName)
+                if (panoImage.filename != imageName)
                 {
                     float3 connectionVektor = new float3((float)(panoImage.X - thisImage.X), (float)(panoImage.Y - thisImage.Y), (float)(panoImage.Z - thisImage.Z));
                     /*if(MathF.Sqrt(connectionVektor.x*connectionVektor.x + connectionVektor.y * connectionVektor.y + connectionVektor.z * connectionVektor.z) < 100)
                     {
                         result.Add(this.createArrow(new float3(9,0,0), panoImage.filename + "_connection"));
                     }*/
-                    
+
                 }
             }
             result.Add(this.createArrow(new float3(9, 0, 0), "test_connection"));
@@ -110,7 +110,7 @@ namespace Fusee.Examples.MuVista.Core
             SceneNode arrow = blenderScene.Children[0];
             arrow.Name = "connection_" + imageName;
             arrow.GetComponent<Transform>(0).Translation = pos;
-            arrow.GetComponent<Transform>(0).Rotation = new float3(-2,-2,0);
+            arrow.GetComponent<Transform>(0).Rotation = new float3(-2, -2, 0);
             return arrow;
         }
     }

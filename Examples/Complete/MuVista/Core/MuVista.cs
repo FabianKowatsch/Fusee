@@ -318,7 +318,7 @@ namespace Fusee.Examples.MuVista.Core
 
             ReadyToLoadNewFile = true;
 
-            
+
         }
         private bool SpaceMouseMoving(out float3 velPos, out float3 velRot)
         {
