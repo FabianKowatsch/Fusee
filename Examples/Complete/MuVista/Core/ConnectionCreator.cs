@@ -58,16 +58,14 @@ namespace Fusee.Examples.MuVista.Core
         }*/
 
 
-        public void searchConnections()
+        public void clickedConnection(PickResult _picked)
         {
-            /*float3 allPositions = fetch from text Datei
-             * for(int i = 0; i < allPositions.count(); i++) {
-             *  if((Math.pow(allPositions[i].x - thisPosition.x) + Math.pow(allPositions[i].y - thisPosition.y)) <= Math.pow(this.acceptedRadius))
-             *  {
-             *      this.activeConnections.push(allPositions[i]);
-             *  }
-             * }
-            */
+            /*if(Mouse.LeftButton)*/
+
+            if((bool)_picked?.Node.Name.Contains("_connection"))
+            {
+                Diagnostics.Debug(_picked?.Node.Name);
+            }
         }
 
         public void changeActivePosition(Texture _newTex, float3 _newPos)
@@ -79,15 +77,40 @@ namespace Fusee.Examples.MuVista.Core
         public ChildList getAllConnections(String imageName)
         {
             ChildList result = new ChildList();
-            result.Add(this.createArrow(new float3(10, 0, 0)));
+            List<PanoImage> panoImages = PanoSphereFactory.readJSONImageData();
+            PanoImage thisImage = null;
+            foreach (PanoImage panoImage in panoImages)
+            {
+                if (panoImage.filename == imageName)
+                {
+                    thisImage = panoImage;
+                }
+            }
+
+            foreach (PanoImage panoImage in panoImages)
+            {
+                Diagnostics.Debug(panoImage.filename);
+                if(panoImage.filename != imageName)
+                {
+                    float3 connectionVektor = new float3((float)(panoImage.X - thisImage.X), (float)(panoImage.Y - thisImage.Y), (float)(panoImage.Z - thisImage.Z));
+                    /*if(MathF.Sqrt(connectionVektor.x*connectionVektor.x + connectionVektor.y * connectionVektor.y + connectionVektor.z * connectionVektor.z) < 100)
+                    {
+                        result.Add(this.createArrow(new float3(9,0,0), panoImage.filename + "_connection"));
+                    }*/
+                    
+                }
+            }
+            result.Add(this.createArrow(new float3(9, 0, 0), "test_connection"));
             return result;
         }
 
-        public SceneNode createArrow(float3 pos)
+        public SceneNode createArrow(float3 pos, String imageName)
         {
-            SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("test.fus");
+            SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("arrow2.fus");
             SceneNode arrow = blenderScene.Children[0];
+            arrow.Name = "connection_" + imageName;
             arrow.GetComponent<Transform>(0).Translation = pos;
+            arrow.GetComponent<Transform>(0).Rotation = new float3(-2,-2,0);
             return arrow;
         }
     }

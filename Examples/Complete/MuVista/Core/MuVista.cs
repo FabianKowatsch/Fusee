@@ -317,6 +317,8 @@ namespace Fusee.Examples.MuVista.Core
             Present();
 
             ReadyToLoadNewFile = true;
+
+            
         }
         private bool SpaceMouseMoving(out float3 velPos, out float3 velRot)
         {
@@ -433,6 +435,16 @@ namespace Fusee.Examples.MuVista.Core
             CalculateRotationAngle();
 
             UpdateCameraTransform();
+
+            /*if (Mouse.LeftButton)
+            {
+                float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
+
+                
+                PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
+                Diagnostics.Debug(newPick.Node.Name);
+                
+            }*/
 
         }
 
