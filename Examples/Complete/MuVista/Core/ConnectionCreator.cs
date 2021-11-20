@@ -89,7 +89,6 @@ namespace Fusee.Examples.MuVista.Core
 
             foreach (PanoImage panoImage in panoImages)
             {
-                Diagnostics.Debug(panoImage.filename);
                 if (panoImage.filename != imageName)
                 {
                     float3 connectionVektor = new float3((float)(panoImage.X - thisImage.X), (float)(panoImage.Y - thisImage.Y), (float)(panoImage.Z - thisImage.Z));

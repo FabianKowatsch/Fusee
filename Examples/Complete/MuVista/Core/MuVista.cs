@@ -346,8 +346,6 @@ namespace Fusee.Examples.MuVista.Core
         private void pcUserInput()
         {
             _isSpaceMouseMoving = SpaceMouseMoving(out float3 velPos, out float3 velRot);
-            Diagnostics.Debug(Keyboard.GetAxis(_spaceAxis.Id));
-            Diagnostics.Debug(Keyboard.GetAxisRaw(_spaceAxis.Id));
 
             if (Keyboard.GetAxis(_spaceAxis.Id) > 0f && _isSpaceUsed == false)
             {
@@ -613,7 +611,7 @@ namespace Fusee.Examples.MuVista.Core
                 Layer = RenderLayers.All
             });
             _scene.Children.Add(root);
-            Diagnostics.Debug(root.GetComponent<Transform>().Translation);
+
             OocLoader.RootNode = root;
             OocLoader.FileFolderPath = PtRenderingParams.PathToOocFile;
 
@@ -627,6 +625,7 @@ namespace Fusee.Examples.MuVista.Core
             var ptRootComponent = root.GetComponent<OctantD>();
             _octreeRootCenter = ptRootComponent.Center;
             _octreeRootLength = ptRootComponent.Size;
+
 
             PtRenderingParams.DepthPassEf = PtRenderingParams.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
             PtRenderingParams.ColorPassEf = PtRenderingParams.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
