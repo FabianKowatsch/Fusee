@@ -56,11 +56,11 @@ namespace Fusee.Engine.Core.ShaderShards.Vertex
             var vertMainBody = new List<string>
             {
                 $"{SurfaceOut.SurfOutVaryingName} = {SurfaceOut.ChangeSurfVert}();",
-                $"vec4 changedPos = { SurfaceOut.SurfOutVaryingName}.{ SurfaceOut.Pos.Item2};",
+                
                 $"{SurfaceOut.SurfOutVaryingName}.{SurfaceOut.Pos.Item2} = ({UniformNameDeclarations.ModelView} * {SurfaceOut.SurfOutVaryingName}.position);",
             };
 
-            if (!setup.HasFlag(LightingSetupFlags.Unlit) && !setup.HasFlag(LightingSetupFlags.Edl))
+            if (!setup.HasFlag(LightingSetupFlags.Unlit))
             {
                 vertMainBody.Add($"{SurfaceOut.SurfOutVaryingName}.{SurfaceOut.Normal.Item2} = normalize(vec3({ UniformNameDeclarations.ITModelView}* vec4({SurfaceOut.SurfOutVaryingName}.normal, 0.0)));");
             }
@@ -76,12 +76,8 @@ namespace Fusee.Engine.Core.ShaderShards.Vertex
                 vertMainBody.Add($"TBN = mat3(T,B,{SurfaceOut.SurfOutVaryingName}.{SurfaceOut.Normal.Item2});");
             }
 
-            vertMainBody.Add($"gl_Position = {UniformNameDeclarations.ModelViewProjection} * changedVert;");
-            vertMainBody.Add($"{VaryingNameDeclarations.Color} = {UniformNameDeclarations.VertexColor};");
-
-            if (doRenderPoints)
-                vertMainBody.Add($"gl_PointSize = float({UniformNameDeclarations.PointSize});");
-
+            vertMainBody.Add($"gl_Position = {UniformNameDeclarations.ModelViewProjection} * vec4({UniformNameDeclarations.Vertex}, 1.0);");
+            
             //TODO: needed when bone animation is working (again)
             //vertMainBody.Add(effectProps.MeshProbs.HasWeightMap
             //? $"gl_Position = {UniformNameDeclarations.ModelViewProjection} * vec4(vec3(newVertex), 1.0);"
