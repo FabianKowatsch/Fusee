@@ -1,4 +1,4 @@
-﻿using Fusee.Base.Core;
+using Fusee.Base.Core;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
 using Fusee.Math.Core;
@@ -11,11 +11,12 @@ namespace Fusee.Examples.MuVista.Core
 {
     public sealed class PtRenderingParams : IDisposable
     {
-        public static ConcurrentDictionary<string, object> ShaderParamsToUpdate = new ConcurrentDictionary<string, object>();
-        public static int MaxNoOfVisiblePoints = 500000;
         public static string PathToOocFile = "G:\\BwSync\\Data\\ProcessedPointCloud\\small_workingCloud";
 
         public static PtRenderingParams Instance { get; private set; } = new();
+
+        public ConcurrentDictionary<int, object> ShaderParamsToUpdate = new();
+        public int MaxNoOfVisiblePoints = 500000;
 
 
         public ShaderEffect DepthPassEf;

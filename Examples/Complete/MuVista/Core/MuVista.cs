@@ -314,7 +314,7 @@ namespace Fusee.Examples.MuVista.Core
 
                 if (UseWPF)
                 {
-                    if (PtRenderingParams.Instance.ShaderParamsToUpdate.Count != 0)
+                    if (!PtRenderingParams.Instance.ShaderParamsToUpdate.IsEmpty)
                     {
                         UpdateShaderParams();
                         PtRenderingParams.Instance.ShaderParamsToUpdate.Clear();
