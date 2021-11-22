@@ -65,7 +65,7 @@ namespace Fusee.Examples.MuVista.Core
             var guiLatoBlack = new FontMap(fontLato, 24);
 
             var text = new TextNode(
-                "FUSEE Spherical Image Viewer",
+                "MuVista Pointcloud and Panorama Viewer",
                 "ButtonText",
                 vsTex,
                 psText,
@@ -146,7 +146,7 @@ namespace Fusee.Examples.MuVista.Core
                     text,
                     zoomInNode,
                     zoomOutNode,
-                    minimapNode
+                    //minimapNode
                 }
             };
 

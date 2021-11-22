@@ -93,7 +93,7 @@ namespace Fusee.Examples.MuVista.Core
 
         private SixDOFDevice _spaceMouse;
 
-        private PanoSphere _panoSphere;
+        private PanoSphere _currentSphere;
 
         private bool _inverseCams = false;
 
@@ -109,9 +109,8 @@ namespace Fusee.Examples.MuVista.Core
         // Init is called on startup. 
         public override void Init()
         {
-
-            _panoSphere = PanoSphereFactory.createPanoSpheres().ElementAt(0);
-            _panoSphere.Name = "PanoSphere";
+            var spheres = PanoSphereFactory.createPanoSpheres();
+            _currentSphere = spheres.ElementAt(1);
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
@@ -190,8 +189,11 @@ namespace Fusee.Examples.MuVista.Core
             _scene.Children.Add(CreateWaypoint(new float3(40, 40, 0)));
             _scene.Children.Add(CreateWaypoint(new float3(50, 40, 0)));
 
+            foreach (PanoSphere sphere in spheres)
+            {
+                _scene.Children.Add(sphere);
+            }
 
-            _scene.Children.Add(_panoSphere);
 
             //_scene.Children.Add(miniMapCam);
 
@@ -416,15 +418,24 @@ namespace Fusee.Examples.MuVista.Core
 
             if (!_pointCloudActive)
             {
-                _mainCamTransform.Translation = _panoSphere.sphereTransform.Translation;
-                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
-                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.None;
+                var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
+                foreach (PanoSphere sphere in spheres)
+                {
+                    sphere.GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                }
+
             }
             else
             {
                 _mainCam.Fov = M.PiOver3;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
-                _scene.Children.Find(children => children.Name == "PanoSphere").GetComponent<RenderLayer>().Layer = RenderLayers.None;
+                var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
+                foreach (PanoSphere sphere in spheres)
+                {
+                    sphere.GetComponent<RenderLayer>().Layer = RenderLayers.None;
+                }
             }
         }
 
@@ -433,6 +444,19 @@ namespace Fusee.Examples.MuVista.Core
             CalculateRotationAngle();
 
             UpdateCameraTransform();
+
+
+            if (Keyboard.IsKeyDown(KeyCodes.Q) && _currentSphere.previous != null)
+            {
+                _currentSphere = _currentSphere.previous;
+                _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+            }
+
+            if (Keyboard.IsKeyDown(KeyCodes.E) && _currentSphere.next != null)
+            {
+                _currentSphere = _currentSphere.next;
+                _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+            }
 
             /*if (Mouse.LeftButton)
             {

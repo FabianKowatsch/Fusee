@@ -25,14 +25,17 @@ namespace Fusee.Examples.MuVista.Core
         private Texture _texture;
 
 
+        public PanoSphere previous = null;
+
+        public PanoSphere next = null;
         public PanoSphere(string imageName)
         {
-
+            Name = "PanoSphere";
             _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"));
 
             Sphere sphere = new Sphere(10, 20, 50);
 
-            Children = ConnectionCreator.Instance.getAllConnections(imageName);
+            // Children = ConnectionCreator.Instance.getAllConnections(imageName);
 
 
             TextureInputOpacity colorInput = new TextureInputOpacity()

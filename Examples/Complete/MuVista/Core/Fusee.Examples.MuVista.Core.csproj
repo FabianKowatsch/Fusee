@@ -12,6 +12,7 @@
     <None Remove="Assets\arrow.fus" />
     <None Remove="Assets\arrow_small.fus" />
     <None Remove="Assets\RocketFus.fus" />
+    <None Remove="Assets\sphere.fus" />
     <None Remove="Assets\test.fus" />
   </ItemGroup>
 
@@ -30,5 +31,9 @@
 	<ProjectReference Include="$(FuseeEngineRoot)\src\Pointcloud\PointAccessorCollection\Fusee.PointCloud.PointAccessorCollections.csproj" />
     <ProjectReference Include="..\..\..\..\src\Pointcloud\Common\Fusee.PointCloud.Common.csproj" />
     <ProjectReference Include="..\..\..\..\src\Pointcloud\PointAccessorCollection\Fusee.PointCloud.PointAccessorCollections.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Data\Pointcloud\" />
   </ItemGroup>
 </Project>
