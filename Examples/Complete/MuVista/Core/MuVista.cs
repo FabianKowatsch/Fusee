@@ -77,7 +77,7 @@ namespace Fusee.Examples.MuVista.Core
         private readonly float Fov = M.PiOver3;
 
         private SceneRendererForward _guiRenderer;
-        //private GUI _gui;
+        private SceneContainer _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
@@ -137,6 +137,8 @@ namespace Fusee.Examples.MuVista.Core
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height, new ImagePixelFormat(ColorFormat.Depth24));
+
+            OocLoader.Init(RC);
 
             IsAlive = true;
             //AppSetup();
@@ -204,10 +206,13 @@ namespace Fusee.Examples.MuVista.Core
             _angleRollInit = 0;
             _offset = float2.Zero;
             _offsetInit = float2.Zero;
-
-            // Set the clear color for the back buffer to white (100% intensity in all color channels R, G, B, A).            
+           
             if (!UseWPF)
                 LoadPointCloudFromFile();
+
+            _gui = FuseeGuiHelper.CreateDefaultGui(this, CanvasRenderMode.Screen, "FUSEE MuVista Viewer");
+            //Create the interaction handler
+            _sih = new SceneInteractionHandler(_gui);
 
             _scene.Children.Add(CreateWaypoint(new float3(40, 40, 0)));
             _scene.Children.Add(CreateWaypoint(new float3(50, 40, 0)));
@@ -223,7 +228,7 @@ namespace Fusee.Examples.MuVista.Core
 
             // Wrap a SceneRenderer around the model.
             _sceneRenderer = new SceneRendererForward(_scene);
-            //_guiRenderer = new SceneRendererForward(_gui);
+            _guiRenderer = new SceneRendererForward(_gui);
 
             _scenePicker = new ScenePicker(_scene);
             /*-----------------------------------------------------------------------
@@ -329,7 +334,17 @@ namespace Fusee.Examples.MuVista.Core
             RC.Projection = float4x4.CreateOrthographic(Width, Height, ZNear, ZFar);
 
             // Constantly check for interactive objects.
-            _sih.CheckForInteractiveObjects(RC, Mouse.Position, Width, Height);
+            //_sih.CheckForInteractiveObjects(RC, Mouse.Position, Width, Height);
+            if (Mouse != null) //Mouse is null when the pointer is outside the GameWindow?
+            {
+
+                _sih.CheckForInteractiveObjects(RC, Mouse.Position, Width, Height);
+
+                if (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint)
+                {
+                    _sih.CheckForInteractiveObjects(RC, Touch.GetPosition(TouchPoints.Touchpoint_0), Width, Height);
+                }
+            }
 
             _guiRenderer.Render(RC);
 
