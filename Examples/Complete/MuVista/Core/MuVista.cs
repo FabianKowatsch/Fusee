@@ -949,11 +949,11 @@ namespace Fusee.Examples.MuVista.Core
         {
             if (Mouse.LeftButton)
             {
-                float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
+                //float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
 
-                PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
+                //PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
 
-                Diagnostics.Debug(newPick.Node.Name);
+                //Diagnostics.Debug(newPick.Node.Name);
                 //if (newPick?.Node != _currentPick?.Node)
                 //{
                 //    if (_currentPick != null)
