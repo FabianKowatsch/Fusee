@@ -12,7 +12,8 @@ using System.IO;
 
 public class PanoSphereFactory
 {
-    private static string pathToImageData = "..\\Core\\Assets\\Data\\output\\data.json";
+    private static string _pathToImageData = ".\\Assets\\Data\\output\\data.json";
+    private static string _debugPathToImageData = "..\\Core\\Assets\\Data\\output\\data.json";
 
     private static string pathToMeta = PtRenderingParams.PathToOocFile + "\\meta.json";
     private static double3 offset;
@@ -20,6 +21,16 @@ public class PanoSphereFactory
     private static double3 center;
     private static double size;
 
+    private static string pathToImageData
+    {
+        get
+        {
+            if (Array.Exists(Environment.GetCommandLineArgs(), element => element == "useDebugPaths"))
+                return _debugPathToImageData;
+            else
+                return _pathToImageData;
+        }
+    }
     public static List<PanoSphere> createPanoSpheres()
     {
         readJSONMetaData();
@@ -108,18 +119,24 @@ public class PanoSphereFactory
 
     private static SceneNode createArrow(float3 pos, float3 nextPos, int i)
     {
-        SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("sphere.fus");
+        SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("arrow2.fus");
         SceneNode arrow = blenderScene.Children[0];
 
         arrow.Name = "connection" + i;
         float3 connectionVektor = new float3((float)(nextPos.x - pos.x), (float)(nextPos.y - pos.y), (float)(nextPos.z - pos.z));
         arrow.GetComponent<Transform>(0).Translation = connectionVektor.Normalize() * 8;
-        float angle = connectionVektor.x / connectionVektor.Length;
-        //.GetComponent<Transform>(0).Rotate(new float3((float)degreeToRadian(-10), MathF.Acos(-angle) + (float)Math.PI / 2, 0));
-        arrow.GetComponent<Transform>().Rotate(float4x4.RotMatToEuler(float4x4.LookAt(pos, nextPos, float3.UnitY)));
-        //arrow.GetComponent<Transform>().Rotation.y += M.PiOver2;
+        float angle = MathF.Atan2(1, 0) - MathF.Atan2(connectionVektor.z, connectionVektor.x);
+
+        arrow.GetComponent<Transform>().Rotate(new float3((float)degreeToRadian(-10), angle, 0));
         arrow.GetComponent<Transform>(0).Translation.y -= 3;
-        arrow.GetComponent<Transform>().Scale = new float3(0.3f, 0.3f, 0.3f);
+        arrow.GetComponent<Transform>().Scale = new float3(0.8f, 0.8f, 0.8f);
+
+
+
+        foreach (string s in Environment.GetCommandLineArgs())
+        {
+            Diagnostics.Debug(s);
+        }
 
         return arrow;
     }
