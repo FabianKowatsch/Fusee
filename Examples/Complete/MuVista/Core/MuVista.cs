@@ -617,7 +617,7 @@ namespace Fusee.Examples.MuVista.Core
             var root = OocFileReader.GetScene();
             var ptOctantComp = root.GetComponent<OctantD>();
 
-            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, 0, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
+            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z));
             root.AddComponent(new RenderLayer()
             {
                 Layer = RenderLayers.All
