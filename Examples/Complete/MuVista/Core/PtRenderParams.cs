@@ -3,6 +3,7 @@ using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
 using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -12,13 +13,25 @@ namespace Fusee.Examples.MuVista.Core
     {
         public static ConcurrentDictionary<string, object> ShaderParamsToUpdate = new ConcurrentDictionary<string, object>();
         public static int MaxNoOfVisiblePoints = 500000;
-        public static string PathToOocFile = "..\\Core\\Assets\\Data\\Pointcloud\\TestCloud";
-
+        private static string _pathToOocFile = ".\\Assets\\Data\\Pointcloud\\TestCloud";
+        private static string _debugPathToOocFile = "..\\Core\\Assets\\Data\\Pointcloud\\TestCloud";
         //"G:\\Studium\\Semester 4\\MuVista\\TestCloud"
         public static ShaderEffect DepthPassEf;
         public static ShaderEffect ColorPassEf;
 
         private static Lighting _lighting = Lighting.Edl;
+        //private static bool _useDebugEnvironment = false;
+        //if(Environment.Get)
+        public static string PathToOocFile
+        {
+            get
+            {
+                if (Array.Exists(Environment.GetCommandLineArgs(), element => element == "useDebugPaths"))
+                    return _debugPathToOocFile;
+                else
+                    return _pathToOocFile;
+            }
+        }
         public static Lighting Lighting
         {
             get { return _lighting; }
