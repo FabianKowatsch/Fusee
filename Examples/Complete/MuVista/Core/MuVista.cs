@@ -106,11 +106,25 @@ namespace Fusee.Examples.MuVista.Core
         private PickResult _currentPick;
         private float4 _oldColor;
 
+        private bool _panoChangeAnim = false;
+        private float _panoChangeAnimTime = 2;
+        private float _panoChangeAnimTimeStart = 0;
+        private PanoSphere _destinationSphere;
+        //private PanoSphere _animSphere;
+
         // Init is called on startup. 
         public override void Init()
         {
             var spheres = PanoSphereFactory.createPanoSpheres();
             _currentSphere = spheres.ElementAt(1);
+
+            //animation Spehere
+            float3 animScale = new float3(1.1f, 1.1f, 1.1f);
+            //_animSphere = new PanoSphere("ladybug_18534664_20210113_GEO2111300_5539");
+            //_animSphere.GetComponent<Transform>(0).Scale = animScale;
+            //_animSphere.GetComponent<Transform>(0).Translation = _currentSphere.GetGlobalTransformation().Translation();
+            //animation Spehere
+
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height);
@@ -194,6 +208,8 @@ namespace Fusee.Examples.MuVista.Core
                 _scene.Children.Add(sphere);
             }
 
+            //_scene.Children.Add(_animSphere);
+
 
             //_scene.Children.Add(miniMapCam);
 
@@ -268,12 +284,22 @@ namespace Fusee.Examples.MuVista.Core
                     sphereUserInput();
                 }
 
+                if(Time.TimeSinceStart < _panoChangeAnimTimeStart + _panoChangeAnimTime && _panoChangeAnim)
+                {
+                    animatePanoChange();
+                } else if(Time.TimeSinceStart > _panoChangeAnimTimeStart + _panoChangeAnimTime && _panoChangeAnim)
+                {
+                    _currentSphere = _destinationSphere;
+                    _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                    _panoChangeAnim = false;
+                }
 
-                #endregion
 
-                //----------------------------  
+                    #endregion
 
-                if (PtRenderingParams.CalcSSAO || PtRenderingParams.Lighting != Lighting.Unlit)
+                    //----------------------------  
+
+                    if (PtRenderingParams.CalcSSAO || PtRenderingParams.Lighting != Lighting.Unlit)
                 {
                     //Render Depth-only pass
                     _scene.Children[1].RemoveComponent<ShaderEffect>();
@@ -448,14 +474,22 @@ namespace Fusee.Examples.MuVista.Core
 
             if (Keyboard.IsKeyDown(KeyCodes.Q) && _currentSphere.previous != null)
             {
-                _currentSphere = _currentSphere.previous;
-                _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                _panoChangeAnim = true;
+                _panoChangeAnimTimeStart = Time.TimeSinceStart;
+                Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
+                _destinationSphere = _currentSphere.previous;
+                //_currentSphere = _currentSphere.previous;
+                //_mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
             }
 
             if (Keyboard.IsKeyDown(KeyCodes.E) && _currentSphere.next != null)
             {
-                _currentSphere = _currentSphere.next;
-                _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                _panoChangeAnim = true;
+                _panoChangeAnimTimeStart = Time.TimeSinceStart;
+                Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
+                _destinationSphere = _currentSphere.next;
+                //_currentSphere = _currentSphere.next;
+                //_mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
             }
 
             /*if (Mouse.LeftButton)
@@ -468,6 +502,12 @@ namespace Fusee.Examples.MuVista.Core
                 
             }*/
 
+        }
+
+        public void animatePanoChange()
+        {
+            float3 connectionVektor = new float3((float)(_destinationSphere.GetComponent<Transform>(0).Translation.x - _mainCamTransform.Translation.x), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.y - _mainCamTransform.Translation.y), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.z - _mainCamTransform.Translation.z));
+            _mainCamTransform.Translate(connectionVektor.Normalize() * (connectionVektor.Length / (_panoChangeAnimTime/DeltaTime)));
         }
 
         public void CalculateRotationAngle()
