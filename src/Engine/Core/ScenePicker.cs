@@ -4,6 +4,7 @@ using Fusee.Math.Core;
 using Fusee.Xene;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Fusee.Engine.Core
 {
@@ -29,7 +30,7 @@ namespace Fusee.Engine.Core
         public int Triangle;
 
         /// <summary>
-        /// The u, v coordinates.
+        /// The barycentric u, v coordinates within the picked triangle.
         /// </summary>
         public float U, V;
 
@@ -147,6 +148,20 @@ namespace Fusee.Engine.Core
                 return float4x4.TransformPerspective(mat, ModelPos);
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        public float2 UV
+        {
+            get
+            {
+                float2 uva = Mesh.UVs[Mesh.Triangles[Triangle]];
+                float2 uvb = Mesh.UVs[Mesh.Triangles[Triangle + 1]];
+                float2 uvc = Mesh.UVs[Mesh.Triangles[Triangle + 2]];
+
+                return float2.Barycentric(uva, uvb, uvc, U, V);
+            }
+        }
     }
 
     /// <summary>
@@ -166,9 +181,10 @@ namespace Fusee.Engine.Core
         /// </summary>
         public class PickerState : VisitorState
         {
-            private readonly CollapsingStateStack<float4x4> _canvasXForm = new CollapsingStateStack<float4x4>();
-            private readonly CollapsingStateStack<float4x4> _model = new CollapsingStateStack<float4x4>();
-            private readonly CollapsingStateStack<MinMaxRect> _uiRect = new CollapsingStateStack<MinMaxRect>();
+            private readonly CollapsingStateStack<float4x4> _canvasXForm = new();
+            private readonly CollapsingStateStack<float4x4> _model = new();
+            private readonly CollapsingStateStack<MinMaxRect> _uiRect = new();
+            private readonly CollapsingStateStack<Cull> _cullMode = new();
 
             /// <summary>
             /// The registered model.
@@ -198,13 +214,23 @@ namespace Fusee.Engine.Core
             }
 
             /// <summary>
-            /// The default constructor for the <see cref="PickerState"/> class, which registers state stacks for mode, UI rectangle, and canvas transform.
+            /// The registered cull mode.
+            /// </summary>
+            public Cull CullMode
+            {
+                get => _cullMode.Tos;
+                set => _cullMode.Tos = value;
+            }
+
+            /// <summary>
+            /// The default constructor for the <see cref="PickerState"/> class, which registers state stacks for model, UI rectangle, and canvas transform, as well as cull mode.
             /// </summary>
             public PickerState()
             {
                 RegisterState(_model);
                 RegisterState(_uiRect);
                 RegisterState(_canvasXForm);
+                RegisterState(_cullMode);
             }
         };
 
@@ -239,6 +265,7 @@ namespace Fusee.Engine.Core
             base.InitState();
             State.Model = float4x4.Identity;
             State.CanvasXForm = float4x4.Identity;
+            State.CullMode = _rc != null ? (Cull)_rc.GetRenderState(RenderState.CullMode) : Cull.None;
         }
 
         /// <summary>
@@ -424,35 +451,20 @@ namespace Fusee.Engine.Core
                 scaleY = 1 / State.UiRect.Size.y;
 
                 //Calculate translation according to alignment
-                switch (xfc.HorizontalAlignment)
+                translationX = xfc.HorizontalAlignment switch
                 {
-                    case HorizontalTextAlignment.Left:
-                        translationX = -State.UiRect.Size.x / 2;
-                        break;
-                    case HorizontalTextAlignment.Center:
-                        translationX = -xfc.Width / 2;
-                        break;
-                    case HorizontalTextAlignment.Right:
-                        translationX = State.UiRect.Size.x / 2 - xfc.Width;
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid Horizontal Alignment");
-                }
-
-                switch (xfc.VerticalAlignment)
+                    HorizontalTextAlignment.Left => -State.UiRect.Size.x / 2,
+                    HorizontalTextAlignment.Center => -xfc.Width / 2,
+                    HorizontalTextAlignment.Right => State.UiRect.Size.x / 2 - xfc.Width,
+                    _ => throw new ArgumentException("Invalid Horizontal Alignment"),
+                };
+                translationY = xfc.VerticalAlignment switch
                 {
-                    case VerticalTextAlignment.Top:
-                        translationY = State.UiRect.Size.y / 2;
-                        break;
-                    case VerticalTextAlignment.Center:
-                        translationY = xfc.Height / 2;
-                        break;
-                    case VerticalTextAlignment.Bottom:
-                        translationY = xfc.Height - (State.UiRect.Size.y / 2);
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid Horizontal Alignment");
-                }
+                    VerticalTextAlignment.Top => State.UiRect.Size.y / 2,
+                    VerticalTextAlignment.Center => xfc.Height / 2,
+                    VerticalTextAlignment.Bottom => xfc.Height - (State.UiRect.Size.y / 2),
+                    _ => throw new ArgumentException("Invalid Horizontal Alignment"),
+                };
             }
             else
             {
@@ -461,35 +473,20 @@ namespace Fusee.Engine.Core
                 scaleY = 1 / State.UiRect.Size.y * scaleFactor;
 
                 //Calculate translation according to alignment by scaling the rectangle size
-                switch (xfc.HorizontalAlignment)
+                translationX = xfc.HorizontalAlignment switch
                 {
-                    case HorizontalTextAlignment.Left:
-                        translationX = -State.UiRect.Size.x * invScaleFactor / 2;
-                        break;
-                    case HorizontalTextAlignment.Center:
-                        translationX = -xfc.Width / 2;
-                        break;
-                    case HorizontalTextAlignment.Right:
-                        translationX = State.UiRect.Size.x * invScaleFactor / 2 - xfc.Width;
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid Horizontal Alignment");
-                }
-
-                switch (xfc.VerticalAlignment)
+                    HorizontalTextAlignment.Left => -State.UiRect.Size.x * invScaleFactor / 2,
+                    HorizontalTextAlignment.Center => -xfc.Width / 2,
+                    HorizontalTextAlignment.Right => State.UiRect.Size.x * invScaleFactor / 2 - xfc.Width,
+                    _ => throw new ArgumentException("Invalid Horizontal Alignment"),
+                };
+                translationY = xfc.VerticalAlignment switch
                 {
-                    case VerticalTextAlignment.Top:
-                        translationY = State.UiRect.Size.y * invScaleFactor / 2;
-                        break;
-                    case VerticalTextAlignment.Center:
-                        translationY = xfc.Height / 2;
-                        break;
-                    case VerticalTextAlignment.Bottom:
-                        translationY = xfc.Height - (State.UiRect.Size.y * invScaleFactor / 2);
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid Horizontal Alignment");
-                }
+                    VerticalTextAlignment.Top => State.UiRect.Size.y * invScaleFactor / 2,
+                    VerticalTextAlignment.Center => xfc.Height / 2,
+                    VerticalTextAlignment.Bottom => xfc.Height - (State.UiRect.Size.y * invScaleFactor / 2),
+                    _ => throw new ArgumentException("Invalid Horizontal Alignment"),
+                };
             }
 
             var translation = float4x4.CreateTranslation(translationX, translationY, 0);
@@ -508,7 +505,7 @@ namespace Fusee.Engine.Core
         [VisitMethod]
         public void RenderTransform(Transform transform)
         {
-            State.Model *= transform.Matrix();
+            State.Model *= transform.Matrix;
             _rc.Model = State.Model;
         }
 
@@ -536,17 +533,25 @@ namespace Fusee.Engine.Core
                 // Point-in-Triangle-Test
                 if (float2.PointInTriangle(a.xy, b.xy, c.xy, PickPosClip, out var u, out var v))
                 {
-                    YieldItem(new PickResult
+                    var pickPos = float3.Barycentric(a.xyz, b.xyz, c.xyz, u, v);
+
+                    if (pickPos.z >= -1 && pickPos.z <= 1)
                     {
-                        Mesh = mesh,
-                        Node = CurrentNode,
-                        Triangle = i,
-                        Model = State.Model,
-                        View = View,
-                        Projection = Projection,
-                        U = u,
-                        V = v
-                    });
+                        if (State.CullMode == Cull.None || float2.IsTriangleCW(a.xy, b.xy, c.xy) == (State.CullMode == Cull.Clockwise))
+                        {
+                            YieldItem(new PickResult
+                            {
+                                Mesh = mesh,
+                                Node = CurrentNode,
+                                Triangle = i,
+                                Model = State.Model,
+                                View = View,
+                                Projection = Projection,
+                                U = u,
+                                V = v
+                            });
+                        }
+                    }
                 }
             }
         }

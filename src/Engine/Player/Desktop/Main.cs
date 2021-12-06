@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using Fusee.Base.Common;
+﻿using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Base.Imp.Desktop;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Scene;
 using Fusee.Serialization;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using Path = System.IO.Path;
 
 namespace Fusee.Engine.Player.Desktop
@@ -32,10 +32,10 @@ namespace Fusee.Engine.Player.Desktop
             Type tApp = null;
 
             string modelFile = null;
-            List<string> assetDirs = new List<string>();
+            List<string> assetDirs = new();
             TryAddDir(assetDirs, "Assets");
 
-            string ExeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string ExeDir = AppContext.BaseDirectory;
             string Cwd = Directory.GetCurrentDirectory();
 
             if (Cwd != ExeDir)
@@ -121,19 +121,27 @@ namespace Fusee.Engine.Player.Desktop
                 tApp = typeof(Fusee.Engine.Player.Core.Player);
             }
 
-            var fap = new Fusee.Base.Imp.Desktop.FileAssetProvider(assetDirs);
+            #region FAP
+
+            var fap = new Fusee.Base.Imp.Desktop.FileAssetProvider("Assets");
             fap.RegisterTypeHandler(
                 new AssetHandler
                 {
                     ReturnedType = typeof(Font),
                     Decoder = (string id, object storage) =>
                     {
-                        if (!Path.GetExtension(id).Contains("ttf", StringComparison.OrdinalIgnoreCase)) return null;
+                        if (!Path.GetExtension(id).Contains("ttf", System.StringComparison.OrdinalIgnoreCase)) return null;
                         return new Font { _fontImp = new FontImp((Stream)storage) };
                     },
-                    Checker = id => Path.GetExtension(id).Contains("ttf", StringComparison.OrdinalIgnoreCase)
+                    DecoderAsync = async (string id, object storage) =>
+                    {
+                        if (!Path.GetExtension(id).Contains("ttf", System.StringComparison.OrdinalIgnoreCase)) return await Task.FromResult(false).ConfigureAwait(false);
+                        return await Task.FromResult(new Font { _fontImp = new FontImp((Stream)storage) }).ConfigureAwait(false);
+                    },
+                    Checker = id => Path.GetExtension(id).Contains("ttf", System.StringComparison.OrdinalIgnoreCase)
                 });
             fap.RegisterTypeHandler(
+
                 new AssetHandler
                 {
                     ReturnedType = typeof(SceneContainer),
@@ -143,10 +151,17 @@ namespace Fusee.Engine.Player.Desktop
 
                         return FusSceneConverter.ConvertFrom(ProtoBuf.Serializer.Deserialize<FusFile>((Stream)storage), id);
                     },
-                    Checker = id => Path.GetExtension(id).Contains("fus", StringComparison.OrdinalIgnoreCase)
+                    DecoderAsync = async (string id, object storage) =>
+                    {
+                        if (!Path.GetExtension(id).Contains("fus", System.StringComparison.OrdinalIgnoreCase)) return await Task.FromResult(false).ConfigureAwait(false);
+                        return await Task.FromResult(FusSceneConverter.ConvertFrom(ProtoBuf.Serializer.Deserialize<FusFile>((Stream)storage), id)).ConfigureAwait(false);
+                    },
+                    Checker = id => Path.GetExtension(id).Contains("fus", System.StringComparison.OrdinalIgnoreCase)
                 });
 
             AssetStorage.RegisterProvider(fap);
+
+            #endregion
 
             // Dynamically instantiate the app because it might live in some external (.NET core) DLL.
             var ctor = tApp.GetConstructor(Type.EmptyTypes);
@@ -157,23 +172,22 @@ namespace Fusee.Engine.Player.Desktop
             else
             {
                 // invoke the first public constructor with no parameters.
-                RenderCanvas app = (RenderCanvas)ctor.Invoke(new object[] { });
+                RenderCanvas app = (RenderCanvas)ctor.Invoke(Array.Empty<object>());
 
-                if (!string.IsNullOrEmpty(modelFile) && app is Fusee.Engine.Player.Core.Player)
-                    ((Fusee.Engine.Player.Core.Player)app).ModelFile = modelFile;
+                if (!string.IsNullOrEmpty(modelFile) && app is Fusee.Engine.Player.Core.Player player)
+                    player.ModelFile = modelFile;
 
                 // Inject Fusee.Engine InjectMe dependencies (hard coded)
-                System.Drawing.Icon appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
-                app.CanvasImplementor = new Fusee.Engine.Imp.Graphics.Desktop.RenderCanvasImp(appIcon);
+                app.CanvasImplementor = new Fusee.Engine.Imp.Graphics.Desktop.RenderCanvasImp();
                 app.ContextImplementor = new Fusee.Engine.Imp.Graphics.Desktop.RenderContextImp(app.CanvasImplementor);
                 Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.RenderCanvasInputDriverImp(app.CanvasImplementor));
                 Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.WindowsSpaceMouseDriverImp(app.CanvasImplementor));
                 Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.WindowsTouchInputDriverImp(app.CanvasImplementor));
                 // app.InputImplementor = new Fusee.Engine.Imp.Graphics.Desktop.InputImp(app.CanvasImplementor);
-                // app.AudioImplementor = new Fusee.Engine.Imp.Sound.Desktop.AudioImp();
-                // app.NetworkImplementor = new Fusee.Engine.Imp.Network.Desktop.NetworkImp();
                 // app.InputDriverImplementor = new Fusee.Engine.Imp.Input.Desktop.InputDriverImp();
                 // app.VideoManagerImplementor = ImpFactory.CreateIVideoManagerImp();
+
+                app.InitApp();
 
                 // Start the app
                 app.Run();

@@ -130,6 +130,20 @@ namespace Fusee.Math.Core
         }
 
         /// <summary>
+        /// Test whether a cuboid intersects this plane.
+        /// See: Ericson 2005, Real Time Collision Detection, p. 161 - 164
+        /// </summary>
+        /// <param name="center">The center of the cuboid.</param>
+        /// <param name="size">The width, height and length of the cuboid.</param>
+        public bool Intersects(double3 center, double3 size)
+        {
+            var r = BoxExtendInNormalDirection(size);
+            var s = SignedDistanceFromPoint(center);
+
+            return System.Math.Abs(s) <= r;
+        }
+
+        /// <summary>
         /// Test whether a <see cref="OBBd"/> intersects this plane.
         /// See: Ericson 2005, Real Time Collision Detection, p. 161 - 164
         /// </summary>
@@ -140,6 +154,56 @@ namespace Fusee.Math.Core
             var s = SignedDistanceFromPoint(obb.Center);
 
             return System.Math.Abs(s) <= r;
+        }
+
+        /// <summary>
+        /// Test whether a cuboid intersects this plane.
+        /// See: Ericson 2005, Real Time Collision Detection, p. 161 - 164
+        /// CAREFUL: the definition whats completely inside and outside is flipped in comparison to Ericson, 
+        /// because FUSEE defines a point with a negative signed distance to be inside.
+        /// </summary>
+        /// <param name="center">The center of the cuboid.</param>
+        /// <param name="size">The width, height and length of the cuboid.</param>
+        public bool InsideOrIntersecting(double3 center, double3 size)
+        {
+            var r = BoxExtendInNormalDirection(size);
+
+            //Distance from aabb center to plane
+            var s = SignedDistanceFromPoint(center);
+
+            //Completely inside
+            if (s <= -r)
+                return true;
+            //Completely outside
+            else if (r <= s)
+                return false;
+            //else intersecting
+            return true;
+        }
+
+        /// <summary>
+        /// Test whether a cuboid intersects this plane.
+        /// See: Ericson 2005, Real Time Collision Detection, p. 161 - 164
+        /// CAREFUL: the definition whats completely inside and outside is flipped in comparison to Ericson, 
+        /// because FUSEE defines a point with a negative signed distance to be inside.
+        /// </summary>
+        /// <param name="center">The center of the cuboid.</param>
+        /// <param name="size">The width, height and length of the cuboid.</param>
+        public bool InsideOrIntersecting(double3 center, double size)
+        {
+            var r = BoxExtendInNormalDirection(size);
+
+            //Distance from aabb center to plane
+            var s = SignedDistanceFromPoint(center);
+
+            //Completely inside
+            if (s <= -r)
+                return true;
+            //Completely outside
+            else if (r <= s)
+                return false;
+            //else intersecting
+            return true;
         }
 
         /// <summary>
@@ -197,6 +261,26 @@ namespace Fusee.Math.Core
         {
             var boxExtend = aabb.Size * 0.5f;
             return boxExtend.x * System.Math.Abs(Normal.x) + boxExtend.y * System.Math.Abs(Normal.y) + boxExtend.z * System.Math.Abs(Normal.z);
+        }
+
+        /// <summary>
+        /// Calculates the projection interval radius of an cuboid onto line L(t) = cuboid.Center + t * plane.Normal (extend (radius) in direction of the plane normal).      
+        /// <param name="size">The width, height and length of a cuboid.</param>
+        /// </summary>
+        private double BoxExtendInNormalDirection(double3 size)
+        {
+            var boxExtend = size * 0.5f;
+            return boxExtend.x * System.Math.Abs(Normal.x) + boxExtend.y * System.Math.Abs(Normal.y) + boxExtend.z * System.Math.Abs(Normal.z);
+        }
+
+        /// <summary>
+        /// Calculates the projection interval radius of an cuboid onto line L(t) = cuboid.Center + t * plane.Normal (extend (radius) in direction of the plane normal).      
+        /// <param name="size">The width, height and length of a cuboid.</param>
+        /// </summary>
+        private double BoxExtendInNormalDirection(double size)
+        {
+            var boxExtend = size * 0.5f;
+            return boxExtend * System.Math.Abs(Normal.x) + boxExtend * System.Math.Abs(Normal.y) + boxExtend * System.Math.Abs(Normal.z);
         }
 
         /// <summary>
@@ -264,9 +348,9 @@ namespace Fusee.Math.Core
         /// </summary>
         /// <param name="obj">The object. This method will throw an exception if the object isn't of type <see cref="PlaneD"/>.</param>
         /// <returns></returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (obj.GetType() != typeof(PlaneD)) throw new ArgumentException($"{obj} is not of Type 'Plane'.");
+            if (obj?.GetType() != typeof(PlaneD)) throw new ArgumentException($"{obj} is not of Type 'Plane'.");
 
             var other = (PlaneD)obj;
             return
@@ -281,15 +365,7 @@ namespace Fusee.Math.Core
         /// </summary>        
         public override int GetHashCode()
         {
-            unchecked
-            {
-                int hash = 17;
-                hash = hash * 29 + A.GetHashCode();
-                hash = hash * 29 + B.GetHashCode();
-                hash = hash * 29 + C.GetHashCode();
-                hash = hash * 29 + D.GetHashCode();
-                return hash;
-            }
+            return HashCode.Combine(A, B, C, D);
         }
 
         #endregion

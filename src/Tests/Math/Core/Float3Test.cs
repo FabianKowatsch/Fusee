@@ -1,10 +1,10 @@
-using System;
-using Xunit;
-using System.Collections.Generic;
 using Fusee.Math.Core;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using Xunit;
 
-namespace Fusee.Test.Math.Core
+namespace Fusee.Tests.Math.Core
 {
     public class Float3Test
     {
@@ -427,13 +427,25 @@ namespace Fusee.Test.Math.Core
         [MemberData(nameof(GetBarycentric))]
         public void GetBarycentric_Edges(float3 a, float3 b, float3 c, float uExpected, float vExpected, float3 point)
         {
-            float uActual;
-            float vActual;
 
-            float3.GetBarycentric(a, b, c, point, out uActual, out vActual);
+            float3.GetBarycentric(a, b, c, point, out float uActual, out float vActual);
 
             Assert.Equal(uExpected, uActual);
             Assert.Equal(vExpected, vActual);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetBarycentric))]
+        public void PointInTriangle_CornersInTriangle(float3 a, float3 b, float3 c, float _1, float _2, float3 point)
+        {
+            Assert.True(float3.PointInTriangle(a, b, c, point, out var _, out var _));
+        }
+
+        [Theory]
+        [MemberData(nameof(GetPointInTriangle_Outside))]
+        public void PointInTriangle_IsNotIntriangle(float3 a, float3 b, float3 c, float3 point)
+        {
+            Assert.False(float3.PointInTriangle(a, b, c, point, out var _, out var _));
         }
 
         #endregion
@@ -502,9 +514,10 @@ namespace Fusee.Test.Math.Core
         [Fact]
         public void Swizzle_Float2_Set()
         {
-            var actual = new float3();
-
-            actual.xy = new float2(1, 2);
+            var actual = new float3
+            {
+                xy = new float2(1, 2)
+            };
             Assert.Equal(new float3(1, 2, 0), actual);
 
             actual.xz = new float2(3, 1);
@@ -539,9 +552,10 @@ namespace Fusee.Test.Math.Core
         [Fact]
         public void Swizzle_Float3_Set()
         {
-            var actual = new float3();
-
-            actual.xyz = new float3(1, 2, 3);
+            var actual = new float3
+            {
+                xyz = new float3(1, 2, 3)
+            };
             Assert.Equal(new float3(1, 2, 3), actual);
 
             actual.xzy = new float3(1, 2, 3);
@@ -718,9 +732,10 @@ namespace Fusee.Test.Math.Core
         [Fact]
         public void Color_Set()
         {
-            var actual = new float3();
-
-            actual.r = 1;
+            var actual = new float3
+            {
+                r = 1
+            };
             Assert.Equal(new float3(1, 0, 0), actual);
 
             actual.g = 2;
@@ -860,6 +875,17 @@ namespace Fusee.Test.Math.Core
             yield return new object[] { x, y, z, 0, 0, z };
             yield return new object[] { x, y, z, 1, 0, x };
             yield return new object[] { x, y, z, 0, 1, y };
+        }
+
+        public static IEnumerable<object[]> GetPointInTriangle_Outside()
+        {
+            var x = new float3(1, 0, 0);
+            var y = new float3(0, 1, 0);
+            var z = new float3(0, 0, 1);
+
+            yield return new object[] { x, y, z, new float3(1, 1, 0) };
+            yield return new object[] { x, y, z, new float3(0, 1, 1) };
+            yield return new object[] { x, y, z, new float3(1, 0, 1) };
         }
 
         public static IEnumerable<object[]> GetEuler()
