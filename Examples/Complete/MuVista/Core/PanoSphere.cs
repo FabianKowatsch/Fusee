@@ -30,13 +30,13 @@ namespace Fusee.Examples.MuVista.Core
 
             _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"));
 
-            Sphere sphere = new Sphere(10, 20, 50);
+            Sphere sphere = new Sphere(5, 20, 50);
 
 
             TextureInputOpacity colorInput = new TextureInputOpacity()
             {
                 Albedo = float4.One,
-                TexOpacity = 0.5f,
+                TexOpacity = 1.0f,
                 //Emission = float4.Zero,
                 //Shininess = 1.0f,
                 //SpecularStrength = 0.0f,
@@ -86,7 +86,7 @@ namespace Fusee.Examples.MuVista.Core
 
 
 
-            var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex;
+            var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTexOpacity;
 
             _surfaceEffect = new DefaultSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_Pos);
 

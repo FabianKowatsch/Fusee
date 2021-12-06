@@ -109,14 +109,15 @@ namespace Fusee.Engine.Core.ShaderShards.Fragment
             if (lightingSetup.HasFlag(LightingSetupFlags.AlbedoTex))
             {
                 res.Add($"vec4 texCol = texture(IN.AlbedoTex, {VaryingNameDeclarations.TextureCoordinates} * IN.TexTiles);");
-                if (lightingSetup.HasFlag(LightingSetupFlags.AlbedoTexOpacity))
-                {
-                    res.Add($"texCol = vec4(DecodeSRGB(texCol.rgb), texCol.a * IN.TexOpacity);");
-                }
-                else
-                {
-                    res.Add($"texCol = vec4(DecodeSRGB(texCol.rgb), texCol.a);");
-                }
+                res.Add($"texCol = vec4(DecodeSRGB(texCol.rgb), texCol.a);");
+                res.Add("float linearLuminance = (0.2126 * texCol.r) + (0.7152 * texCol.g) + (0.0722 * texCol.b);");
+                res.Add($"vec3 mix = mix(IN.Albedo.rgb * linearLuminance, texCol.xyz, IN.AlbedoMix);");
+                res.Add($"OUT.albedo = vec4(mix, texCol.a);");
+            }
+            else if (lightingSetup.HasFlag(LightingSetupFlags.AlbedoTexOpacity))
+            {
+                res.Add($"vec4 texCol = texture(IN.AlbedoTex, {VaryingNameDeclarations.TextureCoordinates} * IN.TexTiles);");
+                res.Add($"texCol = vec4(DecodeSRGB(texCol.rgb), texCol.a * IN.TexOpacity);");
                 res.Add("float linearLuminance = (0.2126 * texCol.r) + (0.7152 * texCol.g) + (0.0722 * texCol.b);");
                 res.Add($"vec3 mix = mix(IN.Albedo.rgb * linearLuminance, texCol.xyz, IN.AlbedoMix);");
                 res.Add($"OUT.albedo = vec4(mix, texCol.a);");

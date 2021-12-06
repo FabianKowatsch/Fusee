@@ -352,7 +352,7 @@ namespace Fusee.Engine.Core.Effects
     public class TextureInputOpacity : TextureInputSpecular
     {
         /// <summary>
-        /// The roughness value. If 0.0 the diffuse component gives standard Lambertian reflection, higher values activate the Oren-Nayar calculation.
+        /// The Opacity value. If 0.0 the object will be see-through and 1.0 it will be at 100%.
         /// </summary>
         public float TexOpacity
         {
@@ -367,7 +367,7 @@ namespace Fusee.Engine.Core.Effects
                 }
             }
         }
-        private float _texOpacity = 1f;
+        private float _texOpacity = 1.0f;
     }
 
 

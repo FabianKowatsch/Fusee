@@ -11,7 +11,7 @@ namespace Fusee.Examples.MuVista.Core
 {
     public sealed class PtRenderingParams : IDisposable
     {
-        public string PathToOocFile = "E:\\BwSync\\MuVista\\Data\\ProcessedPointCloud\\small_workingCloud";
+        public string PathToOocFile = "C:\\Users\\jacko\\OneDrive\\Desktop\\Hochschule\\MuVista\\BW_Sync_and_Share\\Data\\ProcessedPointCloud\\small_workingCloud";
 
         public static PtRenderingParams Instance { get; private set; } = new();
 
@@ -69,7 +69,7 @@ namespace Fusee.Examples.MuVista.Core
             }
         }
 
-        private ColorMode _colorMode = ColorMode.Single;
+        private ColorMode _colorMode = ColorMode.Point;
 
         public ColorMode ColorMode
         {
