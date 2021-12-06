@@ -30,6 +30,8 @@ namespace Fusee.Engine.Imp.Graphics.Android
         internal int NormalBufferObject;
         internal int Normal1BufferObject;
         internal int ColorBufferObject;
+        internal int ColorBufferObject1;
+        internal int ColorBufferObject2;
         internal int UVBufferObject;
         internal int BoneIndexBufferObject;
         internal int BoneWeightBufferObject;
@@ -104,27 +106,29 @@ namespace Fusee.Engine.Imp.Graphics.Android
         public bool NormalsSet { get { return NormalBufferObject != 0; } }
 
         /// <summary>
-        /// Invalidates the second normals.
-        /// </summary>
-        public void InvalidateNormals1()
-        {
-            Normal1BufferObject = 0;
-        }
-        /// <summary>
-        /// Gets a value indicating whether [second normals set].
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if [second normals set]; otherwise, <c>false</c>.
-        /// </value>
-        public bool Normals1Set { get { return Normal1BufferObject != 0; } }
-
-        /// <summary>
-        /// Implementation Tasks: Invalidates the colors, e.g. reset the ColorBufferObject of this instance by setting it to 0.
+        /// Invalidates the colors, e.g. reset the ColorBufferObject of this instance by setting it to 0.
         /// </summary>
         public void InvalidateColors()
         {
             ColorBufferObject = 0;
         }
+
+        /// <summary>
+        /// Invalidates the colors, e.g. reset the ColorBufferObject of this instance by setting it to 0.
+        /// </summary>
+        public void InvalidateColors1()
+        {
+            ColorBufferObject1 = 0;
+        }
+
+        /// <summary>
+        /// Invalidates the colors, e.g. reset the ColorBufferObject of this instance by setting it to 0.
+        /// </summary>
+        public void InvalidateColors2()
+        {
+            ColorBufferObject2 = 0;
+        }
+
         /// <summary>
         /// Gets a value indicating whether [colors set].
         /// </summary>
@@ -132,6 +136,22 @@ namespace Fusee.Engine.Imp.Graphics.Android
         ///   <c>true</c> if [colors set]; otherwise, <c>false</c>.
         /// </value>
         public bool ColorsSet { get { return ColorBufferObject != 0; } }
+
+        /// <summary>
+        /// Gets a value indicating whether [colors set].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [colors set]; otherwise, <c>false</c>.
+        /// </value>
+        public bool ColorsSet1 { get { return ColorBufferObject1 != 0; } }
+
+        /// <summary>
+        /// Gets a value indicating whether [colors set].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [colors set]; otherwise, <c>false</c>.
+        /// </value>
+        public bool ColorsSet2 { get { return ColorBufferObject2 != 0; } }
 
         /// <summary>
         /// Gets a value indicating whether [u vs set].
