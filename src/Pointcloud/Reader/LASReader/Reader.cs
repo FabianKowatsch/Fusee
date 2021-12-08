@@ -176,6 +176,7 @@ namespace Fusee.PointCloud.Reader.LASReader
                 default:
                     throw new ArgumentException($"Point data format with byte {info.PointDataFormat} not recognized!");
                 case 0:
+                case 1:
                     return new PointFormat
                     {
                         HasClassification = true,
