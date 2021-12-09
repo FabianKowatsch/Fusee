@@ -33,7 +33,7 @@ namespace Fusee.Examples.MuVista.Core
             Name = "PanoSphere";
             _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"));
 
-            Sphere sphere = new Sphere(100, 20, 50);
+            Sphere sphere = new Sphere(50, 20, 50);
 
             // Children = ConnectionCreator.Instance.getAllConnections(imageName);
 
