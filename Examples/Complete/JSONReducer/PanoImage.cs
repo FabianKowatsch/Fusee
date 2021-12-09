@@ -30,9 +30,9 @@ namespace JSONReducer
         public double qy { get; set; }
         public double qz { get; set; }
         public double qw { get; set; }
-        public double roll_t { get; set; }
-        public double pitch_t { get; set; }
-        public double heading_t { get; set; }
+        public double roll_orbit { get; set; }
+        public double pitch_orbit { get; set; }
+        public double heading_orbit { get; set; }
         public double distance { get; set; }
     }
 }

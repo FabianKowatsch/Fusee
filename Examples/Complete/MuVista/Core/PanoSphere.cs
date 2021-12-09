@@ -18,6 +18,7 @@ namespace Fusee.Examples.MuVista.Core
 
         public Transform sphereTransform;
 
+        public float radius = 3;
 
         private DefaultSurfaceEffect _surfaceEffect;
 
@@ -31,9 +32,9 @@ namespace Fusee.Examples.MuVista.Core
         public PanoSphere(string imageName)
         {
             Name = "PanoSphere";
-            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"));
+            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName));
 
-            Sphere sphere = new Sphere(10, 20, 50);
+            Sphere sphere = new Sphere(radius, 20, 50);
 
             // Children = ConnectionCreator.Instance.getAllConnections(imageName);
 

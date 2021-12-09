@@ -48,12 +48,12 @@ public class PanoSphereFactory
             if (i != 0)
             {
                 panoSpheres[i].previous = panoSpheres[i - 1];
-                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].previous.sphereTransform.Translation, i));
+                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].previous.sphereTransform.Translation, i, panoSpheres[i].radius));
             }
             if (i != panoSpheres.Count - 1)
             {
                 panoSpheres[i].next = panoSpheres[i + 1];
-                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].next.sphereTransform.Translation, i));
+                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].next.sphereTransform.Translation, i, panoSpheres[i].radius));
             }
         }
         return panoSpheres;
@@ -93,13 +93,15 @@ public class PanoSphereFactory
     private static PanoSphere createSphereWithShift(PanoImage img)
     {
         PanoSphere sphere = new PanoSphere(img.filename);
-        double shiftedX = shiftImgCoords(offset.x, img.X, center.x + 10d);
-        double shiftedZ = shiftImgCoords(offset.y, img.Y, center.z);
-        double shiftedY = shiftImgCoords(offset.z, img.Z, center.y - 8d);
+        //double shiftedX = shiftImgCoords(offset.x, img.X, center.x + 10d);
+        double shiftedX = shiftImgCoords(offset.x, img.X);
+        double shiftedZ = shiftImgCoords(offset.y, img.Y);
+        //double shiftedY = shiftImgCoords(offset.z, img.Z, center.y - 8d);
+        double shiftedY = shiftImgCoords(offset.z, img.Z);
         Diagnostics.Debug(shiftedX + "|" + shiftedY + "|" + shiftedZ);
         sphere.sphereTransform.Translation = new float3(new double3(shiftedX, shiftedY, shiftedZ));
         //sphere.sphereTransform.Translation = new float3(new double3(center.x + img.X - offset.x, center.y + img.Y - offset.y, center.z + img.Z - offset.z));
-        //sphere.sphereTransform.Rotation = new float3(new double3(degreeToRadian(img.roll), degreeToRadian(img.pitch), degreeToRadian(img.heading)));
+        sphere.sphereTransform.Rotation = new float3(new double3(degreeToRadian(img.roll), degreeToRadian(img.pitch), degreeToRadian(img.heading)));
         //Diagnostics.Debug("imgX:" + (img.X - offset.x) + " | imgY" + (img.Y - offset.y) + " | imgZ" + (img.Z - offset.z));
 
         Diagnostics.Debug(center.x + "|" + center.y + "|" + center.z);
@@ -112,19 +114,19 @@ public class PanoSphereFactory
         return (Math.PI / 180) * val;
     }
 
-    private static double shiftImgCoords(double offset, double img, double center)
+    private static double shiftImgCoords(double offset, double img)
     {
-        return img - offset + center;
+        return img - offset;
     }
 
-    private static SceneNode createArrow(float3 pos, float3 nextPos, int i)
+    private static SceneNode createArrow(float3 pos, float3 nextPos, int i, float radius)
     {
         SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("arrow2.fus");
         SceneNode arrow = blenderScene.Children[0];
 
         arrow.Name = "connection" + i;
         float3 connectionVektor = new float3((float)(nextPos.x - pos.x), (float)(nextPos.y - pos.y), (float)(nextPos.z - pos.z));
-        arrow.GetComponent<Transform>(0).Translation = connectionVektor.Normalize() * 8;
+        arrow.GetComponent<Transform>(0).Translation = connectionVektor.Normalize() * (0.8f * radius);
         float angle = MathF.Atan2(1, 0) - MathF.Atan2(connectionVektor.z, connectionVektor.x);
 
         arrow.GetComponent<Transform>().Rotate(new float3((float)degreeToRadian(-10), angle, 0));

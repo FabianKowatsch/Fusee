@@ -13,9 +13,9 @@ namespace Fusee.Examples.MuVista.Core
     {
         public static ConcurrentDictionary<string, object> ShaderParamsToUpdate = new ConcurrentDictionary<string, object>();
         public static int MaxNoOfVisiblePoints = 500000;
-        private static string _pathToOocFile = ".\\Assets\\Data\\Pointcloud\\TestCloud";
-        private static string _debugPathToOocFile = "..\\Core\\Assets\\Data\\Pointcloud\\TestCloud";
-        //"G:\\Studium\\Semester 4\\MuVista\\TestCloud"
+        private static string _pathToOocFile = ".\\Assets\\Data\\Pointcloud\\ProcessedPointcloud";
+        private static string _debugPathToOocFile = "..\\Core\\Assets\\Data\\Pointcloud\\ProcessedPointcloud";
+        //"G:\\Studium\\Semester 4\\MuVista\\ProcessedPointcloud"
         public static ShaderEffect DepthPassEf;
         public static ShaderEffect ColorPassEf;
 
@@ -64,7 +64,7 @@ namespace Fusee.Examples.MuVista.Core
             }
         }
 
-        private static ColorMode _colorMode = ColorMode.Point;
+        private static ColorMode _colorMode = ColorMode.Single;
         public static ColorMode ColorMode
         {
             get { return _colorMode; }
