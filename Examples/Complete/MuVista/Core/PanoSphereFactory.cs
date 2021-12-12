@@ -9,7 +9,7 @@ using System.IO;
 
 public class PanoSphereFactory
 {
-    private static string pathToImageData = "C:\\Users\\jacko\\OneDrive\\Desktop\\Hochschule\\MuVista\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json";
+    private static string pathToImageData = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json";
 
     private static string pathToMeta = PtRenderingParams.Instance.PathToOocFile + "\\meta.json";
     private static double3 offset;

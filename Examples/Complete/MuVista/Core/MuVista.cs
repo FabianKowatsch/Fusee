@@ -827,7 +827,7 @@ namespace Fusee.Examples.MuVista.Core
                 {
                     new RenderLayer {Layer = RenderLayers.Layer02 },
                     new Transform {Translation=translation,  Scale = float3.One },
-                    MakeEffect.FromDiffuseSpecular((float4)ColorUint.Red, float4.Zero, 4.0f, 1f),
+                    MakeEffect.FromDiffuseSpecular((float4)ColorUint.Red, 0f, 4.0f, 1f),
                     CreateCuboid(new float3(3, 10, 3))
                 }
             };

@@ -11,7 +11,7 @@ namespace Fusee.Examples.MuVista.Core
 {
     public sealed class PtRenderingParams : IDisposable
     {
-        public string PathToOocFile = "C:\\Users\\jacko\\OneDrive\\Desktop\\Hochschule\\MuVista\\BW_Sync_and_Share\\Data\\ProcessedPointCloud\\small_workingCloud";
+        public string PathToOocFile = "G:\\Studium\\Semester 4\\MuVista\\Testcloud";
 
         public static PtRenderingParams Instance { get; private set; } = new();
 

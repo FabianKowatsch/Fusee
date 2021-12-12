@@ -1,5 +1,6 @@
 ﻿
 using Fusee.Base.Core;
+using Fusee.Engine.Common;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
 using Fusee.Engine.Core.Scene;
@@ -13,10 +14,10 @@ using System.Collections.Generic;
 namespace Fusee.Examples.MuVista.Core
 {
 
-    public class PanoSphere : Fusee.Engine.Core.Scene.SceneNode
+    public class PanoSphere : SceneNode
     {
 
-        public Transform _sphereTransform;
+        public Transform sphereTransform;
 
 
         //private DefaultSurfaceEffect _surfaceEffect;
@@ -85,15 +86,15 @@ namespace Fusee.Examples.MuVista.Core
              * */
 
             _surfaceEffect = MakeEffect.FromUnlit(
-
+                albedoColor: float4.One,
                 albedoTex: _texture
-            ); 
+            );
 
 
             //var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTexOpacity;
             //_surfaceEffect = new DefaultSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_Pos);
 
-            _sphereTransform = new Transform
+            sphereTransform = new Transform
             {
                 Rotation = new float3(0, 0, 0),
                 Scale = new float3(1, 1, 1),
