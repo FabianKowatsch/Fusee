@@ -13,14 +13,14 @@ using System.Collections.Generic;
 namespace Fusee.Examples.MuVista.Core
 {
 
-    public class PanoSphere : SceneNode
+    public class PanoSphere : Fusee.Engine.Core.Scene.SceneNode
     {
 
-        public Transform sphereTransform;
+        public Transform _sphereTransform;
 
 
-        private DefaultSurfaceEffect _surfaceEffect;
-
+        //private DefaultSurfaceEffect _surfaceEffect;
+        private SurfaceEffect _surfaceEffect;
 
         private Texture _texture;
 
@@ -28,12 +28,12 @@ namespace Fusee.Examples.MuVista.Core
         public PanoSphere(string imageName)
         {
 
-            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"));
+            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"), true, TextureFilterMode.LinearMipmapLinear);
 
             Sphere sphere = new Sphere(5, 20, 50);
 
 
-            TextureInputOpacity colorInput = new TextureInputOpacity()
+            /*TextureInputOpacity colorInput = new TextureInputOpacity()
             {
                 Albedo = float4.One,
                 TexOpacity = 1.0f,
@@ -44,7 +44,7 @@ namespace Fusee.Examples.MuVista.Core
                 AlbedoTex = _texture,
                 TexTiles = float2.One,
                 Roughness = 0.0f
-            };
+            };*/
 
             /*
              *  var sphereTex = new Texture(AssetStorage.Get<ImageData>("ladybug_18534664_20210113_GEO2111300_5561.jpg"));
@@ -84,13 +84,16 @@ namespace Fusee.Examples.MuVista.Core
             };
              * */
 
+            _surfaceEffect = MakeEffect.FromUnlit(
+
+                albedoTex: _texture
+            ); 
 
 
-            var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTexOpacity;
+            //var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTexOpacity;
+            //_surfaceEffect = new DefaultSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_Pos);
 
-            _surfaceEffect = new DefaultSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_Pos);
-
-            sphereTransform = new Transform()
+            _sphereTransform = new Transform
             {
                 Rotation = new float3(0, 0, 0),
                 Scale = new float3(1, 1, 1),

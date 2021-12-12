@@ -8,7 +8,7 @@ namespace Fusee.Engine.Core.Effects
     /// <summary>
     /// The Surface effect used for Interpolation between 2 sets of vertices.
     /// </summary>
-    public class VertexAnimationSurfaceEffect : DefaultSurfaceEffect
+    public class VertexAnimationSurfaceEffect : SurfaceEffect
     {
 
         /// <summary>
@@ -57,8 +57,8 @@ namespace Fusee.Engine.Core.Effects
         /// <param name="surfOutFragBody">The method body for the <see cref="SurfaceEffect.SurfOutFragMethod"/></param>
         /// <param name="SufOutBody_PosNormAnimation">The method body for the <see cref="ShaderShards.Vertex.VertShards.SufOutBody_PosNormAnimation"/></param>
         /// <param name="rendererStates">The renderer state set for this effect.</param>
-        public VertexAnimationSurfaceEffect(LightingSetupFlags lightingSetup, ColorInput input, List<string> surfOutFragBody, List<string> SufOutBody_PosNormAnimation, RenderStateSet rendererStates = null)
-            : base(lightingSetup, input, surfOutFragBody, SufOutBody_PosNormAnimation, rendererStates)
+        public VertexAnimationSurfaceEffect(SurfaceInput input, List<string> surfOutFragBody, List<string> SufOutBody_PosNormAnimation, RenderStateSet rendererStates = null)
+            : base(input, surfOutFragBody, SufOutBody_PosNormAnimation, rendererStates)
         {
 
         }

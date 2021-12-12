@@ -43,7 +43,12 @@ namespace Fusee.Engine.Core.ShaderShards
         /// <summary>
         /// Does this Effect have a thickness map?
         /// </summary>
-        ThicknessMap = 4
+        ThicknessMap = 4,
+
+        /// <summary>
+        /// Does this Effect have an albedo texture and a variable opacity?
+        /// </summary>
+        AlbedoTexOpacity = 8,
 
     }
 

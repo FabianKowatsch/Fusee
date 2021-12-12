@@ -214,7 +214,7 @@ namespace Fusee.Engine.Core.Effects
     /// Class that can be used to collect properties that will serve as uniforms for a specific lighting setup.
     /// In this case for specular lighting with strength, shininess and opacity.
     /// </summary>
-    public class TextureInputOpacity : TextureInputSpecular
+    public class TextureInputOpacity : UnlitInput
     {
         /// <summary>
         /// The Opacity value. If 0.0 the object will be see-through and 1.0 it will be at 100%.
@@ -228,7 +228,7 @@ namespace Fusee.Engine.Core.Effects
                 if (value != _texOpacity)
                 {
                     _texOpacity = value;
-                    NotifyPropertyChanged(_texOpacity.GetType(), nameof(TexOpacity), _texOpacity);
+                    NotifyValueChanged(_texOpacity.GetType(), nameof(TexOpacity), _texOpacity);
                 }
             }
         }

@@ -106,6 +106,21 @@ namespace Fusee.Engine.Imp.Graphics.Android
         public bool NormalsSet { get { return NormalBufferObject != 0; } }
 
         /// <summary>
+        /// Invalidates the normals.
+        /// </summary>
+        public void InvalidateNormals1()
+        {
+            Normal1BufferObject = 0;
+        }
+        /// <summary>
+        /// Gets a value indicating whether [normals set].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [second normals set]; otherwise, <c>false</c>.
+        /// </value>
+        public bool Normals1Set { get { return Normal1BufferObject != 0; } }
+
+        /// <summary>
         /// Invalidates the colors, e.g. reset the ColorBufferObject of this instance by setting it to 0.
         /// </summary>
         public void InvalidateColors()
