@@ -19,19 +19,21 @@ namespace Fusee.Examples.MuVista.Core
 
         public Transform sphereTransform;
 
-
+        public float radius = 3;
         //private DefaultSurfaceEffect _surfaceEffect;
         private SurfaceEffect _surfaceEffect;
 
         private Texture _texture;
 
+        public PanoSphere previous = null;
 
+        public PanoSphere next = null;
         public PanoSphere(string imageName)
         {
+            Name = "PanoSphere";
+            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName), true, TextureFilterMode.LinearMipmapLinear);
 
-            _texture = new Texture(AssetStorage.Get<ImageData>("Panos\\" + imageName + ".jpg"), true, TextureFilterMode.LinearMipmapLinear);
-
-            Sphere sphere = new Sphere(5, 20, 50);
+            Sphere sphere = new Sphere(radius, 20, 50);
 
 
             /*TextureInputOpacity colorInput = new TextureInputOpacity()
@@ -87,7 +89,10 @@ namespace Fusee.Examples.MuVista.Core
 
             _surfaceEffect = MakeEffect.FromUnlit(
                 albedoColor: float4.One,
-                albedoTex: _texture
+                albedoTex: _texture,
+                texTiles: float2.One,
+                albedoMix: 1.0f
+          
             );
 
 

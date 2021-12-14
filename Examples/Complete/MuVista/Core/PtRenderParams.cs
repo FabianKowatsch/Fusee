@@ -11,7 +11,9 @@ namespace Fusee.Examples.MuVista.Core
 {
     public sealed class PtRenderingParams : IDisposable
     {
-        public string PathToOocFile = "G:\\Studium\\Semester 4\\MuVista\\Testcloud";
+        public string PathToOocFile = "D:\\Studium\\MuVista\\NewImageData\\ProcessedPointcloud";
+        //D:\\Studium\\MuVista\\NewImageData\\ProcessedPointcloud
+        //G:\\Studium\\Semester 4\\MuVista\\Testcloud
 
         public static PtRenderingParams Instance { get; private set; } = new();
 
@@ -69,7 +71,7 @@ namespace Fusee.Examples.MuVista.Core
             }
         }
 
-        private ColorMode _colorMode = ColorMode.Point;
+        private ColorMode _colorMode = ColorMode.Single;
 
         public ColorMode ColorMode
         {
@@ -92,7 +94,7 @@ namespace Fusee.Examples.MuVista.Core
             }
         }
 
-        private float4 _singleColor = new(0.8f, 0.8f, 0.8f, 1);
+        private float4 _singleColor = new(0.7f, 0.7f, 0.7f, 1);
         public float4 SingleColor
         {
             get => _singleColor;
