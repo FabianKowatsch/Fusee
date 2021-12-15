@@ -129,6 +129,11 @@ namespace Fusee.Examples.MuVista.Core
         private PickResult _currentPick;
         private float4 _oldColor;
 
+        private bool _panoChangeAnim = false;
+        private float _panoChangeAnimTime = 5;
+        private float _panoChangeAnimTimeStart = 0;
+        private PanoSphere _destinationSphere;
+
         // Init is called on startup. 
         public override void Init()
         {
@@ -221,6 +226,9 @@ namespace Fusee.Examples.MuVista.Core
 
             foreach (PanoSphere sphere in spheres)
             {
+                sphere.GetComponent<Mesh>().Active = false;
+                foreach (SceneNode child in sphere.Children)
+                    child.GetComponent<Mesh>().Active = false;
                 _scene.Children.Add(sphere);
             }
 
@@ -293,6 +301,25 @@ namespace Fusee.Examples.MuVista.Core
                 else
                 {
                     sphereUserInput();
+                }
+
+                if (Time.TimeSinceStart < _panoChangeAnimTimeStart + _panoChangeAnimTime && _panoChangeAnim)
+                {
+                    animatePanoChange();
+                }
+                else if (Time.TimeSinceStart > _panoChangeAnimTimeStart + _panoChangeAnimTime && _panoChangeAnim)
+                {
+                    _currentSphere.GetComponent<Mesh>().Active = false;
+                    foreach (SceneNode child in _currentSphere.Children)
+                        child.GetComponent<Mesh>().Active = false;
+                    _currentSphere = _destinationSphere;
+
+                    _currentSphere.GetComponent<Mesh>().Active = true;
+                    foreach (SceneNode child in _currentSphere.Children)
+                        child.GetComponent<Mesh>().Active = true;
+                    _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.None;
+                    _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                    _panoChangeAnim = false;
                 }
 
 
@@ -451,6 +478,9 @@ namespace Fusee.Examples.MuVista.Core
             if (!_pointCloudActive)
             {
                 _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                _currentSphere.GetComponent<Mesh>().Active = true;
+                foreach (SceneNode child in _currentSphere.Children)
+                    child.GetComponent<Mesh>().Active = true;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.None;
                 var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
                 foreach (PanoSphere sphere in spheres)
@@ -478,16 +508,27 @@ namespace Fusee.Examples.MuVista.Core
 
             if (Keyboard.IsKeyDown(KeyCodes.Q) && _currentSphere.previous != null)
             {
-                _currentSphere = _currentSphere.previous;
-                _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                _panoChangeAnim = true;
+                _panoChangeAnimTimeStart = Time.TimeSinceStart;
+                Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
+                _destinationSphere = _currentSphere.previous;
             }
 
             if (Keyboard.IsKeyDown(KeyCodes.E) && _currentSphere.next != null)
             {
-                _currentSphere = _currentSphere.next;
-                _mainCamTransform.Translation = _currentSphere.sphereTransform.Translation;
+                _panoChangeAnim = true;
+                _panoChangeAnimTimeStart = Time.TimeSinceStart;
+                Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
+                _destinationSphere = _currentSphere.next;
             }
 
+        }
+
+        public void animatePanoChange()
+        {
+            _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+            float3 connectionVektor = new float3((float)(_destinationSphere.GetComponent<Transform>(0).Translation.x - _mainCamTransform.Translation.x), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.y - _mainCamTransform.Translation.y), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.z - _mainCamTransform.Translation.z));
+            _mainCamTransform.Translate(connectionVektor.Normalize() * (connectionVektor.Length / (_panoChangeAnimTime / DeltaTime)));
         }
 
         public void CalculateRotationAngle()
