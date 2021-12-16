@@ -130,7 +130,7 @@ namespace Fusee.Examples.MuVista.Core
         private float4 _oldColor;
 
         private bool _panoChangeAnim = false;
-        private float _panoChangeAnimTime = 5;
+        private float _panoChangeAnimTime = 3;
         private float _panoChangeAnimTimeStart = 0;
         private PanoSphere _destinationSphere;
 

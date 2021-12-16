@@ -10,12 +10,23 @@ using System.IO;
 
 public class PanoSphereFactory
 {
-    private static string pathToImageData = "D:\\Studium\\MuVista\\NewImageData\\data.json";
+    private static string _pathToImageData = ".\\Assets\\Data\\output\\data.json";
+    private static string _debugPathToImageData = "..\\Assets\\Data\\output\\data.json";
     //G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json
     private static string pathToMeta = PtRenderingParams.Instance.PathToOocFile + "\\meta.json";
     private static double3 offset;
     private static double3 center;
 
+    private static string pathToImageData
+    {
+        get
+        {
+            if (Array.Exists(Environment.GetCommandLineArgs(), element => element == "useDebugPaths"))
+                return _debugPathToImageData;
+            else
+                return _pathToImageData;
+        }
+    }
     public static List<PanoSphere> createPanoSpheres()
     {
         readJSONMetaData();

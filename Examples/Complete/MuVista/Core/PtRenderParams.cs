@@ -11,11 +11,23 @@ namespace Fusee.Examples.MuVista.Core
 {
     public sealed class PtRenderingParams : IDisposable
     {
-        public string PathToOocFile = "D:\\Studium\\MuVista\\NewImageData\\ProcessedPointcloud";
+        private string _pathToOocFile = ".\\Assets\\Data\\Pointcloud\\ProcessedPointcloud";
+        private string _debugPathToOocFile = "..\\Assets\\Data\\Pointcloud\\ProcessedPointcloud";
         //D:\\Studium\\MuVista\\NewImageData\\ProcessedPointcloud
         //G:\\Studium\\Semester 4\\MuVista\\Testcloud
 
         public static PtRenderingParams Instance { get; private set; } = new();
+
+        public string PathToOocFile
+        {
+            get
+            {
+                if (Array.Exists(Environment.GetCommandLineArgs(), element => element == "useDebugPaths"))
+                    return _debugPathToOocFile;
+                else
+                    return _pathToOocFile;
+            }
+        }
 
         public ConcurrentDictionary<int, object> ShaderParamsToUpdate = new();
         public int MaxNoOfVisiblePoints = 500000;
