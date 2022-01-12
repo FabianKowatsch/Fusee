@@ -78,7 +78,7 @@ namespace Fusee.Examples.MuVista.Core
         private readonly float Fov = M.PiOver3;
 
         private SceneRendererForward _guiRenderer;
-        private SceneContainer _gui;
+        private GUI _gui;
         private SceneInteractionHandler _sih;
         private readonly CanvasRenderMode _canvasRenderMode = CanvasRenderMode.Screen;
 
@@ -109,7 +109,7 @@ namespace Fusee.Examples.MuVista.Core
         private Transform _mainCamTransform;
         private Camera _mainCam;
 
-        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Perspective, 3, 100, M.PiOver4);
+        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Orthographic, 3, 100, M.PiOver4);
         private Transform _minimapCamTransform;
 
         private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
@@ -216,12 +216,9 @@ namespace Fusee.Examples.MuVista.Core
             if (!UseWPF)
                 LoadPointCloudFromFile();
 
-            _gui = FuseeGuiHelper.CreateDefaultGui(this, CanvasRenderMode.Screen, "FUSEE MuVista Viewer");
-            //Create the interaction handler
-            _sih = new SceneInteractionHandler(_gui);
 
-            _scene.Children.Add(CreateWaypoint(new float3(40, 40, 0)));
-            _scene.Children.Add(CreateWaypoint(new float3(50, 40, 0)));
+            _scene.Children.Add(CreateWaypoint(new float3(20, 40, 0)));
+            _scene.Children.Add(CreateWaypoint(new float3(-20, 40, 0)));
 
 
             foreach (PanoSphere sphere in spheres)
@@ -234,9 +231,9 @@ namespace Fusee.Examples.MuVista.Core
 
             _scene.Children.Add(miniMapCam);
 
-            //_gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
-            //Create the interaction handler
-            //_sih = new SceneInteractionHandler(_gui);
+            _gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
+            // Create the interaction handler
+            _sih = new SceneInteractionHandler(_gui);
 
             // Wrap a SceneRenderer around the model.
             _sceneRenderer = new SceneRendererForward(_scene);
@@ -275,8 +272,8 @@ namespace Fusee.Examples.MuVista.Core
                     OocLoader.IsUserMoving = false;*/
                 //--------------------------------------------------------------------------------------------
                 #region Controls
-                //HndGuiButtonInput();
-                //MouseWheelZoom();
+                HndGuiButtonInput();
+                MouseWheelZoom();
 
                 if (Keyboard.IsKeyDown(KeyCodes.Enter))
                 {
@@ -770,84 +767,84 @@ namespace Fusee.Examples.MuVista.Core
             PtRenderingParams.Instance.ShaderParamsToUpdate.Clear();
         }
 
-        //public void HndGuiButtonInput()
-        //{
-        //    if (_gui._btnZoomOut.IsMouseOver)
-        //    {
-        //        _gui._btnZoomOut.OnMouseDown += BtnZoomOutDown;
-        //    }
+        public void HndGuiButtonInput()
+        {
+            if (_gui._btnZoomOut.IsMouseOver)
+            {
+                _gui._btnZoomOut.OnMouseDown += BtnZoomOutDown;
+            }
 
-        //    if (_gui._btnZoomIn.IsMouseOver)
-        //    {
-        //        _gui._btnZoomIn.OnMouseDown += BtnZoomInDown;
-        //    }
+            if (_gui._btnZoomIn.IsMouseOver)
+            {
+                _gui._btnZoomIn.OnMouseDown += BtnZoomInDown;
+            }
 
-        //    if (_gui._btnMiniMap.IsMouseOver)
-        //    {
-        //        _gui._btnMiniMap.OnMouseDown += OnMinimapDown;
-        //    }
-        //}
+            if (_gui._btnMiniMap.IsMouseOver)
+            {
+                _gui._btnMiniMap.OnMouseDown += OnMinimapDown;
+            }
+        }
 
-        //public void MouseWheelZoom()
-        //{
-        //    _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
+        public void MouseWheelZoom()
+        {
+            _zoom = Mouse.WheelVel * DeltaTime * -0.05f;
 
-        //    if (_sphereIsVisible)
-        //    {
-        //        if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
-        //        {
-        //            _mainCam.Fov += _zoom;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        if (_zoom != 0)
-        //        {
-        //            if (!(_mainCam.Fov + _zoom >= M.PiOver2) && !(_mainCam.Fov + _zoom <= 0.3))
-        //            {
-        //                _mainCam.Fov += _zoom;
-        //            }
-        //        }
-        //    }
-        //}
+            if (_sphereIsVisible)
+            {
+                if (!(_mainCam.Fov + _zoom >= 1.2) && !(_mainCam.Fov + _zoom <= 0.3))
+                {
+                    _mainCam.Fov += _zoom;
+                }
+            }
+            else
+            {
+                if (_zoom != 0)
+                {
+                    if (!(_mainCam.Fov + _zoom >= M.PiOver2) && !(_mainCam.Fov + _zoom <= 0.3))
+                    {
+                        _mainCam.Fov += _zoom;
+                    }
+                }
+            }
+        }
 
-        //public void BtnZoomOutDown(CodeComponent sender)
-        //{
-        //    if (_sphereIsVisible)
-        //    {
-        //        if (_inverseCams)
-        //        {
-        //            if (_minimapCam.Fov + 0.001 <= 1.2f)
-        //            {
-        //                _minimapCam.Fov += 0.001f;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            if (_mainCam.Fov + 0.001 <= 1.2f)
-        //            {
-        //                _mainCam.Fov += 0.001f;
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        if (_inverseCams)
-        //        {
-        //            if (!(_minimapCam.Fov + 0.001f >= M.PiOver3) && !(_minimapCam.Fov + 0.001f <= 0.3))
-        //            {
-        //                _minimapCam.Fov += 0.001f;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            if (!(_mainCam.Fov + 0.001f >= M.PiOver3) && !(_mainCam.Fov + 0.001f <= 0.3))
-        //            {
-        //                _mainCam.Fov += 0.001f;
-        //            }
-        //        }
-        //    }
-        //}
+        public void BtnZoomOutDown(CodeComponent sender)
+        {
+            if (_sphereIsVisible)
+            {
+                if (_inverseCams)
+                {
+                    if (_minimapCam.Fov + 0.001 <= 1.2f)
+                    {
+                        _minimapCam.Fov += 0.001f;
+                    }
+                }
+                else
+                {
+                    if (_mainCam.Fov + 0.001 <= 1.2f)
+                    {
+                        _mainCam.Fov += 0.001f;
+                    }
+                }
+            }
+            else
+            {
+                if (_inverseCams)
+                {
+                    if (!(_minimapCam.Fov + 0.001f >= M.PiOver3) && !(_minimapCam.Fov + 0.001f <= 0.3))
+                    {
+                        _minimapCam.Fov += 0.001f;
+                    }
+                }
+                else
+                {
+                    if (!(_mainCam.Fov + 0.001f >= M.PiOver3) && !(_mainCam.Fov + 0.001f <= 0.3))
+                    {
+                        _mainCam.Fov += 0.001f;
+                    }
+                }
+            }
+        }
 
         public void BtnZoomInDown(CodeComponent sender)
         {
@@ -898,7 +895,7 @@ namespace Fusee.Examples.MuVista.Core
                 Name = "Waypoint",
                 Components = new List<SceneComponent>
                 {
-                    new RenderLayer {Layer = RenderLayers.Layer02 },
+                    new RenderLayer {Layer = RenderLayers.Layer01 },
                     new Transform {Translation=translation,  Scale = float3.One },
                     MakeEffect.FromDiffuseSpecular((float4)ColorUint.Red, 0f, 4.0f, 1f),
                     CreateCuboid(new float3(3, 10, 3))
@@ -1022,16 +1019,22 @@ namespace Fusee.Examples.MuVista.Core
         {
             if (Mouse.LeftButton)
             {
+                //var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
+                //_scene.Children.Remove(pointcloud);
                 //float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
 
                 //PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
 
-                //Diagnostics.Debug(newPick.Node.Name);
+                //Diagnostics.Debug("newPick" + newPick);
+                //if (newPick != null)
+                //{
+                //    Diagnostics.Debug("newPick" + newPick);
+                //}
                 //if (newPick?.Node != _currentPick?.Node)
                 //{
                 //    if (_currentPick != null)
                 //    {
-                //        var ef = _currentPick.Node.GetComponent<DefaultSurfaceEffect>();
+                //        var ef = _currentPick.Node.GetComponent<SurfaceEffect>();
                 //        ef.SurfaceInput.Albedo = _oldColor;
                 //    }
                 //    if (newPick != null)
@@ -1042,6 +1045,8 @@ namespace Fusee.Examples.MuVista.Core
                 //    }
                 //    _currentPick = newPick;
                 //}
+
+                //_scene.Children.Insert(1, pointcloud);
             }
         }
     }
