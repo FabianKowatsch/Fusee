@@ -287,7 +287,7 @@ namespace Fusee.Examples.MuVista.Core
 
                 //if (_inverseCams)
                 //{
-                    CheckWaypointPicking();
+                    //CheckWaypointPicking();
                 //}
 
                 if (_pointCloudActive)
