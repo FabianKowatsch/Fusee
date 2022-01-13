@@ -9,6 +9,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Assets\AlphaBackground.png" />
+    <None Remove="Assets\AlphaDown.png" />
+    <None Remove="Assets\AlphaHandle.png" />
+    <None Remove="Assets\AlphaUp.png" />
     <None Remove="Assets\RocketFus.fus" />
   </ItemGroup>
 

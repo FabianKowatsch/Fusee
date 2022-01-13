@@ -20,10 +20,24 @@ namespace Fusee.Examples.MuVista.Core
 
         public GuiButton _btnMiniMap;
 
+        public GuiButton _btnPanoAlpha;
+        public GuiButton _btnPanoAlphaUp;
+        public GuiButton _btnPanoAlphaDown;
+
         public float2 _zoomInBtnPosition;
         public float2 _zoomOutBtnPosition;
 
         public float2 _miniMapBtnPosition;
+
+        public float2 _btnPanoAlphaPosition;
+        public float2 _btnPanoAlphaUpPosition;
+        public float2 _btnPanoAlphaDownPosition;
+        public TextureNode _panoAlphaNode;
+        public bool _movePanoAlphaHandler = false;
+        public float _velocity;
+
+        public TextNode _panoAlphaPercent;
+        public float _lastStep = 100;
 
         public GUI(int width, int height, CanvasRenderMode canvasRenderMode, Transform mainCamTransform, Camera guiCam)
         {
@@ -84,6 +98,19 @@ namespace Fusee.Examples.MuVista.Core
                 Name = "MiniMap"
             };
 
+            _btnPanoAlpha = new GuiButton
+            {
+                Name = "Pano_Alpha"
+            };
+            _btnPanoAlphaUp = new GuiButton
+            {
+                Name = "Pano_Alpha_Up"
+            };
+            _btnPanoAlphaDown = new GuiButton
+            {
+                Name = "Pano_Alpha_Down"
+            };
+
             _zoomInBtnPosition = new float2(canvasWidth - 1f, 1f);
             TextureNode zoomInNode = TextureNode.Create(
                 "ZoomInLogo",
@@ -115,8 +142,54 @@ namespace Fusee.Examples.MuVista.Core
                 );
             minimapNode.Components.Add(_btnMiniMap);
 
+            _btnPanoAlphaPosition = new float2(0.375f - 2, 2.8f);
+            _panoAlphaNode = TextureNode.Create(
+                "AlphaPanoHandler",
+                new Texture(AssetStorage.Get<ImageData>("AlphaHandle.png")),
+                GuiElementPosition.GetAnchors(AnchorPos.DownDownLeft),
+                GuiElementPosition.CalcOffsets(AnchorPos.DownDownLeft, _btnPanoAlphaPosition, canvasHeight, canvasWidth, new float2(0.5f, 0.2f)),
+                float2.One
+                );
+            _panoAlphaNode.Components.Add(_btnPanoAlpha);
 
+            _btnPanoAlphaUpPosition = new float2(0.5f - 2, 3f);
+            var panoAlphaUpNode = TextureNode.Create(
+                "AlphaPanoUpHandler",
+                new Texture(AssetStorage.Get<ImageData>("AlphaUp.png")),
+                GuiElementPosition.GetAnchors(AnchorPos.DownDownLeft),
+                GuiElementPosition.CalcOffsets(AnchorPos.DownDownLeft, _btnPanoAlphaUpPosition, canvasHeight, canvasWidth, new float2(0.25f, 0.25f)),
+                float2.One
+                );
+            panoAlphaUpNode.Components.Add(_btnPanoAlphaUp);
 
+            _btnPanoAlphaDownPosition = new float2(0.5f - 2, 0.25f);
+            var panoAlphaDownNode = TextureNode.Create(
+                "AlphaPanoDownHandler",
+                new Texture(AssetStorage.Get<ImageData>("AlphaDown.png")),
+                GuiElementPosition.GetAnchors(AnchorPos.DownDownLeft),
+                GuiElementPosition.CalcOffsets(AnchorPos.DownDownLeft, _btnPanoAlphaDownPosition, canvasHeight, canvasWidth, new float2(0.25f, 0.25f)),
+                float2.One
+                );
+            panoAlphaDownNode.Components.Add(_btnPanoAlphaDown);
+
+            _panoAlphaPercent = TextNode.Create(
+                "100%",
+                "PanoAlphaPercent",
+                GuiElementPosition.GetAnchors(AnchorPos.DownDownLeft),
+                GuiElementPosition.CalcOffsets(AnchorPos.DownDownLeft, new float2(0.375f - 2, 3.2f), canvasHeight, canvasWidth, new float2(0.5f, 0.5f)),
+                guiLatoBlack,
+                (float4)ColorUint.Greenery,
+                HorizontalTextAlignment.Center,
+                VerticalTextAlignment.Center
+            );
+
+            TextureNode panoAlphaBackground = TextureNode.Create(
+                "PanoAlphaBackground",
+                new Texture(AssetStorage.Get<ImageData>("AlphaBackground.png")),
+                GuiElementPosition.GetAnchors(AnchorPos.DownDownLeft),
+                GuiElementPosition.CalcOffsets(AnchorPos.DownDownLeft, new float2(0.575f - 2, 0.5f), canvasHeight, canvasWidth, new float2(0.1f, 2.5f)),
+                float2.One
+                );
 
             var canvas = new CanvasNode(
                 "Canvas",
@@ -134,7 +207,12 @@ namespace Fusee.Examples.MuVista.Core
                     text,
                     zoomInNode,
                     zoomOutNode,
-                    minimapNode
+                    minimapNode,
+                    panoAlphaBackground,
+                    panoAlphaDownNode,
+                    panoAlphaUpNode,
+                    _panoAlphaNode,
+                    //_panoAlphaPercent,
                 }
             };
 
@@ -150,11 +228,9 @@ namespace Fusee.Examples.MuVista.Core
                         guiCam
                     }
                 },
-                    
                 //Add canvas.
                 canvas
             };
-
         }
 
         public void BtnLogoEnter(CodeComponent sender)
@@ -175,5 +251,85 @@ namespace Fusee.Examples.MuVista.Core
         {
             //OpenLink("http://fusee3d.org");
         }
+
+        public void OnPanoAlphaUp(CodeComponent sender)
+        {
+            _movePanoAlphaHandler = true;
+            _velocity = 1f;
+        }
+
+        public void OnPanoAlphaDown(CodeComponent sender)
+        {
+            _movePanoAlphaHandler = true;
+            _velocity = -1;
+        }
+
+        public void OnPanoAlphaStop(CodeComponent sender)
+        {
+            _movePanoAlphaHandler = false;
+        }
+
+        public void replaceTextForPercent(string percent, float width, float height)
+        {
+            for(int i = 0; i < this.Children[1].Children.Count; i++)
+            {
+                if(this.Children[1].Children[i].Name == "PanoAlphaPercent")
+                {
+                    this.Children[1].Children.Remove(this.Children[1].Children[i]);
+                }
+            }
+
+            var canvasWidth = width / 100f;
+            var canvasHeight = height/ 100f;
+
+            var fontLato = AssetStorage.Get<Font>("Lato-Black.ttf");
+            var guiLatoBlack = new FontMap(fontLato, 24);
+
+            _panoAlphaPercent = TextNode.Create(
+                percent,
+                "PanoAlphaPercent",
+                GuiElementPosition.GetAnchors(AnchorPos.DownDownLeft),
+                GuiElementPosition.CalcOffsets(AnchorPos.DownDownLeft, new float2(0.375f, 3.2f), canvasHeight, canvasWidth, new float2(0.5f, 0.5f)),
+                guiLatoBlack,
+                (float4)ColorUint.Greenery,
+                HorizontalTextAlignment.Center,
+                VerticalTextAlignment.Center
+            );
+
+            this.Children[1].Children.Add(_panoAlphaPercent);
+        }
+
+        public void DeactivatePanoAlphaHandle()
+        {
+            
+            for (int i = 0; i < this.Children[1].Children.Count; i++)
+            {
+                if (this.Children[1].Children[i].Name == "PanoAlphaBackground" || this.Children[1].Children[i].Name == "PanoAlphaPercent" || this.Children[1].Children[i].Name == "AlphaPanoDownHandler" || this.Children[1].Children[i].Name == "AlphaPanoUpHandler" || this.Children[1].Children[i].Name == "AlphaPanoHandler")
+                {
+                    if (this.Children[1].Children[i].GetComponent<RectTransform>().Offsets.Min.x > 0f)
+                    {
+                        this.Children[1].Children[i].GetComponent<RectTransform>().Offsets.Min.x -= 2f;
+                        this.Children[1].Children[i].GetComponent<RectTransform>().Offsets.Max.x -= 2f;
+                    }
+                }
+            }
+        }
+
+        public void ActivatePanoAlphaHandle()
+        {
+            
+            for(int i = 0; i < this.Children[1].Children.Count; i++)
+            {
+                if (this.Children[1].Children[i].Name == "PanoAlphaBackground" || this.Children[1].Children[i].Name == "PanoAlphaPercent" || this.Children[1].Children[i].Name == "AlphaPanoDownHandler" || this.Children[1].Children[i].Name == "AlphaPanoUpHandler" || this.Children[1].Children[i].Name == "AlphaPanoHandler")
+                {
+                    if (this.Children[1].Children[i].GetComponent<RectTransform>().Offsets.Min.x < 0f)
+                    {
+                        this.Children[1].Children[i].GetComponent<RectTransform>().Offsets.Min.x += 2f;
+                        this.Children[1].Children[i].GetComponent<RectTransform>().Offsets.Max.x += 2f;
+                    }
+                }
+            }
+        }
+
     }
 }

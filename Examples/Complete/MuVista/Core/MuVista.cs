@@ -484,6 +484,7 @@ namespace Fusee.Examples.MuVista.Core
                 {
                     sphere.GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
                 }
+                _gui.ActivatePanoAlphaHandle();
             }
             else
             {
@@ -494,6 +495,7 @@ namespace Fusee.Examples.MuVista.Core
                 {
                     sphere.GetComponent<RenderLayer>().Layer = RenderLayers.None;
                 }
+                _gui.DeactivatePanoAlphaHandle();
             }
         }
 
@@ -783,6 +785,38 @@ namespace Fusee.Examples.MuVista.Core
             {
                 _gui._btnMiniMap.OnMouseDown += OnMinimapDown;
             }
+
+            _gui._btnPanoAlphaUp.OnMouseDown += _gui.OnPanoAlphaUp;
+            _gui._btnPanoAlphaDown.OnMouseDown += _gui.OnPanoAlphaDown;
+
+            _gui._btnPanoAlphaUp.OnMouseUp += _gui.OnPanoAlphaStop;
+            _gui._btnPanoAlphaDown.OnMouseUp += _gui.OnPanoAlphaStop;
+            _gui._btnPanoAlphaUp.OnMouseExit += _gui.OnPanoAlphaStop;
+            _gui._btnPanoAlphaDown.OnMouseExit += _gui.OnPanoAlphaStop;
+
+            if (_gui._movePanoAlphaHandler)
+            {
+                if(_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 0.5f && _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 2.8f)
+                {
+                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
+                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
+                } else if(_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
+                {
+                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 0.50f;
+                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 0.70f;
+                }
+                else if(_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 2.8f)
+                {
+                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 2.8f;
+                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 3f;
+                }
+                float percent = MathF.Round(((_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y - 0.7f) / (3 - 0.7f)) * 100);
+                if (percent >= _gui._lastStep + 10 || percent <= _gui._lastStep - 10)
+                {
+                    //_gui.replaceTextForPercent(percent + "%", Width, Height);
+                    _gui._lastStep = percent;
+                }
+            }
         }
 
         public void MouseWheelZoom()
@@ -869,6 +903,7 @@ namespace Fusee.Examples.MuVista.Core
         {
             SwitchCamViewport();
         }
+
         public void SwitchCamViewport()
         {
             _inverseCams = !_inverseCams;
