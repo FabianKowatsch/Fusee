@@ -42,12 +42,12 @@ public class PanoSphereFactory
             if (i != 0)
             {
                 panoSpheres[i].previous = panoSpheres[i - 1];
-                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].previous.sphereTransform.Translation, i, panoSpheres[i].radius));
+                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].previous.sphereTransform.Translation, i, panoSpheres[i].radius,panoSpheres[i].sphereTransform.Rotation.y));
             }
             if (i != panoSpheres.Count - 1)
             {
                 panoSpheres[i].next = panoSpheres[i + 1];
-                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].next.sphereTransform.Translation, i, panoSpheres[i].radius));
+                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].next.sphereTransform.Translation, i, panoSpheres[i].radius, panoSpheres[i].sphereTransform.Rotation.y));
             }
         }
         return panoSpheres;
@@ -81,19 +81,20 @@ public class PanoSphereFactory
     private static PanoSphere createSphereWithShift(PanoImage img)
     {
         PanoSphere sphere = new PanoSphere(img.filename);
-        //double shiftedX = shiftImgCoords(offset.x, img.X, center.x + 10d);
         double shiftedX = shiftImgCoords(offset.x, img.X);
         double shiftedZ = shiftImgCoords(offset.y, img.Y);
-        //double shiftedY = shiftImgCoords(offset.z, img.Z, center.y - 8d);
         double shiftedY = shiftImgCoords(offset.z, img.Z);
-        Diagnostics.Debug(shiftedX + "|" + shiftedY + "|" + shiftedZ);
-        sphere.sphereTransform.Translation = new float3(new double3(shiftedX, shiftedY, shiftedZ));
-        //sphere.sphereTransform.Translation = new float3(new double3(center.x + img.X - offset.x, center.y + img.Y - offset.y, center.z + img.Z - offset.z));
-        sphere.sphereTransform.Rotation = new float3(new double3(degreeToRadian(img.roll), degreeToRadian(img.pitch), degreeToRadian(img.heading)));
-        //Diagnostics.Debug("imgX:" + (img.X - offset.x) + " | imgY" + (img.Y - offset.y) + " | imgZ" + (img.Z - offset.z));
+        var fiber3dLadybugQuaternion_y = (float)img.qz;
+        var fiber3dLadybugQuaternion_x = (float)img.qy * (-1);
+        var fiber3dLadybugQuaternion_z = (float)img.qx * (-1);
+        var fiber3dLadybugQuaternion_w = (float)img.qw * (-1);
 
-        Diagnostics.Debug(center.x + "|" + center.y + "|" + center.z);
-
+    
+        sphere.sphereTransform.Matrix = new Quaternion(fiber3dLadybugQuaternion_x, fiber3dLadybugQuaternion_y, fiber3dLadybugQuaternion_z, fiber3dLadybugQuaternion_w).ToRotMat();
+        sphere.sphereTransform.Rotate(new float3(0, M.Pi, 0));
+        sphere.sphereTransform.Translate(new float3(new double3(shiftedX, shiftedY, shiftedZ)));
+        Diagnostics.Debug(sphere.sphereTransform.Rotation.y);
+       
         return sphere;
     }
 
@@ -106,20 +107,20 @@ public class PanoSphereFactory
     {
         return img - offset;
     }
-    private static SceneNode createArrow(float3 pos, float3 nextPos, int i, float radius)
+    private static SceneNode createArrow(float3 pos, float3 nextPos, int i, float radius, float currentSphereRotationY)
     {
         SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("arrow2.fus");
         SceneNode arrow = blenderScene.Children[0];
 
         arrow.Name = "connection" + i;
         float3 connectionVektor = new float3((float)(nextPos.x - pos.x), (float)(nextPos.y - pos.y), (float)(nextPos.z - pos.z));
-        arrow.GetComponent<Transform>(0).Translation = connectionVektor.Normalize() * (0.8f * radius);
+        connectionVektor = float3.Rotate(new float3(0, -currentSphereRotationY, 0), connectionVektor);
         float angle = MathF.Atan2(1, 0) - MathF.Atan2(connectionVektor.z, connectionVektor.x);
-
-        arrow.GetComponent<Transform>().Rotate(new float3((float)degreeToRadian(-10), angle, 0));
+        
+        arrow.GetComponent<Transform>().Rotate(new float3((float)degreeToRadian(-10), angle , 0));
+        arrow.GetComponent<Transform>(0).Translation = connectionVektor.Normalize() * (0.8f * radius);
         //arrow.GetComponent<Transform>(0).Translation.y -= 3;
         arrow.GetComponent<Transform>().Scale = new float3(0.8f, 0.8f, 0.8f);
-
 
 
         foreach (string s in Environment.GetCommandLineArgs())
