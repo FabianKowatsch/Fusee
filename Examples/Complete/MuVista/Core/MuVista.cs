@@ -3,6 +3,7 @@ using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Effects;
+using Fusee.Engine.Core.Primitives;
 using Fusee.Engine.Core.Scene;
 using Fusee.Engine.Core.ShaderShards;
 using Fusee.Engine.Gui;
@@ -67,6 +68,9 @@ namespace Fusee.Examples.MuVista.Core
         private SceneContainer _scene;
         private SceneRendererForward _sceneRenderer;
 
+        private SceneContainer _minimapScene;
+        private SceneRendererForward _sceneRendererMiniMap;
+
         private bool _keys;
         private bool _pointCloudActive = true;
         private bool _isSpaceUsed = false;
@@ -109,7 +113,7 @@ namespace Fusee.Examples.MuVista.Core
         private Transform _mainCamTransform;
         private Camera _mainCam;
 
-        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Orthographic, 3, 100, M.PiOver4);
+        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Orthographic, 3, 1000, M.PiOver4);
         private Transform _minimapCamTransform;
 
         private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
@@ -154,6 +158,11 @@ namespace Fusee.Examples.MuVista.Core
                 Children = new List<SceneNode>()
             };
 
+            _minimapScene = new SceneContainer
+            {
+                Children = new List<SceneNode>()
+            };
+
             _mainCamTransform = new Transform()
             {
                 Name = "MainCamTransform",
@@ -164,7 +173,8 @@ namespace Fusee.Examples.MuVista.Core
 
             _mainCam = new Camera(ProjectionMethod.Perspective, ZNear, ZFar, Fov, RenderLayers.Layer01)
             {
-                BackgroundColor = float4.One
+                BackgroundColor = float4.One,
+                Viewport = _mainCamViewport
             };
 
 
@@ -183,17 +193,17 @@ namespace Fusee.Examples.MuVista.Core
             _minimapCam.Layer = _minimapLayer;
             _minimapCam.BackgroundColor = new float4(0, 0, 0, 1);
             _minimapCam.Viewport = _minimapViewport;
-            _minimapCam.RenderLayer = RenderLayers.Layer02;
+            _minimapCam.Scale = 0.02f;
 
             _minimapCamTransform = new Transform()
             {
-                Rotation = new float3(M.PiOver2, 0, 0),
-                Translation = new float3(0, 100, 0),
+                Rotation = new float3(0, 0, 0),
+                Translation = new float3(0, 0, 0),
                 Scale = float3.One
             };
 
 
-            var miniMapCam = new SceneNode()
+            var miniMapCamNode = new SceneNode()
             {
                 Name = "MiniMapCam",
                 Components = new List<SceneComponent>()
@@ -212,13 +222,30 @@ namespace Fusee.Examples.MuVista.Core
             _angleRollInit = 0;
             _offset = float2.Zero;
             _offsetInit = float2.Zero;
-           
+
             if (!UseWPF)
                 LoadPointCloudFromFile();
 
+            var mapTex = new Texture(AssetStorage.Get<ImageData>("Map_Cologne.jpg"), true, TextureFilterMode.LinearMipmapLinear, TextureWrapMode.ClampToBorder);
 
-            _scene.Children.Add(CreateWaypoint(new float3(20, 40, 0)));
-            _scene.Children.Add(CreateWaypoint(new float3(-20, 40, 0)));
+            var minimapPlane = new SceneNode()
+            {
+                Name = "MiniMap",
+                Components = new List<SceneComponent>
+                {
+                    new Transform { Translation = new float3(0,0,10), Scale = new float3(11, 8, 11) },
+                    MakeEffect.FromDiffuse(float4.One, 0, float3.Zero, mapTex, 1f, new float2(2,2)),
+                    new Plane()
+                }
+            };
+
+            _minimapScene.Children.Add(minimapPlane);
+            
+            _minimapScene.Children.Add(miniMapCamNode);
+            _minimapScene.Children.Add(CreateWaypoint(new float3(-2.5f, -1.5f, 9)));
+            _minimapScene.Children.Add(CreateWaypoint(new float3(-2f, -2, 9)));
+            //_minimapScene.Children.Add(CreateWaypoint(new float3(-20, 40, 0)));
+
 
 
             foreach (PanoSphere sphere in spheres)
@@ -229,17 +256,16 @@ namespace Fusee.Examples.MuVista.Core
                 _scene.Children.Add(sphere);
             }
 
-            _scene.Children.Add(miniMapCam);
-
             _gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
             // Create the interaction handler
             _sih = new SceneInteractionHandler(_gui);
 
             // Wrap a SceneRenderer around the model.
             _sceneRenderer = new SceneRendererForward(_scene);
+            _sceneRendererMiniMap = new SceneRendererForward(_minimapScene);
             _guiRenderer = new SceneRendererForward(_gui);
 
-            _scenePicker = new ScenePicker(_scene);
+            _scenePicker = new ScenePicker(_minimapScene);
             /*-----------------------------------------------------------------------
             * Debuggingtools
             -----------------------------------------------------------------------*/
@@ -263,8 +289,6 @@ namespace Fusee.Examples.MuVista.Core
 
             if (IsSceneLoaded)
             {
-
-
                 // ------------ Enable to update the Scene only when the user isn't moving ------------------
                 /*if (Keyboard.WSAxis != 0 || Keyboard.ADAxis != 0 || (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint) || isSpaceMouseMoving)
                     OocLoader.IsUserMoving = true;
@@ -287,7 +311,7 @@ namespace Fusee.Examples.MuVista.Core
 
                 //if (_inverseCams)
                 //{
-                    //CheckWaypointPicking();
+                CheckWaypointPicking();
                 //}
 
                 if (_pointCloudActive)
@@ -340,7 +364,6 @@ namespace Fusee.Examples.MuVista.Core
                 _scene.Children[1].RemoveComponent<ShaderEffect>();
                 _scene.Children[1].Components.Insert(1, PtRenderingParams.Instance.ColorPassEf);
                 _sceneRenderer.Render(RC);
-
                 //UpdateScene after Render / Traverse because there we calculate the view matrix (when using a camera) we need for the update.
                 //OocLoader.RC = RC;
                 OocLoader.UpdateScene(PtRenderingParams.Instance.PtMode, PtRenderingParams.Instance.DepthPassEf, PtRenderingParams.Instance.ColorPassEf);
@@ -375,6 +398,7 @@ namespace Fusee.Examples.MuVista.Core
             }
 
             _guiRenderer.Render(RC);
+            _sceneRendererMiniMap.Render(RC);
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rendered frame) on the front buffer.
             Present();
@@ -482,7 +506,7 @@ namespace Fusee.Examples.MuVista.Core
                 var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
                 foreach (PanoSphere sphere in spheres)
                 {
-                    sphere.GetComponent<RenderLayer>().Layer = RenderLayers.Layer01;
+                    sphere.GetComponent<RenderLayer>().Layer = RenderLayers.All;
                 }
                 _gui.ActivatePanoAlphaHandle();
             }
@@ -796,16 +820,17 @@ namespace Fusee.Examples.MuVista.Core
 
             if (_gui._movePanoAlphaHandler)
             {
-                if(_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 0.5f && _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 2.8f)
+                if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 0.5f && _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 2.8f)
                 {
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
-                } else if(_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
+                }
+                else if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
                 {
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 0.50f;
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 0.70f;
                 }
-                else if(_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 2.8f)
+                else if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 2.8f)
                 {
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 2.8f;
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 3f;
@@ -930,10 +955,9 @@ namespace Fusee.Examples.MuVista.Core
                 Name = "Waypoint",
                 Components = new List<SceneComponent>
                 {
-                    new RenderLayer {Layer = RenderLayers.Layer01 },
-                    new Transform {Translation=translation,  Scale = float3.One },
-                    MakeEffect.FromDiffuseSpecular((float4)ColorUint.Red, 0f, 4.0f, 1f),
-                    CreateCuboid(new float3(3, 10, 3))
+                    new Transform { Translation = translation, Scale = new float3(1, 1, 1) },
+                    MakeEffect.FromDiffuseSpecular((float4)ColorUint.Green, 0f, 4.0f, 1f),
+                    new Sphere(0.2f, 20, 50)
                 }
             };
         }
@@ -1052,34 +1076,33 @@ namespace Fusee.Examples.MuVista.Core
 
         public void CheckWaypointPicking()
         {
-            if (Mouse.LeftButton)
+            if (Mouse.LeftButton && _inverseCams)
             {
-                //var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
-                //_scene.Children.Remove(pointcloud);
-                //float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
+                //_scene.Children.Remove(_scene.Children.Find(node => node.Name == "Pointcloud"));
+                float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
 
-                //PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
+                PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
 
                 //Diagnostics.Debug("newPick" + newPick);
-                //if (newPick != null)
-                //{
-                //    Diagnostics.Debug("newPick" + newPick);
-                //}
-                //if (newPick?.Node != _currentPick?.Node)
-                //{
-                //    if (_currentPick != null)
-                //    {
-                //        var ef = _currentPick.Node.GetComponent<SurfaceEffect>();
-                //        ef.SurfaceInput.Albedo = _oldColor;
-                //    }
-                //    if (newPick != null)
-                //    {
-                //        var ef = newPick.Node.GetComponent<SurfaceEffect>();
-                //        _oldColor = ef.SurfaceInput.Albedo;
-                //        ef.SurfaceInput.Albedo = (float4)ColorUint.OrangeRed;
-                //    }
-                //    _currentPick = newPick;
-                //}
+                if (newPick != null)
+                {
+                    Diagnostics.Debug(newPick.Node.Name);
+                }
+                if (newPick?.Node != _currentPick?.Node)
+                {
+                    if (_currentPick != null)
+                    {
+                        var ef = _currentPick.Node.GetComponent<SurfaceEffect>();
+                        ef.SurfaceInput.Albedo = _oldColor;
+                    }
+                    if (newPick != null)
+                    {
+                        var ef = newPick.Node.GetComponent<SurfaceEffect>();
+                        _oldColor = ef.SurfaceInput.Albedo;
+                        ef.SurfaceInput.Albedo = (float4)ColorUint.OrangeRed;
+                    }
+                    _currentPick = newPick;
+                }
 
                 //_scene.Children.Insert(1, pointcloud);
             }
