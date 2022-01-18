@@ -1,25 +1,26 @@
 {
   "octree": {
-    "maxLevel": 6,
-    "maxNoOfPointsInBucket": 10000,
-    "spacingFactor": 0.481461422578125,
+    "maxLevel": 7,
+    "maxNoOfPointsInBucket": 5000,
+    "spacingFactor": 0.50279871234375,
     "rootNode": {
       "center": [
-        5.1942,
-        12.516350000000001,
-        -2.521749999999999
+        10.062750000000001,
+        -0.6147499999999999,
+        3.346
       ],
-      "size": 61.62706209
+      "size": 64.35823518
     }
   },
   "ptAccessorBools": {
-    "HasPositionFloat3_64": true
+    "HasPositionFloat3_64": true,
+    "HasColorFloat3_32": true
   },
-  "pointType": "Pos64",
+  "pointType": "Pos64Col32",
   "metaInfo": {
-    "offsetX": 375103.2057626433,
-    "offsetY": 5634232.095169064,
-    "offsetZ": 122.30371655853982,
+    "offsetX": 374838.0040728498,
+    "offsetY": 5634938.011017927,
+    "offsetZ": 126.05507617705604,
     "scaleX": 0.0001,
     "scaleY": 0.0001,
     "scaleZ": 0.0001

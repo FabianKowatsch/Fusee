@@ -83,7 +83,7 @@ namespace Fusee.Examples.MuVista.Core
             }
         }
 
-        private ColorMode _colorMode = ColorMode.Single;
+        private ColorMode _colorMode = ColorMode.Point;
 
         public ColorMode ColorMode
         {

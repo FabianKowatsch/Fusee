@@ -9,14 +9,14 @@ namespace JSONReducer
 {
     class Program
     {
-        private static string pathToImages = "G:\\Projects\\Fusee\\Examples\\Complete\\MuVista\\Core\\Assets\\Panos";
-        private static string pathToInput = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\input\\data.json";
-        private static string pathToOutput = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output";
+        private static string pathToImages = "D:\\Projects\\Fusee\\Examples\\Complete\\MuVista\\Core\\Assets\\Panos";
+        private static string pathToInput = "D:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\input\\data.json";
+        private static string pathToOutput = "D:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output";
         static void Main(string[] args)
         {
             string[] imageFiles = GetFileNames(pathToImages, "*.jpg");
 
-            removeJPGString(imageFiles);
+            //removeJPGString(imageFiles);
 
             List<PanoImage> newPanoList = alteredPanoList(imageFiles);
 

@@ -147,14 +147,14 @@ namespace Fusee.PointCloud.FileReader.LasReader
         {
             return info.PointDataFormat switch
             {
-                0 => new LasPointFormat
+                0 or 1=> new LasPointFormat
                 {
                     HasClassification = true,
                     HasColor = false,
                     HasIntensity = true,
                     HasUserData = false
                 },
-                2 or 3 => new LasPointFormat
+                2 or 3 or 7 => new LasPointFormat
                 {
                     HasClassification = true,
                     HasColor = true,
