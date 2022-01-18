@@ -405,6 +405,29 @@ namespace Fusee.Engine.Core
         }
 
         /// <summary>
+        /// Creates a simple unlit shader from an albedo color and texture with variable opacity.
+        /// </summary>
+        /// <param name="albedoColor">The albedo color.</param>
+        /// <param name="albedoTex">The albedo texture.</param>
+        /// <param name="albedoMix">Determines how much the diffuse color and the color from the texture are mixed.</param>
+        /// <param name="texTiles">The number of times the textures are repeated in x and y direction.</param>
+        /// <param name="texOpacity">Determines the alpha value of the albedo texture.</param>
+        /// <returns></returns>
+        public static SurfaceEffect FromUnlitOpacity(float4 albedoColor, Texture albedoTex = null, float2 texTiles = new float2(), float albedoMix = 0, float texOpacity = 1.0f)
+        {
+            var input = new TextureInputOpacity()
+            {
+                TextureSetup = albedoTex != null ? TextureSetup.AlbedoTexOpacity : TextureSetup.NoTextures,
+                Albedo = albedoColor,
+                AlbedoTex = albedoTex,
+                AlbedoMix = albedoMix,
+                TexTiles = texTiles,
+                TexOpacity = texOpacity,
+            };
+            return new SurfaceEffect(input);
+        }
+
+        /// <summary>
         /// Builds a simple shader effect with diffuse lighting component.
         /// </summary>
         /// <param name="albedoColor">The albedo color of the resulting effect.</param>

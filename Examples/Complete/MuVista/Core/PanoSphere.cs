@@ -87,11 +87,12 @@ namespace Fusee.Examples.MuVista.Core
             };
              * */
 
-            _surfaceEffect = MakeEffect.FromUnlit(
+            _surfaceEffect = MakeEffect.FromUnlitOpacity(
                 albedoColor: float4.One,
                 albedoTex: _texture,
                 texTiles: float2.One,
-                albedoMix: 1.0f
+                albedoMix: 1.0f,
+                texOpacity: 0.5f
           
             );
 
