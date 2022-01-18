@@ -47,12 +47,12 @@ namespace Fusee.PointCloud.OoCReaderWriter
         /// <param name="scaleX">pointcloud X scale in Geo Coords.</param>
         /// <param name="scaleY">pointcloud Y scale in Geo Coords.</param>
         /// <param name="scaleZ">ppointcloud Z scale in Geo Coords.</param>
-        public void WriteCompleteData(PtOctree<TPoint> octree, PointAccessor<TPoint> ptAccessor/*, double offsetX, double offsetY, double offsetZ, double scaleX, double scaleY, double scaleZ*/)
+        public void WriteCompleteData(PtOctree<TPoint> octree, PointAccessor<TPoint> ptAccessor, double offsetX, double offsetY, double offsetZ, double scaleX, double scaleY, double scaleZ)
         {
             var watch = new Stopwatch();
             watch.Restart();
 
-            //WriteMeta(octree, ptAccessor, offsetX, offsetY, offsetZ, scaleX, scaleY, scaleZ);
+            WriteMeta(octree, ptAccessor, offsetX, offsetY, offsetZ, scaleX, scaleY, scaleZ);
             Diagnostics.Debug("-------------- Write meta file: " + watch.ElapsedMilliseconds + "ms.");
 
             watch.Restart();

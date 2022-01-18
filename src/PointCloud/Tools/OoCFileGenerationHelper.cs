@@ -91,8 +91,10 @@ namespace Fusee.PointCloud.Core
             Console.WriteLine("Octree creation took: " + watch.ElapsedMilliseconds + "ms.");
 
             watch.Restart();
+            var reader = new LasPointReader(pathToFile);
+            var metaInfo = (LasMetaInfo)reader.MetaInfo;
             var occFileWriter = new PtOctreeFileWriter<TPoint>(pathToFolder);
-            occFileWriter.WriteCompleteData(octree, ptAcc);
+            occFileWriter.WriteCompleteData(octree, ptAcc, metaInfo.OffsetX, metaInfo.OffsetY, metaInfo.OffsetZ, metaInfo.ScaleFactorX, metaInfo.ScaleFactorY, metaInfo.ScaleFactorZ);
             Console.WriteLine("Writing files took: " + watch.ElapsedMilliseconds + "ms.");
         }
 
