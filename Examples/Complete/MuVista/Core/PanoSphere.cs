@@ -19,7 +19,7 @@ namespace Fusee.Examples.MuVista.Core
 
         public Transform sphereTransform;
 
-        public float radius = 20;
+        public float radius = 10;
         //private DefaultSurfaceEffect _surfaceEffect;
         private SurfaceEffect _surfaceEffect;
 
@@ -92,7 +92,7 @@ namespace Fusee.Examples.MuVista.Core
                 albedoTex: _texture,
                 texTiles: float2.One,
                 albedoMix: 1.0f,
-                texOpacity: 0.5f
+                texOpacity: 1f
           
             );
 

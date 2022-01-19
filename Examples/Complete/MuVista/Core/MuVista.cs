@@ -335,6 +335,9 @@ namespace Fusee.Examples.MuVista.Core
                         child.GetComponent<Mesh>().Active = false;
                     _currentSphere = _destinationSphere;
 
+                    TextureInputOpacity textureInputOpacityCurrent = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+                    textureInputOpacityCurrent.TexOpacity = 1;
+
                     _currentSphere.GetComponent<Mesh>().Active = true;
                     foreach (SceneNode child in _currentSphere.Children)
                         child.GetComponent<Mesh>().Active = true;
@@ -495,6 +498,7 @@ namespace Fusee.Examples.MuVista.Core
         private void switchModes()
         {
             _pointCloudActive = !_pointCloudActive;
+            //TextureInputOpacity textureInputOpacityCloud = (TextureInputOpacity)_scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<SurfaceEffect>().SurfaceInput;
 
             if (!_pointCloudActive)
             {
@@ -503,6 +507,7 @@ namespace Fusee.Examples.MuVista.Core
                 foreach (SceneNode child in _currentSphere.Children)
                     child.GetComponent<Mesh>().Active = true;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.None;
+                //textureInputOpacityCloud.TexOpacity = 0;
                 var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
                 foreach (PanoSphere sphere in spheres)
                 {
@@ -514,6 +519,7 @@ namespace Fusee.Examples.MuVista.Core
             {
                 _mainCam.Fov = M.PiOver3;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+                //textureInputOpacityCloud.TexOpacity = 1;
                 var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
                 foreach (PanoSphere sphere in spheres)
                 {
@@ -535,6 +541,10 @@ namespace Fusee.Examples.MuVista.Core
                 _panoChangeAnimTimeStart = Time.TimeSinceStart;
                 Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
                 _destinationSphere = _currentSphere.previous;
+                _destinationSphere.GetComponent<Mesh>().Active = true;
+                TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+                textureInputOpacityDest.TexOpacity = 0;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
             }
 
             if (Keyboard.IsKeyDown(KeyCodes.E) && _currentSphere.next != null)
@@ -543,13 +553,23 @@ namespace Fusee.Examples.MuVista.Core
                 _panoChangeAnimTimeStart = Time.TimeSinceStart;
                 Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
                 _destinationSphere = _currentSphere.next;
+                _destinationSphere.GetComponent<Mesh>().Active = true;
+                TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+                textureInputOpacityDest.TexOpacity = 0;
+                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
             }
 
         }
 
         public void animatePanoChange()
         {
-            _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+            TextureInputOpacity textureInputOpacityDestSphere = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+            TextureInputOpacity textureInputOpacityCurrent = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+            textureInputOpacityDestSphere.TexOpacity = 0 + (Time.TimeSinceStart - _panoChangeAnimTimeStart) / _panoChangeAnimTime;
+            Diagnostics.Debug("Dest: " + textureInputOpacityDestSphere.TexOpacity);
+            textureInputOpacityCurrent.TexOpacity = 1 - (Time.TimeSinceStart - _panoChangeAnimTimeStart)/ _panoChangeAnimTime;
+            Diagnostics.Debug("Cur: " + textureInputOpacityCurrent.TexOpacity);
+
             float3 connectionVektor = new float3((float)(_destinationSphere.GetComponent<Transform>(0).Translation.x - _mainCamTransform.Translation.x), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.y - _mainCamTransform.Translation.y), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.z - _mainCamTransform.Translation.z));
             _mainCamTransform.Translate(connectionVektor.Normalize() * (connectionVektor.Length / (_panoChangeAnimTime / DeltaTime)));
         }
@@ -818,24 +838,38 @@ namespace Fusee.Examples.MuVista.Core
             _gui._btnPanoAlphaUp.OnMouseExit += _gui.OnPanoAlphaStop;
             _gui._btnPanoAlphaDown.OnMouseExit += _gui.OnPanoAlphaStop;
 
+            TextureInputOpacity textureInputOpacity = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+            //TextureInputOpacity textureInputOpacityCloud = (TextureInputOpacity)_scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<SurfaceEffect>().SurfaceInput;
+            float percent = MathF.Round(((_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y - 0.7f) / (3 - 0.7f)) * 100);
+
             if (_gui._movePanoAlphaHandler)
             {
                 if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 0.5f && _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 2.8f)
                 {
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
+
+                    
+                    textureInputOpacity.TexOpacity=(percent/100);
+                    //textureInputOpacityCloud.TexOpacity = 1 - (percent / 100);
+                    Diagnostics.Debug(textureInputOpacity.TexOpacity);
+
                 }
                 else if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
                 {
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 0.50f;
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 0.70f;
+                    textureInputOpacity.TexOpacity = 0f;
+                    //textureInputOpacityCloud.TexOpacity = 1;
                 }
                 else if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 2.8f)
                 {
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 2.8f;
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 3f;
+                    textureInputOpacity.TexOpacity = 1f;
+                    //textureInputOpacityCloud.TexOpacity = 0;
                 }
-                float percent = MathF.Round(((_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y - 0.7f) / (3 - 0.7f)) * 100);
+                
                 if (percent >= _gui._lastStep + 10 || percent <= _gui._lastStep - 10)
                 {
                     //_gui.replaceTextForPercent(percent + "%", Width, Height);
