@@ -71,6 +71,8 @@ namespace Fusee.Examples.MuVista.Core
         private SceneContainer _minimapScene;
         private SceneRendererForward _sceneRendererMiniMap;
 
+        private SceneRayCaster _sceneRayCaster;
+
         private bool _keys;
         private bool _pointCloudActive = true;
         private bool _isSpaceUsed = false;
@@ -129,9 +131,7 @@ namespace Fusee.Examples.MuVista.Core
         private readonly int _minimapLayer = 5;
         private readonly int _mainCamLayer = 1;
 
-        private ScenePicker _scenePicker;
-        private PickResult _currentPick;
-        private float4 _oldColor;
+        private ScenePicker _scenePickerMinimap;
 
         private bool _panoChangeAnim = false;
         private float _panoChangeAnimTime = 3;
@@ -240,19 +240,19 @@ namespace Fusee.Examples.MuVista.Core
             };
 
             _minimapScene.Children.Add(minimapPlane);
-            
+
             _minimapScene.Children.Add(miniMapCamNode);
-            _minimapScene.Children.Add(CreateWaypoint(new float3(-2.5f, -1.5f, 9)));
-            _minimapScene.Children.Add(CreateWaypoint(new float3(-2f, -2, 9)));
-            //_minimapScene.Children.Add(CreateWaypoint(new float3(-20, 40, 0)));
 
-
+            _minimapScene.Children.Add(new Waypoint(new float3(-2.5f, -1.5f, 9), spheres[0]));
+            _minimapScene.Children.Add(new Waypoint(new float3(-2f, -2, 9), spheres[1]));
 
             foreach (PanoSphere sphere in spheres)
             {
+                Diagnostics.Debug(sphere.GetTransform().Translation);
                 sphere.GetComponent<Mesh>().Active = false;
                 foreach (SceneNode child in sphere.Children)
                     child.GetComponent<Mesh>().Active = false;
+
                 _scene.Children.Add(sphere);
             }
 
@@ -265,7 +265,9 @@ namespace Fusee.Examples.MuVista.Core
             _sceneRendererMiniMap = new SceneRendererForward(_minimapScene);
             _guiRenderer = new SceneRendererForward(_gui);
 
-            _scenePicker = new ScenePicker(_minimapScene);
+            _scenePickerMinimap = new ScenePicker(_minimapScene);
+            _sceneRayCaster = new SceneRayCaster(_scene);
+
             /*-----------------------------------------------------------------------
             * Debuggingtools
             -----------------------------------------------------------------------*/
@@ -311,7 +313,7 @@ namespace Fusee.Examples.MuVista.Core
 
                 //if (_inverseCams)
                 //{
-                CheckWaypointPicking();
+                DoPicking();
                 //}
 
                 if (_pointCloudActive)
@@ -348,7 +350,6 @@ namespace Fusee.Examples.MuVista.Core
 
 
                 #endregion
-
                 //----------------------------  
 
                 if (PtRenderingParams.Instance.CalcSSAO || PtRenderingParams.Instance.Lighting != Lighting.Unlit)
@@ -399,6 +400,7 @@ namespace Fusee.Examples.MuVista.Core
                     _sih.CheckForInteractiveObjects(RC, Touch.GetPosition(TouchPoints.Touchpoint_0), Width, Height);
                 }
             }
+
 
             _guiRenderer.Render(RC);
             _sceneRendererMiniMap.Render(RC);
@@ -490,9 +492,6 @@ namespace Fusee.Examples.MuVista.Core
                     _mainCamTransform.FpsView(_angleHorz, _angleVert, Keyboard.WSAxis, Keyboard.ADAxis, DeltaTime * 20);
                 }
             }
-
-            //_minimapCamTransform.Translation.z = _mainCamTransform.Translation.z;
-            //_minimapCamTransform.Translation.x = _mainCamTransform.Translation.x;
         }
 
         private void switchModes()
@@ -537,28 +536,38 @@ namespace Fusee.Examples.MuVista.Core
 
             if (Keyboard.IsKeyDown(KeyCodes.Q) && _currentSphere.previous != null)
             {
-                _panoChangeAnim = true;
-                _panoChangeAnimTimeStart = Time.TimeSinceStart;
-                Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
-                _destinationSphere = _currentSphere.previous;
-                _destinationSphere.GetComponent<Mesh>().Active = true;
-                TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
-                textureInputOpacityDest.TexOpacity = 0;
-                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+                CreateAnimationToPreviousSphere();
             }
 
             if (Keyboard.IsKeyDown(KeyCodes.E) && _currentSphere.next != null)
             {
-                _panoChangeAnim = true;
-                _panoChangeAnimTimeStart = Time.TimeSinceStart;
-                Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
-                _destinationSphere = _currentSphere.next;
-                _destinationSphere.GetComponent<Mesh>().Active = true;
-                TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
-                textureInputOpacityDest.TexOpacity = 0;
-                _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+                CreateAnimationToNextSphere();
             }
 
+        }
+
+        public void CreateAnimationToPreviousSphere()
+        {
+            _panoChangeAnim = true;
+            _panoChangeAnimTimeStart = Time.TimeSinceStart;
+            Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
+            _destinationSphere = _currentSphere.previous;
+            _destinationSphere.GetComponent<Mesh>().Active = true;
+            TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+            textureInputOpacityDest.TexOpacity = 0;
+            _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
+        }
+
+        public void CreateAnimationToNextSphere()
+        {
+            _panoChangeAnim = true;
+            _panoChangeAnimTimeStart = Time.TimeSinceStart;
+            Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
+            _destinationSphere = _currentSphere.next;
+            _destinationSphere.GetComponent<Mesh>().Active = true;
+            TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+            textureInputOpacityDest.TexOpacity = 0;
+            _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
         }
 
         public void animatePanoChange()
@@ -567,7 +576,7 @@ namespace Fusee.Examples.MuVista.Core
             TextureInputOpacity textureInputOpacityCurrent = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
             textureInputOpacityDestSphere.TexOpacity = 0 + (Time.TimeSinceStart - _panoChangeAnimTimeStart) / _panoChangeAnimTime;
             Diagnostics.Debug("Dest: " + textureInputOpacityDestSphere.TexOpacity);
-            textureInputOpacityCurrent.TexOpacity = 1 - (Time.TimeSinceStart - _panoChangeAnimTimeStart)/ _panoChangeAnimTime;
+            textureInputOpacityCurrent.TexOpacity = 1 - (Time.TimeSinceStart - _panoChangeAnimTimeStart) / _panoChangeAnimTime;
             Diagnostics.Debug("Cur: " + textureInputOpacityCurrent.TexOpacity);
 
             float3 connectionVektor = new float3((float)(_destinationSphere.GetComponent<Transform>(0).Translation.x - _mainCamTransform.Translation.x), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.y - _mainCamTransform.Translation.y), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.z - _mainCamTransform.Translation.z));
@@ -849,8 +858,8 @@ namespace Fusee.Examples.MuVista.Core
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
                     _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
 
-                    
-                    textureInputOpacity.TexOpacity=(percent/100);
+
+                    textureInputOpacity.TexOpacity = (percent / 100);
                     //textureInputOpacityCloud.TexOpacity = 1 - (percent / 100);
                     Diagnostics.Debug(textureInputOpacity.TexOpacity);
 
@@ -869,7 +878,7 @@ namespace Fusee.Examples.MuVista.Core
                     textureInputOpacity.TexOpacity = 1f;
                     //textureInputOpacityCloud.TexOpacity = 0;
                 }
-                
+
                 if (percent >= _gui._lastStep + 10 || percent <= _gui._lastStep - 10)
                 {
                     //_gui.replaceTextForPercent(percent + "%", Width, Height);
@@ -982,163 +991,52 @@ namespace Fusee.Examples.MuVista.Core
             }
         }
 
-        public SceneNode CreateWaypoint(float3 translation)
+        public void DoPicking()
         {
-            return new SceneNode()
+            if (!Mouse.LeftButton)
+                return;
+
+            if (_inverseCams)
             {
-                Name = "Waypoint",
-                Components = new List<SceneComponent>
-                {
-                    new Transform { Translation = translation, Scale = new float3(1, 1, 1) },
-                    MakeEffect.FromDiffuseSpecular((float4)ColorUint.Green, 0f, 4.0f, 1f),
-                    new Sphere(0.2f, 20, 50)
-                }
-            };
-        }
-
-        public static Mesh CreateCuboid(float3 size)
-        {
-            return new Mesh
-            {
-                Vertices = new[]
-                {
-                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = +0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z},
-                    new float3 {x = +0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = +0.5f * size.z},
-                    new float3 {x = -0.5f * size.x, y = -0.5f * size.y, z = -0.5f * size.z}
-                },
-
-                Triangles = new ushort[]
-                {
-                    // front face
-                    0, 2, 1, 0, 3, 2,
-
-                    // right face
-                    4, 6, 5, 4, 7, 6,
-
-                    // back face
-                    8, 10, 9, 8, 11, 10,
-
-                    // left face
-                    12, 14, 13, 12, 15, 14,
-
-                    // top face
-                    16, 18, 17, 16, 19, 18,
-
-                    // bottom face
-                    20, 22, 21, 20, 23, 22
-                },
-
-                Normals = new[]
-                {
-                    new float3(0, 0, 1),
-                    new float3(0, 0, 1),
-                    new float3(0, 0, 1),
-                    new float3(0, 0, 1),
-                    new float3(1, 0, 0),
-                    new float3(1, 0, 0),
-                    new float3(1, 0, 0),
-                    new float3(1, 0, 0),
-                    new float3(0, 0, -1),
-                    new float3(0, 0, -1),
-                    new float3(0, 0, -1),
-                    new float3(0, 0, -1),
-                    new float3(-1, 0, 0),
-                    new float3(-1, 0, 0),
-                    new float3(-1, 0, 0),
-                    new float3(-1, 0, 0),
-                    new float3(0, 1, 0),
-                    new float3(0, 1, 0),
-                    new float3(0, 1, 0),
-                    new float3(0, 1, 0),
-                    new float3(0, -1, 0),
-                    new float3(0, -1, 0),
-                    new float3(0, -1, 0),
-                    new float3(0, -1, 0)
-                },
-
-                UVs = new[]
-                {
-                    new float2(1, 0),
-                    new float2(1, 1),
-                    new float2(0, 1),
-                    new float2(0, 0),
-                    new float2(1, 0),
-                    new float2(1, 1),
-                    new float2(0, 1),
-                    new float2(0, 0),
-                    new float2(1, 0),
-                    new float2(1, 1),
-                    new float2(0, 1),
-                    new float2(0, 0),
-                    new float2(1, 0),
-                    new float2(1, 1),
-                    new float2(0, 1),
-                    new float2(0, 0),
-                    new float2(1, 0),
-                    new float2(1, 1),
-                    new float2(0, 1),
-                    new float2(0, 0),
-                    new float2(1, 0),
-                    new float2(1, 1),
-                    new float2(0, 1),
-                    new float2(0, 0)
-                },
-                BoundingBox = new AABBf(-0.5f * size, 0.5f * size)
-            };
-        }
-
-        public void CheckWaypointPicking()
-        {
-            if (Mouse.LeftButton && _inverseCams)
-            {
-                //_scene.Children.Remove(_scene.Children.Find(node => node.Name == "Pointcloud"));
                 float2 pickPosClip = Mouse.Position * new float2(2.0f / Width, -2.0f / Height) + new float2(-1, 1);
 
-                PickResult newPick = _scenePicker.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
+                PickResult newPick = _scenePickerMinimap.Pick(RC, pickPosClip).OrderBy(pr => pr.ClipPos.z).FirstOrDefault();
 
-                //Diagnostics.Debug("newPick" + newPick);
-                if (newPick != null)
-                {
-                    Diagnostics.Debug(newPick.Node.Name);
-                }
-                if (newPick?.Node != _currentPick?.Node)
-                {
-                    if (_currentPick != null)
-                    {
-                        var ef = _currentPick.Node.GetComponent<SurfaceEffect>();
-                        ef.SurfaceInput.Albedo = _oldColor;
-                    }
-                    if (newPick != null)
-                    {
-                        var ef = newPick.Node.GetComponent<SurfaceEffect>();
-                        _oldColor = ef.SurfaceInput.Albedo;
-                        ef.SurfaceInput.Albedo = (float4)ColorUint.OrangeRed;
-                    }
-                    _currentPick = newPick;
-                }
+                if (newPick == null)
+                    return;
 
-                //_scene.Children.Insert(1, pointcloud);
+                if (newPick.Node.Name != "Waypoint")
+                    return;
+
+                Waypoint pickedWaypoint = (Waypoint)newPick.Node;
+                if (pickedWaypoint.GetPanoSphere() == null)
+                    return;
+
+                SwitchCamViewport();
+                _currentSphere = pickedWaypoint.GetPanoSphere();
+
+                _pointCloudActive = true;
+                switchModes();
+            }
+
+            if (!_pointCloudActive)
+            {
+                List<RayCastResult> result = _sceneRayCaster.RayPick(RC, Mouse.Position).ToList();
+
+                List<RayCastResult> filteredResult = result.FindAll(pr => pr.Node.Name != "Pointcloud");
+                RayCastResult newPick = filteredResult.OrderBy(pr => pr.DistanceFromOrigin).FirstOrDefault();
+
+                if (newPick == null)
+                    return;
+
+                if (!newPick.Node.Name.Contains("connection"))
+                    return;
+
+                if (newPick.Node.Name.Contains("previous"))
+                    CreateAnimationToPreviousSphere();
+
+                if (newPick.Node.Name.Contains("next"))
+                    CreateAnimationToNextSphere();
             }
         }
     }

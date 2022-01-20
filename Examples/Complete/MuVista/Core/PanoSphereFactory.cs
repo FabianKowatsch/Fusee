@@ -42,12 +42,12 @@ public class PanoSphereFactory
             if (i != 0)
             {
                 panoSpheres[i].previous = panoSpheres[i - 1];
-                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].previous.sphereTransform.Translation, i, panoSpheres[i].radius,panoSpheres[i].sphereTransform.Rotation.y));
+                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].previous.sphereTransform.Translation, i, panoSpheres[i].radius,panoSpheres[i].sphereTransform.Rotation.y, "previous"));
             }
             if (i != panoSpheres.Count - 1)
             {
                 panoSpheres[i].next = panoSpheres[i + 1];
-                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].next.sphereTransform.Translation, i, panoSpheres[i].radius, panoSpheres[i].sphereTransform.Rotation.y));
+                panoSpheres[i].Children.Add(createArrow(panoSpheres[i].sphereTransform.Translation, panoSpheres[i].next.sphereTransform.Translation, i, panoSpheres[i].radius, panoSpheres[i].sphereTransform.Rotation.y, "next"));
             }
         }
         return panoSpheres;
@@ -107,12 +107,12 @@ public class PanoSphereFactory
     {
         return img - offset;
     }
-    private static SceneNode createArrow(float3 pos, float3 nextPos, int i, float radius, float currentSphereRotationY)
+    private static SceneNode createArrow(float3 pos, float3 nextPos, int i, float radius, float currentSphereRotationY, string connectionType)
     {
         SceneContainer blenderScene = AssetStorage.Get<SceneContainer>("arrow2.fus");
         SceneNode arrow = blenderScene.Children[0];
 
-        arrow.Name = "connection" + i;
+        arrow.Name = connectionType + " connection " + i;
         float3 connectionVektor = new float3((float)(nextPos.x - pos.x), (float)(nextPos.y - pos.y), (float)(nextPos.z - pos.z));
         connectionVektor = float3.Rotate(new float3(0, -currentSphereRotationY, 0), connectionVektor);
         float angle = MathF.Atan2(1, 0) - MathF.Atan2(connectionVektor.z, connectionVektor.x);
