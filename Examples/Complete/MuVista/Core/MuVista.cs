@@ -115,7 +115,7 @@ namespace Fusee.Examples.MuVista.Core
         private Transform _mainCamTransform;
         private Camera _mainCam;
 
-        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Orthographic, 3, 1000, M.PiOver4);
+        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Orthographic, 3, 5000, M.PiOver6);
         private Transform _minimapCamTransform;
 
         private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
@@ -193,15 +193,16 @@ namespace Fusee.Examples.MuVista.Core
             _minimapCam.Layer = _minimapLayer;
             _minimapCam.BackgroundColor = new float4(0, 0, 0, 1);
             _minimapCam.Viewport = _minimapViewport;
-            _minimapCam.Scale = 0.02f;
+            _minimapCam.Scale = 0.025f;
 
+            float3 firstSphereTranslation = spheres.ElementAt(0).GetTransform(0).Translation;
+            float3 miniMapTransform = new float3(firstSphereTranslation.x, firstSphereTranslation.z, firstSphereTranslation.y - 15);
             _minimapCamTransform = new Transform()
             {
                 Rotation = new float3(0, 0, 0),
-                Translation = new float3(0, 0, 0),
+                Translation = miniMapTransform,
                 Scale = float3.One
             };
-
 
             var miniMapCamNode = new SceneNode()
             {
@@ -226,28 +227,26 @@ namespace Fusee.Examples.MuVista.Core
             if (!UseWPF)
                 LoadPointCloudFromFile();
 
-            var mapTex = new Texture(AssetStorage.Get<ImageData>("Map_Cologne.jpg"), true, TextureFilterMode.LinearMipmapLinear, TextureWrapMode.ClampToBorder);
+            var mapTex = new Texture(AssetStorage.Get<ImageData>("Minimap.jpg"), true, TextureFilterMode.LinearMipmapLinear, TextureWrapMode.ClampToBorder);
 
+            float3 miniMapPlaneTransform = new float3(firstSphereTranslation.x + 36/ 4, firstSphereTranslation.z + 22 / 4, firstSphereTranslation.y + 5);
             var minimapPlane = new SceneNode()
             {
                 Name = "MiniMap",
                 Components = new List<SceneComponent>
                 {
-                    new Transform { Translation = new float3(0,0,10), Scale = new float3(11, 8, 11) },
+                    new Transform { Translation = miniMapPlaneTransform, Scale = new float3(36, 22, 1) },
                     MakeEffect.FromDiffuse(float4.One, 0, float3.Zero, mapTex, 1f, new float2(2,2)),
                     new Plane()
                 }
             };
 
-            _minimapScene.Children.Add(minimapPlane);
-
             _minimapScene.Children.Add(miniMapCamNode);
-
-            _minimapScene.Children.Add(new Waypoint(new float3(-2.5f, -1.5f, 9), spheres[0]));
-            _minimapScene.Children.Add(new Waypoint(new float3(-2f, -2, 9), spheres[1]));
+            _minimapScene.Children.Add(minimapPlane);
 
             foreach (PanoSphere sphere in spheres)
             {
+                _minimapScene.Children.Add(new Waypoint(sphere));
                 Diagnostics.Debug(sphere.GetTransform().Translation);
                 sphere.GetComponent<Mesh>().Active = false;
                 foreach (SceneNode child in sphere.Children)
