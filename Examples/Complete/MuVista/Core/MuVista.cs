@@ -75,8 +75,8 @@ namespace Fusee.Examples.MuVista.Core
 
         private bool _keys;
         private bool _pointCloudActive = true;
-        private bool _isSpaceUsed = false;
-        private AxisDescription _spaceAxis;
+
+        private int _upDownAxis;
 
         private const float ZNear = 1f;
         private const float ZFar = 1000;
@@ -141,9 +141,9 @@ namespace Fusee.Examples.MuVista.Core
         // Init is called on startup. 
         public override void Init()
         {
-
+            
             var spheres = PanoSphereFactory.createPanoSpheres();
-            _currentSphere = spheres.ElementAt(1);
+            _currentSphere = spheres.ElementAt(0);
             _spaceMouse = GetDevice<SixDOFDevice>();
 
             _depthTex = WritableTexture.CreateDepthTex(Width, Height, new ImagePixelFormat(ColorFormat.Depth24));
@@ -195,7 +195,7 @@ namespace Fusee.Examples.MuVista.Core
             _minimapCam.Viewport = _minimapViewport;
             _minimapCam.Scale = 0.025f;
 
-            float3 firstSphereTranslation = spheres.ElementAt(0).GetTransform(0).Translation;
+            float3 firstSphereTranslation = spheres.ElementAt(0).sphereTransform.Translation;
             float3 miniMapTransform = new float3(firstSphereTranslation.x, firstSphereTranslation.z, firstSphereTranslation.y - 15);
             _minimapCamTransform = new Transform()
             {
@@ -247,7 +247,6 @@ namespace Fusee.Examples.MuVista.Core
             foreach (PanoSphere sphere in spheres)
             {
                 _minimapScene.Children.Add(new Waypoint(sphere));
-                Diagnostics.Debug(sphere.GetTransform().Translation);
                 sphere.GetComponent<Mesh>().Active = false;
                 foreach (SceneNode child in sphere.Children)
                     child.GetComponent<Mesh>().Active = false;
@@ -257,7 +256,7 @@ namespace Fusee.Examples.MuVista.Core
 
             _gui = new GUI(Width, Height, _canvasRenderMode, _mainCamTransform, _guiCam);
             // Create the interaction handler
-            _sih = new SceneInteractionHandler(_gui);
+           _sih = new SceneInteractionHandler(_gui);
 
             // Wrap a SceneRenderer around the model.
             _sceneRenderer = new SceneRendererForward(_scene);
@@ -273,8 +272,8 @@ namespace Fusee.Examples.MuVista.Core
 
             //RC.SetRenderState(RenderState.CullMode, (uint)Cull.None);
             //RC.SetRenderState(RenderState.FillMode, (uint)FillMode.Wireframe);
+            _upDownAxis = Keyboard.RegisterTwoButtonAxis((int)KeyCodes.LControl, (int)KeyCodes.Space, AxisDirection.Z).Id;
 
-            _spaceAxis = Keyboard.RegisterSingleButtonAxis(32);
             IsInitialized = true;
 
 
@@ -354,8 +353,8 @@ namespace Fusee.Examples.MuVista.Core
                 if (PtRenderingParams.Instance.CalcSSAO || PtRenderingParams.Instance.Lighting != Lighting.Unlit)
                 {
                     //Render Depth-only pass
-                    _scene.Children[1].RemoveComponent<ShaderEffect>();
-                    _scene.Children[1].Components.Insert(1, PtRenderingParams.Instance.DepthPassEf);
+                    _scene.Children.Find(children => children.Name == "Pointcloud").RemoveComponent<ShaderEffect>();
+                    _scene.Children.Find(children => children.Name == "Pointcloud").Components.Insert(1, PtRenderingParams.Instance.DepthPassEf);
 
                     _mainCam.RenderTexture = _depthTex;
                     _sceneRenderer.Render(RC);
@@ -364,8 +363,8 @@ namespace Fusee.Examples.MuVista.Core
 
                 //Render color pass
                 //Change shader effect in complete scene
-                _scene.Children[1].RemoveComponent<ShaderEffect>();
-                _scene.Children[1].Components.Insert(1, PtRenderingParams.Instance.ColorPassEf);
+                _scene.Children.Find(children => children.Name == "Pointcloud").RemoveComponent<ShaderEffect>();
+                _scene.Children.Find(children => children.Name == "Pointcloud").Components.Insert(1, PtRenderingParams.Instance.ColorPassEf);
                 _sceneRenderer.Render(RC);
                 //UpdateScene after Render / Traverse because there we calculate the view matrix (when using a camera) we need for the update.
                 //OocLoader.RC = RC;
@@ -406,7 +405,6 @@ namespace Fusee.Examples.MuVista.Core
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rendered frame) on the front buffer.
             Present();
-
             ReadyToLoadNewFile = true;
         }
         private bool SpaceMouseMoving(out float3 velPos, out float3 velRot)
@@ -435,15 +433,9 @@ namespace Fusee.Examples.MuVista.Core
         private void pcUserInput()
         {
             _isSpaceMouseMoving = SpaceMouseMoving(out float3 velPos, out float3 velRot);
-            if (Keyboard.GetAxis(_spaceAxis.Id) > 0f && _isSpaceUsed == false)
-            {
-                _isSpaceUsed = true;
-            }
 
-            if (_isSpaceUsed)
-            {
-                _mainCamTransform.Translate(new float3(0, -0.2f * (Keyboard.GetAxis(_spaceAxis.Id) - 1f), 0));
-            }
+            _mainCamTransform.Translate(new float3(0, 0.2f * (Keyboard.GetAxis(_upDownAxis)), 0));
+
 
             // Mouse and keyboard movement
             if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
@@ -742,6 +734,7 @@ namespace Fusee.Examples.MuVista.Core
             var ptOctantComp = root.GetComponent<OctantD>();
 
             InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z));
+            //InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
             root.AddComponent(new RenderLayer()
             {
                 Layer = RenderLayers.All
