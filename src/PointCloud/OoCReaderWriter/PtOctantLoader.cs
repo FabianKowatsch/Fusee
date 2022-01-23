@@ -481,7 +481,9 @@ namespace Fusee.PointCloud.OoCReaderWriter
             else //is visible and was loaded
             {
                 node.Components.RemoveAll(cmp => cmp.GetType() == typeof(Mesh));
-                node.Components.AddRange(_loadedMeshs[ptOctantComp.Guid]);
+                if(_loadedMeshs.ContainsKey(ptOctantComp.Guid))
+                    node.Components.AddRange(_loadedMeshs[ptOctantComp.Guid]);
+               
             }
 
             foreach (var child in node.Children)
