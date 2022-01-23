@@ -1,15 +1,15 @@
 {
   "octree": {
-    "maxLevel": 7,
+    "maxLevel": 8,
     "maxNoOfPointsInBucket": 5000,
-    "spacingFactor": 0.50279871234375,
+    "spacingFactor": 1.203346103828125,
     "rootNode": {
       "center": [
-        10.062750000000001,
-        -0.6147499999999999,
-        3.346
+        42.23025,
+        13.773050000000001,
+        -17.54405
       ],
-      "size": 64.35823518
+      "size": 154.02830129
     }
   },
   "ptAccessorBools": {
@@ -18,9 +18,9 @@
   },
   "pointType": "Pos64Col32",
   "metaInfo": {
-    "offsetX": 374838.0040728498,
-    "offsetY": 5634938.011017927,
-    "offsetZ": 126.05507617705604,
+    "offsetX": 374792.0,
+    "offsetY": 5634980.0,
+    "offsetZ": 110.809,
     "scaleX": 0.0001,
     "scaleY": 0.0001,
     "scaleZ": 0.0001
