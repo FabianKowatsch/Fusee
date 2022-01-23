@@ -36,6 +36,7 @@ public class PanoSphereFactory
         foreach (PanoImage img in panoImages)
         {
             panoSpheres.Add(createSphereWithShift(img));
+            Diagnostics.Debug(img.filename);
         }
         for (int i = 0; i < panoSpheres.Count; i++)
         {
@@ -93,7 +94,7 @@ public class PanoSphereFactory
         sphere.sphereTransform.Matrix = new Quaternion(fiber3dLadybugQuaternion_x, fiber3dLadybugQuaternion_y, fiber3dLadybugQuaternion_z, fiber3dLadybugQuaternion_w).ToRotMat();
         sphere.sphereTransform.Rotate(new float3(0, M.Pi, 0));
         sphere.sphereTransform.Translate(new float3(new double3(shiftedX, shiftedY, shiftedZ)));
-        Diagnostics.Debug(sphere.sphereTransform.Rotation.y);
+        
        
         return sphere;
     }

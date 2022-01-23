@@ -541,7 +541,7 @@ namespace Fusee.Examples.MuVista.Core
         {
             _panoChangeAnim = true;
             _panoChangeAnimTimeStart = Time.TimeSinceStart;
-            Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
+            //Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
             _destinationSphere = _currentSphere.previous;
             _destinationSphere.GetComponent<Mesh>().Active = true;
             TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
@@ -566,9 +566,9 @@ namespace Fusee.Examples.MuVista.Core
             TextureInputOpacity textureInputOpacityDestSphere = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
             TextureInputOpacity textureInputOpacityCurrent = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
             textureInputOpacityDestSphere.TexOpacity = 0 + (Time.TimeSinceStart - _panoChangeAnimTimeStart) / _panoChangeAnimTime;
-            Diagnostics.Debug("Dest: " + textureInputOpacityDestSphere.TexOpacity);
+            //Diagnostics.Debug("Dest: " + textureInputOpacityDestSphere.TexOpacity);
             textureInputOpacityCurrent.TexOpacity = 1 - (Time.TimeSinceStart - _panoChangeAnimTimeStart) / _panoChangeAnimTime;
-            Diagnostics.Debug("Cur: " + textureInputOpacityCurrent.TexOpacity);
+            //Diagnostics.Debug("Cur: " + textureInputOpacityCurrent.TexOpacity);
 
             float3 connectionVektor = new float3((float)(_destinationSphere.GetComponent<Transform>(0).Translation.x - _mainCamTransform.Translation.x), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.y - _mainCamTransform.Translation.y), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.z - _mainCamTransform.Translation.z));
             _mainCamTransform.Translate(connectionVektor.Normalize() * (connectionVektor.Length / (_panoChangeAnimTime / DeltaTime)));
@@ -641,24 +641,7 @@ namespace Fusee.Examples.MuVista.Core
                 _mainCamTransform.Translation = new float3(_angleHorz * CamTranslationSpeed, _angleVert * CamTranslationSpeed, 0);
             }
         }
-        /*        public void SwitchBetweenViews()
-                {
-                    _mainCam.Fov = M.PiOver4;
-                    //Animationsettings
-                    _animTimeStart = TimeSinceStart;
-                    _animActive = true;
-                    _mainCamTransform.Translation = new float3(0, 0, 0);
-                    _angleVelHorz = 0;
-                    _angleVert = 0;
-                    _angleVelVert = 0;
-                    _mainCamTransform.Rotation = new float3(0, M.Pi, 0);
-                    _sphereIsVisible = !_sphereIsVisible;
 
-                    if (_sphereIsVisible)
-                        _angleHorz = M.Pi;
-                    else
-                        _angleHorz = 0;
-                }*/
         // Is called when the window was resized
         public override void Resize(ResizeEventArgs e)
         {
@@ -853,7 +836,7 @@ namespace Fusee.Examples.MuVista.Core
 
                     textureInputOpacity.TexOpacity = (percent / 100);
                     //textureInputOpacityCloud.TexOpacity = 1 - (percent / 100);
-                    Diagnostics.Debug(textureInputOpacity.TexOpacity);
+                   
 
                 }
                 else if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
