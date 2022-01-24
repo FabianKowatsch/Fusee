@@ -1,4 +1,5 @@
 ﻿using Fusee.Base.Common;
+using Fusee.Base.Core;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Scene;
 using Fusee.Math.Core;
@@ -16,12 +17,12 @@ namespace Fusee.Examples.MuVista.Core
         public Waypoint(PanoSphere sphere)
         {
             Name = "Waypoint";
-            float3 sphereFuseeTransform = new float3(sphere.GetTransform(0).Translation.x, sphere.GetTransform(0).Translation.z, sphere.GetTransform(0).Translation.y);
+            float3 sphereFuseeTransform = new float3(sphere.GetTransform(0).Translation.x, sphere.GetTransform(0).Translation.z, -1);
             Components = new List<SceneComponent>
             {
                     new Transform { Translation = sphereFuseeTransform, Scale = new float3(1, 1, 1) },
                     MakeEffect.FromDiffuseSpecular((float4) ColorUint.Green, 0f, 4.0f, 1f),
-                    new Sphere(0.3f, 20, 50)
+                    new Sphere(0.5f, 20, 50)
             };
             _sphere = sphere;
         }

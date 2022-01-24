@@ -115,7 +115,7 @@ namespace Fusee.Examples.MuVista.Core
         private Transform _mainCamTransform;
         private Camera _mainCam;
 
-        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Orthographic, 3, 5000, M.PiOver6);
+        private readonly Camera _minimapCam = new Camera(ProjectionMethod.Perspective, 3, 5000, M.PiOver6);
         private Transform _minimapCamTransform;
 
         private readonly Camera _guiCam = new Camera(ProjectionMethod.Orthographic, 1, 1000, M.PiOver4);
@@ -137,6 +137,9 @@ namespace Fusee.Examples.MuVista.Core
         private float _panoChangeAnimTime = 3;
         private float _panoChangeAnimTimeStart = 0;
         private PanoSphere _destinationSphere;
+
+        private float minimapPlaneWidth = 75;
+        private float minimapPlaneHeight = 75;
 
         // Init is called on startup. 
         public override void Init()
@@ -195,8 +198,8 @@ namespace Fusee.Examples.MuVista.Core
             _minimapCam.Viewport = _minimapViewport;
             _minimapCam.Scale = 0.025f;
 
-            float3 firstSphereTranslation = spheres.ElementAt(0).sphereTransform.Translation;
-            float3 miniMapTransform = new float3(firstSphereTranslation.x, firstSphereTranslation.z, firstSphereTranslation.y - 15);
+            float3 middleSphereTranslation = spheres.ElementAt((int)spheres.Count/2).sphereTransform.Translation;
+            float3 miniMapTransform = new float3(middleSphereTranslation.x, middleSphereTranslation.z, -50);
             _minimapCamTransform = new Transform()
             {
                 Rotation = new float3(0, 0, 0),
@@ -229,13 +232,13 @@ namespace Fusee.Examples.MuVista.Core
 
             var mapTex = new Texture(AssetStorage.Get<ImageData>("Minimap.jpg"), true, TextureFilterMode.LinearMipmapLinear, TextureWrapMode.ClampToBorder);
 
-            float3 miniMapPlaneTransform = new float3(firstSphereTranslation.x + 36/ 4, firstSphereTranslation.z + 22 / 4, firstSphereTranslation.y + 5);
+            float3 miniMapPlaneTransform = new float3(middleSphereTranslation.x + minimapPlaneWidth / 4, middleSphereTranslation.z + minimapPlaneHeight / 4, 0);
             var minimapPlane = new SceneNode()
             {
                 Name = "MiniMap",
                 Components = new List<SceneComponent>
                 {
-                    new Transform { Translation = miniMapPlaneTransform, Scale = new float3(36, 22, 1) },
+                    new Transform { Translation = miniMapPlaneTransform, Scale = new float3(minimapPlaneWidth, minimapPlaneHeight, 1) },
                     MakeEffect.FromDiffuse(float4.One, 0, float3.Zero, mapTex, 1f, new float2(2,2)),
                     new Plane()
                 }
@@ -988,13 +991,19 @@ namespace Fusee.Examples.MuVista.Core
                     return;
 
                 SwitchCamViewport();
+                _currentSphere.GetComponent<Mesh>().Active = false;
+                foreach (SceneNode child in _currentSphere.Children)
+                    child.GetComponent<Mesh>().Active = false;
                 _currentSphere = pickedWaypoint.GetPanoSphere();
-
+                //_currentSphere.GetComponent<Mesh>().Active = true;
+                //_currentSphere = pickedWaypoint.GetPanoSphere();
+                TextureInputOpacity textureInputOpacityCurrent = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
+                textureInputOpacityCurrent.TexOpacity = 1;
                 _pointCloudActive = true;
                 switchModes();
             }
 
-            if (!_pointCloudActive)
+            if (!_pointCloudActive && !_panoChangeAnim)
             {
                 List<RayCastResult> result = _sceneRayCaster.RayPick(RC, Mouse.Position).ToList();
 
