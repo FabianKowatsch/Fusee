@@ -825,43 +825,72 @@ namespace Fusee.Examples.MuVista.Core
             _gui._btnPanoAlphaUp.OnMouseExit += _gui.OnPanoAlphaStop;
             _gui._btnPanoAlphaDown.OnMouseExit += _gui.OnPanoAlphaStop;
 
-            TextureInputOpacity textureInputOpacity = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
-            //TextureInputOpacity textureInputOpacityCloud = (TextureInputOpacity)_scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<SurfaceEffect>().SurfaceInput;
-            float percent = MathF.Round(((_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y - 0.7f) / (3 - 0.7f)) * 100);
+            _gui._btnPointSizeUp.OnMouseDown += _gui.OnPointSizeUp;
+            _gui._btnPointSizeDown.OnMouseDown += _gui.OnPointSizeDown;
+
+            _gui._btnPointSizeUp.OnMouseUp += _gui.OnPointSizeStop;
+            _gui._btnPointSizeDown.OnMouseUp += _gui.OnPointSizeStop;
+            _gui._btnPointSizeUp.OnMouseExit += _gui.OnPointSizeStop;
+            _gui._btnPointSizeDown.OnMouseExit += _gui.OnPointSizeStop;
+
+            if(_gui._movePointSizeHandler)
+            {
+                movePointSizeHandle();
+            }
 
             if (_gui._movePanoAlphaHandler)
             {
-                if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 0.5f && _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 2.8f)
-                {
-                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
-                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
+                movePanoAlphaHandle();
+            }
+        }
 
+        public void movePanoAlphaHandle()
+        {
+            float percent = MathF.Round(((_gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y - 0.7f) / (3 - 0.7f)) * 100);
+            TextureInputOpacity textureInputOpacity = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
 
-                    textureInputOpacity.TexOpacity = (percent / 100);
-                    //textureInputOpacityCloud.TexOpacity = 1 - (percent / 100);
-                   
+            if (_gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y >= 0.5f && _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y <= 2.8f)
+            {
+                _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y = _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
+                _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y = _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
 
-                }
-                else if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
-                {
-                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 0.50f;
-                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 0.70f;
-                    textureInputOpacity.TexOpacity = 0f;
-                    //textureInputOpacityCloud.TexOpacity = 1;
-                }
-                else if (_gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y >= 2.8f)
-                {
-                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Min.y = 2.8f;
-                    _gui._panoAlphaNode.GetComponent<RectTransform>().Offsets.Max.y = 3f;
-                    textureInputOpacity.TexOpacity = 1f;
-                    //textureInputOpacityCloud.TexOpacity = 0;
-                }
+                textureInputOpacity.TexOpacity = (percent / 100);
 
-                if (percent >= _gui._lastStep + 10 || percent <= _gui._lastStep - 10)
-                {
-                    //_gui.replaceTextForPercent(percent + "%", Width, Height);
-                    _gui._lastStep = percent;
-                }
+            }
+            else if (_gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
+            {
+                _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y = 0.50f;
+                _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y = 0.70f;
+                textureInputOpacity.TexOpacity = 0f;
+            }
+            else if (_gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y >= 2.8f)
+            {
+                _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y = 2.8f;
+                _gui._panoAlphaHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y = 3f;
+                textureInputOpacity.TexOpacity = 1f;
+            }
+        }
+
+        public void movePointSizeHandle()
+        {
+            float percent = MathF.Round(((_gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y - 0.7f) / (3 - 0.7f)) * 100);
+
+            if (_gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y >= 0.5f && _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y <= 2.8f)
+            {
+                _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y = _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
+                _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y = _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
+                PtRenderingParams.Instance.Size = (int)MathF.Round(percent / 10);
+                Diagnostics.Debug(PtRenderingParams.Instance.Size);
+            }
+            else if (_gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
+            {
+                _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y = 0.50f;
+                _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y = 0.70f;
+            }
+            else if (_gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y >= 2.8f)
+            {
+                _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y = 2.8f;
+                _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y = 3f;
             }
         }
 
