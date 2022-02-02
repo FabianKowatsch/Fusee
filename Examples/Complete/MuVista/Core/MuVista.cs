@@ -880,7 +880,7 @@ namespace Fusee.Examples.MuVista.Core
                 _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y = _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Max.y + 0.01f * _gui._velocity;
                 _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y = _gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y + 0.01f * _gui._velocity;
                 PtRenderingParams.Instance.Size = (int)MathF.Round(percent / 10);
-                Diagnostics.Debug(PtRenderingParams.Instance.Size);
+                UpdateShaderParams();
             }
             else if (_gui._pointSizeHandle.Children[3].GetComponent<RectTransform>().Offsets.Min.y <= 0.50f)
             {
