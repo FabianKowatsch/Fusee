@@ -11,7 +11,7 @@ namespace JSONReducer
     {
         private static string pathToImages = "G:\\Projects\\Fusee\\Examples\\Complete\\MuVista\\Core\\Assets\\Panos";
         private static string pathToInput = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\input\\data.json";
-        private static string pathToOutput = "G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output";
+        private static string pathToOutput = "G:\\Projects\\Fusee\\Examples\\Complete\\MuVista\\Core\\Assets\\Data\\output";
         static void Main(string[] args)
         {
             string[] imageFiles = GetFileNames(pathToImages, "*.jpg");

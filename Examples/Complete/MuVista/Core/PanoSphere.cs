@@ -18,7 +18,7 @@ namespace Fusee.Examples.MuVista.Core
     {
         public Transform sphereTransform;
 
-        public float radius = 10;
+        public float radius = 20;
 
         private SurfaceEffect _surfaceEffect;
 
