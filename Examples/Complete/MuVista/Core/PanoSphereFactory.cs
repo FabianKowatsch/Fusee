@@ -12,10 +12,8 @@ public class PanoSphereFactory
 {
     private static string _pathToImageData = ".\\net6.0\\Assets\\Data\\output\\data.json";
     private static string _debugPathToImageData = "..\\net6.0\\Assets\\Data\\output\\data.json";
-    //G:\\Projects\\Fusee\\Examples\\Complete\\JSONReducer\\output\\data.json
     private static string pathToMeta = PtRenderingParams.Instance.PathToOocFile + "\\meta.json";
     private static double3 offset;
-    private static double3 center;
 
     private static string pathToImageData
     {
@@ -36,7 +34,6 @@ public class PanoSphereFactory
         foreach (PanoImage img in panoImages)
         {
             panoSpheres.Add(createSphereWithShift(img));
-            Diagnostics.Debug(img.filename);
         }
         for (int i = 0; i < panoSpheres.Count; i++)
         {
@@ -69,12 +66,9 @@ public class PanoSphereFactory
         {
             jsonObj = (JObject)JToken.ReadFrom(new JsonTextReader(sr));
         }
-
-        var jsonCenter = (JArray)jsonObj["octree"]["rootNode"]["center"];
         var offsetX = (JValue)jsonObj["metaInfo"]["offsetX"];
         var offsetY = (JValue)jsonObj["metaInfo"]["offsetY"];
         var offsetZ = (JValue)jsonObj["metaInfo"]["offsetZ"];
-        center = new double3((double)jsonCenter[0], (double)jsonCenter[1], (double)jsonCenter[2]);
         offset = new double3((double)offsetX, (double)offsetY, (double)offsetZ);
     }
 
@@ -120,14 +114,7 @@ public class PanoSphereFactory
         
         arrow.GetComponent<Transform>().Rotate(new float3((float)degreeToRadian(-10), angle , 0));
         arrow.GetComponent<Transform>(0).Translation = connectionVektor.Normalize() * (0.8f * radius);
-        //arrow.GetComponent<Transform>(0).Translation.y -= 3;
         arrow.GetComponent<Transform>().Scale = new float3(0.8f, 0.8f, 0.8f);
-
-
-        foreach (string s in Environment.GetCommandLineArgs())
-        {
-            Diagnostics.Debug(s);
-        }
 
         return arrow;
     }

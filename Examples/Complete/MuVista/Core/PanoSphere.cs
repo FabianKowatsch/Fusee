@@ -16,11 +16,10 @@ namespace Fusee.Examples.MuVista.Core
 
     public class PanoSphere : SceneNode
     {
-
         public Transform sphereTransform;
 
         public float radius = 10;
-        //private DefaultSurfaceEffect _surfaceEffect;
+
         private SurfaceEffect _surfaceEffect;
 
         private Texture _texture;
@@ -36,69 +35,13 @@ namespace Fusee.Examples.MuVista.Core
             Sphere sphere = new Sphere(radius, 20, 50);
 
 
-            /*TextureInputOpacity colorInput = new TextureInputOpacity()
-            {
-                Albedo = float4.One,
-                TexOpacity = 1.0f,
-                //Emission = float4.Zero,
-                //Shininess = 1.0f,
-                //SpecularStrength = 0.0f,
-                AlbedoMix = 1.0f,
-                AlbedoTex = _texture,
-                TexTiles = float2.One,
-                Roughness = 0.0f
-            };*/
-
-            /*
-             *  var sphereTex = new Texture(AssetStorage.Get<ImageData>("ladybug_18534664_20210113_GEO2111300_5561.jpg"));
-
-            sphereTex2 = new Texture(AssetStorage.Get<ImageData>("LadyBug_C1P1.jpg"));
-
-            Sphere sphere = new Sphere(10, 20, 50);
-            GridPlane plane = new GridPlane(20, 50, _planeHeight, _planeWidth, DistancePlaneCamera);
-
-            TextureInputOpacity colorInput = new TextureInputOpacity()
-            {
-                Albedo = float4.One,
-                TexOpacity = 0.5f,
-                //Emission = float4.Zero,
-                //Shininess = 1.0f,
-                //SpecularStrength = 0.0f,
-                AlbedoMix = 1.0f,
-                AlbedoTex = sphereTex,
-                TexTiles = float2.One,
-                Roughness = 0.0f
-            };
-            colorInput2 = new TextureInputOpacity()
-            {
-                Albedo = float4.One,
-                TexOpacity = 0.0f,
-                AlbedoMix = 1.0f,
-                AlbedoTex = sphereTex2,
-                TexTiles = float2.One,
-                Roughness = 0.0f
-            };
-            var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTex | LightingSetupFlags.AlbedoTexOpacity;
-
-            _animationEffect = new VertexAnimationSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_PosAnimation)
-            {
-                PercentPerVertex = 1.0f,
-                PercentPerVertex1 = 0.0f
-            };
-             * */
-
             _surfaceEffect = MakeEffect.FromUnlitOpacity(
                 albedoColor: float4.One,
                 albedoTex: _texture,
                 texTiles: float2.One,
                 albedoMix: 1.0f,
-                texOpacity: 1f
-          
+                texOpacity: 1f         
             );
-
-
-            //var lightingSetup = LightingSetupFlags.Unlit | LightingSetupFlags.AlbedoTexOpacity;
-            //_surfaceEffect = new DefaultSurfaceEffect(lightingSetup, colorInput, FragShards.SurfOutBody_Textures(lightingSetup), VertShards.SufOutBody_Pos);
 
             sphereTransform = new Transform
             {
@@ -106,8 +49,6 @@ namespace Fusee.Examples.MuVista.Core
                 Scale = new float3(1, 1, 1),
                 Translation = new float3(0, 0, 0)
             };
-
-
 
             Components = new List<SceneComponent>()
             {

@@ -56,14 +56,9 @@ namespace Fusee.Examples.MuVista.Core
         private const float RotationSpeed = 7;
         private const float Damping = 0.8f;
 
-        private const float _planeHeight = 4096f / 300f;
-        private const float _planeWidth = 8192f / 300f;
+
         // angle variables
         private static float _angleHorz, _angleVert, _angleVelHorz, _angleVelVert, _angleRoll, _angleRollInit, _zoom;
-        private static float2 _offset;
-        private static float2 _offsetInit;
-
-
 
         private SceneContainer _scene;
         private SceneRendererForward _sceneRenderer;
@@ -224,8 +219,7 @@ namespace Fusee.Examples.MuVista.Core
 
             _angleRoll = 0;
             _angleRollInit = 0;
-            _offset = float2.Zero;
-            _offsetInit = float2.Zero;
+
 
             if (!UseWPF)
                 LoadPointCloudFromFile();
@@ -312,10 +306,9 @@ namespace Fusee.Examples.MuVista.Core
                     SwitchCamViewport();
                 }
 
-                //if (_inverseCams)
-                //{
+
                 DoPicking();
-                //}
+
 
                 if (_pointCloudActive)
                 {
@@ -326,6 +319,9 @@ namespace Fusee.Examples.MuVista.Core
                 {
                     sphereUserInput();
                 }
+                #endregion
+
+                #region Animation
 
                 if (Time.TimeSinceStart < _panoChangeAnimTimeStart + _panoChangeAnimTime && _panoChangeAnim)
                 {
@@ -351,6 +347,7 @@ namespace Fusee.Examples.MuVista.Core
 
 
                 #endregion
+
                 //----------------------------  
 
                 if (PtRenderingParams.Instance.CalcSSAO || PtRenderingParams.Instance.Lighting != Lighting.Unlit)
@@ -370,7 +367,7 @@ namespace Fusee.Examples.MuVista.Core
                 _scene.Children.Find(children => children.Name == "Pointcloud").Components.Insert(1, PtRenderingParams.Instance.ColorPassEf);
                 _sceneRenderer.Render(RC);
                 //UpdateScene after Render / Traverse because there we calculate the view matrix (when using a camera) we need for the update.
-                //OocLoader.RC = RC;
+
                 OocLoader.UpdateScene(PtRenderingParams.Instance.PtMode, PtRenderingParams.Instance.DepthPassEf, PtRenderingParams.Instance.ColorPassEf);
 
                 if (UseWPF)
@@ -390,7 +387,7 @@ namespace Fusee.Examples.MuVista.Core
             RC.Projection = float4x4.CreateOrthographic(Width, Height, ZNear, ZFar);
 
             // Constantly check for interactive objects.
-            //_sih.CheckForInteractiveObjects(RC, Mouse.Position, Width, Height);
+
             if (Mouse != null) //Mouse is null when the pointer is outside the GameWindow?
             {
 
@@ -472,7 +469,6 @@ namespace Fusee.Examples.MuVista.Core
                 float speed = DeltaTime * 12;
 
                 _mainCamTransform.FpsView(_angleHorz, _angleVert, velPos.z, velPos.x, speed);
-                //_mainCamTransform.Translation.y += velPos.y * speed;
             }
             else
             {
@@ -491,7 +487,6 @@ namespace Fusee.Examples.MuVista.Core
         private void switchModes()
         {
             _pointCloudActive = !_pointCloudActive;
-            //TextureInputOpacity textureInputOpacityCloud = (TextureInputOpacity)_scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<SurfaceEffect>().SurfaceInput;
 
             if (!_pointCloudActive)
             {
@@ -500,7 +495,6 @@ namespace Fusee.Examples.MuVista.Core
                 foreach (SceneNode child in _currentSphere.Children)
                     child.GetComponent<Mesh>().Active = true;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.None;
-                //textureInputOpacityCloud.TexOpacity = 0;
                 var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
                 foreach (PanoSphere sphere in spheres)
                 {
@@ -512,7 +506,6 @@ namespace Fusee.Examples.MuVista.Core
             {
                 _mainCam.Fov = M.PiOver3;
                 _scene.Children.Find(children => children.Name == "Pointcloud").GetComponent<RenderLayer>().Layer = RenderLayers.All;
-                //textureInputOpacityCloud.TexOpacity = 1;
                 var spheres = _scene.Children.FindAll(children => children.Name == "PanoSphere");
                 foreach (PanoSphere sphere in spheres)
                 {
@@ -544,7 +537,6 @@ namespace Fusee.Examples.MuVista.Core
         {
             _panoChangeAnim = true;
             _panoChangeAnimTimeStart = Time.TimeSinceStart;
-            //Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
             _destinationSphere = _currentSphere.previous;
             _destinationSphere.GetComponent<Mesh>().Active = true;
             TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
@@ -556,7 +548,6 @@ namespace Fusee.Examples.MuVista.Core
         {
             _panoChangeAnim = true;
             _panoChangeAnimTimeStart = Time.TimeSinceStart;
-            Diagnostics.Debug("Anim start Time: " + _panoChangeAnimTimeStart);
             _destinationSphere = _currentSphere.next;
             _destinationSphere.GetComponent<Mesh>().Active = true;
             TextureInputOpacity textureInputOpacityDest = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
@@ -569,10 +560,7 @@ namespace Fusee.Examples.MuVista.Core
             TextureInputOpacity textureInputOpacityDestSphere = (TextureInputOpacity)_destinationSphere.GetComponent<SurfaceEffect>().SurfaceInput;
             TextureInputOpacity textureInputOpacityCurrent = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
             textureInputOpacityDestSphere.TexOpacity = 0 + (Time.TimeSinceStart - _panoChangeAnimTimeStart) / _panoChangeAnimTime;
-            //Diagnostics.Debug("Dest: " + textureInputOpacityDestSphere.TexOpacity);
             textureInputOpacityCurrent.TexOpacity = 1 - (Time.TimeSinceStart - _panoChangeAnimTimeStart) / _panoChangeAnimTime;
-            //Diagnostics.Debug("Cur: " + textureInputOpacityCurrent.TexOpacity);
-
             float3 connectionVektor = new float3((float)(_destinationSphere.GetComponent<Transform>(0).Translation.x - _mainCamTransform.Translation.x), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.y - _mainCamTransform.Translation.y), (float)(_destinationSphere.GetComponent<Transform>(0).Translation.z - _mainCamTransform.Translation.z));
             _mainCamTransform.Translate(connectionVektor.Normalize() * (connectionVektor.Length / (_panoChangeAnimTime / DeltaTime)));
         }
@@ -622,13 +610,7 @@ namespace Fusee.Examples.MuVista.Core
                 {
                     _angleHorz += _angleVelHorz;
                 }
-                else
-                {
-                    if ((_angleHorz + _angleVelHorz) * CamTranslationSpeed <= _planeWidth / 2f && (_angleHorz + _angleVelHorz) * CamTranslationSpeed >= _planeWidth / -2f)
-                    {
-                        _angleHorz += _angleVelHorz;
-                    }
-                }
+              
             }
 
         }
@@ -644,162 +626,7 @@ namespace Fusee.Examples.MuVista.Core
                 _mainCamTransform.Translation = new float3(_angleHorz * CamTranslationSpeed, _angleVert * CamTranslationSpeed, 0);
             }
         }
-
-        // Is called when the window was resized
-        public override void Resize(ResizeEventArgs e)
-        {
-            if (!PtRenderingParams.Instance.CalcSSAO && PtRenderingParams.Instance.Lighting == Lighting.Unlit) return;
-
-            //(re)create depth tex and fbo
-            if (_isTexInitialized)
-            {
-                _depthTex = WritableTexture.CreateDepthTex(Width, Height, new ImagePixelFormat(ColorFormat.Depth24));
-
-                PtRenderingParams.Instance.DepthPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
-                PtRenderingParams.Instance.ColorPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
-                PtRenderingParams.Instance.ColorPassEf.SetFxParam("DepthTex", _depthTex);
-            }
-
-            _isTexInitialized = true;
-        }
-
-        public override void DeInit()
-        {
-            IsAlive = false;
-            base.DeInit();
-
-        }
-
-        private bool HasUserMoved()
-        {
-            return RC.View == float4x4.Identity
-                || Mouse.LeftButton
-                || Keyboard.WSAxis != 0 || Keyboard.ADAxis != 0
-                || (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint);
-        }
-
-        public RenderContext GetRc()
-        {
-            return RC;
-        }
-
-        public SceneNode GetOocLoaderRootNode()
-        {
-            return OocLoader.RootNode;
-        }
-
-        public bool GetOocLoaderWasSceneUpdated()
-        {
-            return OocLoader.WasSceneUpdated;
-        }
-
-        public int GetOocLoaderPointThreshold()
-        {
-            return OocLoader.PointThreshold;
-        }
-
-        public void SetOocLoaderPointThreshold(int value)
-        {
-            OocLoader.PointThreshold = value;
-        }
-
-        public void SetOocLoaderMinProjSizeMod(float value)
-        {
-            OocLoader.MinProjSizeModifier = value;
-        }
-
-        public float GetOocLoaderMinProjSizeMod()
-        {
-            return OocLoader.MinProjSizeModifier;
-        }
-
-        public void LoadPointCloudFromFile()
-        {
-            //create Scene from octree structure
-            var root = OocFileReader.GetScene();
-            var ptOctantComp = root.GetComponent<OctantD>();
-
-            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z));
-            //InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
-            root.AddComponent(new RenderLayer()
-            {
-                Layer = RenderLayers.All
-            });
-            _scene.Children.Add(root);
-            Diagnostics.Debug(root.GetComponent<Transform>().Translation);
-            OocLoader.RootNode = root;
-            OocLoader.FileFolderPath = PtRenderingParams.Instance.PathToOocFile;
-
-            var octreeTexImgData = new ImageData(ColorFormat.uiRgb8, OocFileReader.NumberOfOctants, 1);
-            _octreeTex = new Texture(octreeTexImgData);
-            OocLoader.VisibleOctreeHierarchyTex = _octreeTex;
-
-            var byteSize = OocFileReader.NumberOfOctants * octreeTexImgData.PixelFormat.BytesPerPixel;
-            octreeTexImgData.PixelData = new byte[byteSize];
-
-            var ptRootComponent = root.GetComponent<OctantD>();
-            _octreeRootCenter = ptRootComponent.Center;
-            _octreeRootLength = ptRootComponent.Size;
-
-            PtRenderingParams.Instance.DepthPassEf = PtRenderingParams.Instance.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
-            PtRenderingParams.Instance.ColorPassEf = PtRenderingParams.Instance.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
-
-            var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
-            pointcloud.RemoveComponent<ShaderEffect>();
-            if (PtRenderingParams.Instance.CalcSSAO || PtRenderingParams.Instance.Lighting != Lighting.Unlit)
-                pointcloud.AddComponent(PtRenderingParams.Instance.DepthPassEf);
-            else
-                pointcloud.AddComponent(PtRenderingParams.Instance.ColorPassEf);
-
-            IsSceneLoaded = true;
-        }
-
-        public void DeletePointCloud()
-        {
-            IsSceneLoaded = false;
-
-            while (!OocLoader.WasSceneUpdated || !ReadyToLoadNewFile)
-            {
-                continue;
-            }
-
-            if (OocLoader.RootNode != null)
-                _scene.Children.Remove(OocLoader.RootNode);
-
-        }
-
-        public void ResetCamera()
-        {
-            _mainCamTransform.Translation = InitCameraPos;
-            _angleHorz = _angleVert = 0;
-        }
-
-        public void DeleteOctants()
-        {
-            IsSceneLoaded = false;
-
-            while (!OocLoader.WasSceneUpdated || !ReadyToLoadNewFile)
-            {
-                continue;
-            }
-
-            if (OocLoader.RootNode != null)
-                _scene.Children.Remove(OocLoader.RootNode);
-        }
-
-        private static void UpdateShaderParams()
-        {
-            foreach (var param in PtRenderingParams.Instance.ShaderParamsToUpdate)
-            {
-                if (PtRenderingParams.Instance.DepthPassEf.ParamDecl.ContainsKey(param.Key))
-                    PtRenderingParams.Instance.DepthPassEf.SetFxParam(param.Key, param.Value);
-                if (PtRenderingParams.Instance.ColorPassEf.ParamDecl.ContainsKey(param.Key))
-                    PtRenderingParams.Instance.ColorPassEf.SetFxParam(param.Key, param.Value);
-            }
-
-            PtRenderingParams.Instance.ShaderParamsToUpdate.Clear();
-        }
-
+        #region GUI
         public void HndGuiButtonInput()
         {
             if (_gui._btnZoomOut.IsMouseOver)
@@ -833,7 +660,7 @@ namespace Fusee.Examples.MuVista.Core
             _gui._btnPointSizeUp.OnMouseExit += _gui.OnPointSizeStop;
             _gui._btnPointSizeDown.OnMouseExit += _gui.OnPointSizeStop;
 
-            if(_gui._movePointSizeHandler)
+            if (_gui._movePointSizeHandler)
             {
                 movePointSizeHandle();
             }
@@ -997,7 +824,7 @@ namespace Fusee.Examples.MuVista.Core
                 _minimapCam.Layer = _minimapLayer;
             }
         }
-
+        #endregion
         public void DoPicking()
         {
             if (!Mouse.LeftButton)
@@ -1024,8 +851,6 @@ namespace Fusee.Examples.MuVista.Core
                 foreach (SceneNode child in _currentSphere.Children)
                     child.GetComponent<Mesh>().Active = false;
                 _currentSphere = pickedWaypoint.GetPanoSphere();
-                //_currentSphere.GetComponent<Mesh>().Active = true;
-                //_currentSphere = pickedWaypoint.GetPanoSphere();
                 TextureInputOpacity textureInputOpacityCurrent = (TextureInputOpacity)_currentSphere.GetComponent<SurfaceEffect>().SurfaceInput;
                 textureInputOpacityCurrent.TexOpacity = 1;
                 _pointCloudActive = true;
@@ -1052,5 +877,164 @@ namespace Fusee.Examples.MuVista.Core
                     CreateAnimationToNextSphere();
             }
         }
+
+        // Is called when the window was resized
+        public override void Resize(ResizeEventArgs e)
+        {
+            if (!PtRenderingParams.Instance.CalcSSAO && PtRenderingParams.Instance.Lighting == Lighting.Unlit) return;
+
+            //(re)create depth tex and fbo
+            if (_isTexInitialized)
+            {
+                _depthTex = WritableTexture.CreateDepthTex(Width, Height, new ImagePixelFormat(ColorFormat.Depth24));
+
+                PtRenderingParams.Instance.DepthPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
+                PtRenderingParams.Instance.ColorPassEf.SetFxParam("ScreenParams", new float2(Width, Height));
+                PtRenderingParams.Instance.ColorPassEf.SetFxParam("DepthTex", _depthTex);
+            }
+
+            _isTexInitialized = true;
+        }
+
+        #region Pointcloud
+
+        public override void DeInit()
+        {
+            IsAlive = false;
+            base.DeInit();
+
+        }
+
+        private bool HasUserMoved()
+        {
+            return RC.View == float4x4.Identity
+                || Mouse.LeftButton
+                || Keyboard.WSAxis != 0 || Keyboard.ADAxis != 0
+                || (Touch.GetTouchActive(TouchPoints.Touchpoint_0) && !Touch.TwoPoint);
+        }
+
+        public RenderContext GetRc()
+        {
+            return RC;
+        }
+
+        public SceneNode GetOocLoaderRootNode()
+        {
+            return OocLoader.RootNode;
+        }
+
+        public bool GetOocLoaderWasSceneUpdated()
+        {
+            return OocLoader.WasSceneUpdated;
+        }
+
+        public int GetOocLoaderPointThreshold()
+        {
+            return OocLoader.PointThreshold;
+        }
+
+        public void SetOocLoaderPointThreshold(int value)
+        {
+            OocLoader.PointThreshold = value;
+        }
+
+        public void SetOocLoaderMinProjSizeMod(float value)
+        {
+            OocLoader.MinProjSizeModifier = value;
+        }
+
+        public float GetOocLoaderMinProjSizeMod()
+        {
+            return OocLoader.MinProjSizeModifier;
+        }
+
+        public void LoadPointCloudFromFile()
+        {
+            //create Scene from octree structure
+            var root = OocFileReader.GetScene();
+            var ptOctantComp = root.GetComponent<OctantD>();
+
+            InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z));
+            //InitCameraPos = _mainCamTransform.Translation = new float3((float)ptOctantComp.Center.x, (float)ptOctantComp.Center.y, (float)(ptOctantComp.Center.z - (ptOctantComp.Size * 2f)));
+            root.AddComponent(new RenderLayer()
+            {
+                Layer = RenderLayers.All
+            });
+            _scene.Children.Add(root);
+            OocLoader.RootNode = root;
+            OocLoader.FileFolderPath = PtRenderingParams.Instance.PathToOocFile;
+
+            var octreeTexImgData = new ImageData(ColorFormat.uiRgb8, OocFileReader.NumberOfOctants, 1);
+            _octreeTex = new Texture(octreeTexImgData);
+            OocLoader.VisibleOctreeHierarchyTex = _octreeTex;
+
+            var byteSize = OocFileReader.NumberOfOctants * octreeTexImgData.PixelFormat.BytesPerPixel;
+            octreeTexImgData.PixelData = new byte[byteSize];
+
+            var ptRootComponent = root.GetComponent<OctantD>();
+            _octreeRootCenter = ptRootComponent.Center;
+            _octreeRootLength = ptRootComponent.Size;
+
+            PtRenderingParams.Instance.DepthPassEf = PtRenderingParams.Instance.CreateDepthPassEffect(new float2(Width, Height), InitCameraPos.z, _octreeTex, _octreeRootCenter, _octreeRootLength);
+            PtRenderingParams.Instance.ColorPassEf = PtRenderingParams.Instance.CreateColorPassEffect(new float2(Width, Height), InitCameraPos.z, new float2(ZNear, ZFar), _depthTex, _octreeTex, _octreeRootCenter, _octreeRootLength);
+
+            var pointcloud = _scene.Children.Find(children => children.Name == "Pointcloud");
+            pointcloud.RemoveComponent<ShaderEffect>();
+            if (PtRenderingParams.Instance.CalcSSAO || PtRenderingParams.Instance.Lighting != Lighting.Unlit)
+                pointcloud.AddComponent(PtRenderingParams.Instance.DepthPassEf);
+            else
+                pointcloud.AddComponent(PtRenderingParams.Instance.ColorPassEf);
+
+            IsSceneLoaded = true;
+        }
+
+        public void DeletePointCloud()
+        {
+            IsSceneLoaded = false;
+
+            while (!OocLoader.WasSceneUpdated || !ReadyToLoadNewFile)
+            {
+                continue;
+            }
+
+            if (OocLoader.RootNode != null)
+                _scene.Children.Remove(OocLoader.RootNode);
+
+        }
+
+        public void ResetCamera()
+        {
+            _mainCamTransform.Translation = InitCameraPos;
+            _angleHorz = _angleVert = 0;
+        }
+
+        public void DeleteOctants()
+        {
+            IsSceneLoaded = false;
+
+            while (!OocLoader.WasSceneUpdated || !ReadyToLoadNewFile)
+            {
+                continue;
+            }
+
+            if (OocLoader.RootNode != null)
+                _scene.Children.Remove(OocLoader.RootNode);
+        }
+
+        private static void UpdateShaderParams()
+        {
+            foreach (var param in PtRenderingParams.Instance.ShaderParamsToUpdate)
+            {
+                if (PtRenderingParams.Instance.DepthPassEf.ParamDecl.ContainsKey(param.Key))
+                    PtRenderingParams.Instance.DepthPassEf.SetFxParam(param.Key, param.Value);
+                if (PtRenderingParams.Instance.ColorPassEf.ParamDecl.ContainsKey(param.Key))
+                    PtRenderingParams.Instance.ColorPassEf.SetFxParam(param.Key, param.Value);
+            }
+
+            PtRenderingParams.Instance.ShaderParamsToUpdate.Clear();
+        }
+        #endregion
+
+        
     }
 }
