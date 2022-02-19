@@ -116,7 +116,7 @@ Die Rotation erfolgt mithilfe der in den Bilddaten angegebenen Quaternionen. Dab
 
 ### createArrow()
 
-Hier werden die Pfeile erstellt. welche in Richtung der angegebenen Sphere zeigen.
+Hier werden die Pfeile erstellt, welche in Richtung der angegebenen Sphere zeigen.
 
 ## PanoImage
 
@@ -127,3 +127,23 @@ Die PanoImage-Klasse dient als Datenstruktur, die der JSON-Struktur der Bildmeta
 Die Klasse PanoSphere erbt von der SceneNode-Klasse. In ihr stehen Attribute wie die Transform-Component, Radius, Textur sowie Verweise auf die vorherige und nächste Sphere.
 
 <!-- Davor den restlichen Klassenstuff _______________________________________________________________________________________________________________ -->
+
+# Daten für MuVista vorbereiten
+
+Zum starten von MuVista werden verschiedene Daten benötigt, die in einem bestimmten Format vorliegen müssen:
+
+- Die Punktwolke: muss mithilfe des [OocFileGenerator](https://github.com/FabianKowatsch/Fusee/blob/feature/MuVista2/src/PointCloud/Tools/Program.cs) aus einem .las/.laz-File erstellt worden sein und eine meta.json enthalten
+- Die Panoramabilder: müssen im ...MuVista/Core/Assets/Panos-Verzeichnis von liegen
+- Die data.json in ...MuVista/Core/Assets/Data , welche aus dem .log-File der Panoramadaten mithilfe der Tools [JSONReducer](https://github.com/FabianKowatsch/Fusee/blob/feature/MuVista2/Examples/Complete/JSONReducer/Program.cs) und [LogToJSON](https://github.com/FabianKowatsch/Fusee/blob/feature/MuVista2/Examples/Complete/JSONReducer/LogToJSON/LogToJSON.cs) erstellt wird.
+
+### Die Logdatei umwandeln
+
+Um die Logdaten in das JSON-Format umzuwandeln muss in der Klasse LogToJSON (siehe oben) der Pfad der .log-Datei sowie der Pfad zum output vorgegeben werden und anschließend das Programm ausgeführt werden.
+
+### Die JSON-Datei anpassen
+
+MuVista generiert die PanoSpheres basierend auf den Panoramabildern im Asset-Ordner und der zugehörigen data.json. Um die Startdauer von MuVista zu reduzieren, wird eine verkürzte Version der data.json verwendet, welche nur Informationen zu den Bildern im Asset-Ordner enthält. Um diese zu erstellen muss das Programm jSONReducer ausgeführt werden und die Pfade zu den Bildern, Input und Output korrekt in den Attributen angegeben werden.
+
+### Die Punktwolkendaten generieren
+
+Um die Punktwolke brauchbar für das Projekt MuVista zu machen, muss das Programm OocFileGenerator (siehe oben) ausgeführt werden. Dafür wird der Pfad zur .las/-laz-Datei benötigt, sowie der Pfad zum output. Dieser sollte vorzugsweise ... MuVista/Core/Assets/Data/ProcessedPointcloud sein. Außerdem muss die Anzahl der Punkte pro Oktant angegeben werden (empfohlen zwischen 3000 und 20000, je nach Größe und Performance) sowie der Indikator des Punkttyps als Integer (1 für einfarbige Punkte, 3 für mehrfarbige)
