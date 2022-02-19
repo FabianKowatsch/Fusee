@@ -79,10 +79,10 @@ public class PanoSphereFactory
         double shiftedX = shiftImgCoords(offset.x, img.X);
         double shiftedZ = shiftImgCoords(offset.y, img.Y);
         double shiftedY = shiftImgCoords(offset.z, img.Z);
-        var fiber3dLadybugQuaternion_y = (float)img.qz;
-        var fiber3dLadybugQuaternion_x = (float)img.qy * (-1);
-        var fiber3dLadybugQuaternion_z = (float)img.qx * (-1);
-        var fiber3dLadybugQuaternion_w = (float)img.qw * (-1);
+        var fiber3dLadybugQuaternion_y = (float)img.qz * (-1);
+        var fiber3dLadybugQuaternion_x = (float)img.qy;
+        var fiber3dLadybugQuaternion_z = (float)img.qx;
+        var fiber3dLadybugQuaternion_w = (float)img.qw;
 
     
         sphere.sphereTransform.Matrix = new Quaternion(fiber3dLadybugQuaternion_x, fiber3dLadybugQuaternion_y, fiber3dLadybugQuaternion_z, fiber3dLadybugQuaternion_w).ToRotMat();
