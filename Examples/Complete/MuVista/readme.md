@@ -50,6 +50,18 @@ Im Konstruktor der GUI werden alle Komponenten welche später in der GUI zu sehe
 
 Die Funktion erstellt eine Handle die später in eine Canvas Node gesetzt werden kann. Damit die handle dann fnktioniert müssen noch 3 funktionen geschrieben werden (vgl. OnPointSizeUp, OnPointSizeDown und OnPointSizeStop) diese können dann in einer RenderAFrame Funktion ausgelöst werden. Die Handle besteht aus 5 Komponenten. Einem Background (TextureNode), Down (TextureNode) und Up (TextureNode) mit jeweils GuiButtons angehängt, Handle (TextureNode) und einem Titel (TextNode).
 
+## Waypoint
+
+Die Klasse Waypoint leitet von SceneNode ab und erstellt eine Sphere auf der Minimap an der Position der Panosphere in der Minimap Szene und beinhaltet die PanoSphere zu welcher PanoSphere gewechselt werden soll, wenn der Waypoint angeklickt wird.
+
+## PtRenderParams
+
+Die Klasse PtRenderParams enthält alle Parameter, mit denen die Punktwolke verändert werden kann. Diese Klasse beinhaltet unter anderem den Pfad zur Punktwolke, die Farbe der Punkte sowie die Größe der Punkte in der Punktwolke.
+
+## AppSetup
+
+Diese Klasse wird in der Main Funktion verwendet, um die ganze Anwendung mit der benötigten Setup-Methode abhängig vom verwendeten Typ der Punktwolke zu starten.
+
 ## MuVista
 
 ### Init()
