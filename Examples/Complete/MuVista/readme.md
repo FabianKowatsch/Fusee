@@ -27,8 +27,6 @@ Durchs klicken auf die Minimap, oben links im Fenster, kommt man auf die Map-Ans
 
 # Dokumentation der einzelnen Klassen
 
-## AppSetup
-
 ## GUI
 
 Die GUI erbt von SceneContainer. In der Klasse MuVista bekommt sie dann noch eine eigene Kamera und einen Renderer.
@@ -102,6 +100,15 @@ Die Funktion funktioniert gleich wie die Funktion movePanoAlphaHandle() jedoch b
 
 SwitchModes() toggelt zwischen der Punktwolkenansicht und der Panoramabild Ansicht. Falls der User sich in der Anwendung gerade im Punktwolkenmodus befindet und zur Panoramabildansicht wechselt wird die Kamera auf die Position der Current Sphere gesetzt und die Sphere wird ein- und die Punktwolken werden ausgeblendet.
 Falls der Wechsel in die andere Richtung durchgeführt wird werden die Punkte eingeblendet und die Panoramabilder werden ausgeblendet. Die Kamera verändert aber nicht ihre Position.
+
+
+#### SwitchCamViewport
+
+In dieser Funktion wird der Viewport der Main Kamera und der Minimap getauscht. Dies wird ausgeführt, wenn F5 betätigt wurde oder oben rechts auf die Minimap geklickt wird.
+
+#### DoPicking()
+
+In dieser Funktion wird die Funktionalitäten des Pickings in der Anwendung ausgeführt. Einerseits soll, wenn gerade die Minimap offen ist überprüft werden, ob einer der Waypoints angeklickt wurde, um dann zur Panoramansicht dieses angeklickten Panoramabildes zu gelangen. Andererseits soll in der Panoramansicht überprüft werden, ob einer der Verbindungspfeile angeklickt wurde, um die Animtation zwischen den Panoramabildern zu starten.
 
 ## PanoSphereFactory
 
