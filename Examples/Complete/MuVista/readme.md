@@ -101,6 +101,9 @@ Die Funktion funktioniert gleich wie die Funktion movePanoAlphaHandle() jedoch b
 SwitchModes() toggelt zwischen der Punktwolkenansicht und der Panoramabild Ansicht. Falls der User sich in der Anwendung gerade im Punktwolkenmodus befindet und zur Panoramabildansicht wechselt wird die Kamera auf die Position der Current Sphere gesetzt und die Sphere wird ein- und die Punktwolken werden ausgeblendet.
 Falls der Wechsel in die andere Richtung durchgeführt wird werden die Punkte eingeblendet und die Panoramabilder werden ausgeblendet. Die Kamera verändert aber nicht ihre Position.
 
+### Map
+
+Die Map besteht aus einer eigenen Szene. Die Szene besteht aus einer Plane, welche auf die Position der mittlersten PanoSphere positioniert wird und alle PanoSpheres werden auf die Plane als grüne Spheres in Form von Waypoints platziert.
 
 #### SwitchCamViewport
 
