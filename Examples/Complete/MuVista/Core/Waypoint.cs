@@ -17,12 +17,12 @@ namespace Fusee.Examples.MuVista.Core
         public Waypoint(PanoSphere sphere)
         {
             Name = "Waypoint";
-            float3 sphereFuseeTransform = new float3(sphere.GetTransform(0).Translation.x, sphere.GetTransform(0).Translation.z, -1);
+            float3 sphereFuseeTransform = new float3(sphere.GetTransform(0).Translation.x, sphere.GetTransform(0).Translation.z, -5);
             Components = new List<SceneComponent>
             {
                     new Transform { Translation = sphereFuseeTransform, Scale = new float3(1, 1, 1) },
                     MakeEffect.FromDiffuseSpecular((float4) ColorUint.Green, 0f, 4.0f, 1f),
-                    new Sphere(0.5f, 20, 50)
+                    new Sphere(2.5f, 20, 50)
             };
             _sphere = sphere;
         }

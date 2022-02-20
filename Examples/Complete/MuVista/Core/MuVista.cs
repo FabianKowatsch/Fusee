@@ -133,8 +133,8 @@ namespace Fusee.Examples.MuVista.Core
         private float _panoChangeAnimTimeStart = 0;
         private PanoSphere _destinationSphere;
 
-        private float minimapPlaneWidth = 75;
-        private float minimapPlaneHeight = 75;
+        private float minimapPlaneWidth = 400;
+        private float minimapPlaneHeight = 400;
 
         // Init is called on startup. 
         public override void Init()
@@ -194,7 +194,7 @@ namespace Fusee.Examples.MuVista.Core
             _minimapCam.Scale = 0.025f;
 
             float3 middleSphereTranslation = spheres.ElementAt((int)spheres.Count/2).sphereTransform.Translation;
-            float3 miniMapTransform = new float3(middleSphereTranslation.x, middleSphereTranslation.z, -50);
+            float3 miniMapTransform = new float3(middleSphereTranslation.x, middleSphereTranslation.z, -400);
             _minimapCamTransform = new Transform()
             {
                 Rotation = new float3(0, 0, 0),
